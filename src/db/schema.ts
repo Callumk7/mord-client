@@ -20,6 +20,18 @@ export const campaigns = pgTable("campaigns", {
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Scenarios Table
+export const scenarios = pgTable("scenarios", {
+	id: serial("id").primaryKey(),
+	name: text("name").notNull(),
+	playerCount: integer("player_count").notNull(),
+	description: text("description"),
+	specialRules: jsonb("special_rules").$type<string[]>(),
+	campaignId: integer("campaign_id").references(() => campaigns.id),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Warbands Table
 export const warbands = pgTable("warbands", {
 	id: serial("id").primaryKey(),
@@ -140,6 +152,15 @@ export const casualties = pgTable("casualties", {
 // Relations
 export const campaignsRelations = relations(campaigns, ({ many }) => ({
 	warbands: many(warbands),
+	scenarios: many(scenarios),
+}));
+
+export const scenariosRelations = relations(scenarios, ({ one, many }) => ({
+	campaign: one(campaigns, {
+		fields: [scenarios.campaignId],
+		references: [campaigns.id],
+	}),
+	matches: many(matches),
 }));
 
 export const warbandsRelations = relations(warbands, ({ one, many }) => ({
@@ -161,6 +182,10 @@ export const warriorsRelations = relations(warriors, ({ one }) => ({
 }));
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
+	scenario: one(scenarios, {
+		fields: [matches.scenarioId],
+		references: [scenarios.id],
+	}),
 	winner: one(warbands, {
 		fields: [matches.winnerId],
 		references: [warbands.id],
