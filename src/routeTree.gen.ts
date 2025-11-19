@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignIndexRouteImport } from './routes/$campaign/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
 import { Route as DemoDbChatApiRouteImport } from './routes/demo/db-chat-api'
 import { Route as DemoDbChatRouteImport } from './routes/demo/db-chat'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
@@ -37,11 +36,6 @@ const CampaignIndexRoute = CampaignIndexRouteImport.update({
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoDrizzleRoute = DemoDrizzleRouteImport.update({
-  id: '/demo/drizzle',
-  path: '/demo/drizzle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoDbChatApiRoute = DemoDbChatApiRouteImport.update({
@@ -99,7 +93,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo/db-chat': typeof DemoDbChatRoute
   '/demo/db-chat-api': typeof DemoDbChatApiRoute
-  '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/$campaign': typeof CampaignIndexRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -115,7 +108,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo/db-chat': typeof DemoDbChatRoute
   '/demo/db-chat-api': typeof DemoDbChatApiRoute
-  '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/$campaign': typeof CampaignIndexRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -132,7 +124,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/demo/db-chat': typeof DemoDbChatRoute
   '/demo/db-chat-api': typeof DemoDbChatApiRoute
-  '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/$campaign/': typeof CampaignIndexRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -150,7 +141,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo/db-chat'
     | '/demo/db-chat-api'
-    | '/demo/drizzle'
     | '/demo/tanstack-query'
     | '/$campaign'
     | '/demo/api/names'
@@ -166,7 +156,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo/db-chat'
     | '/demo/db-chat-api'
-    | '/demo/drizzle'
     | '/demo/tanstack-query'
     | '/$campaign'
     | '/demo/api/names'
@@ -182,7 +171,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo/db-chat'
     | '/demo/db-chat-api'
-    | '/demo/drizzle'
     | '/demo/tanstack-query'
     | '/$campaign/'
     | '/demo/api/names'
@@ -199,7 +187,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DemoDbChatRoute: typeof DemoDbChatRoute
   DemoDbChatApiRoute: typeof DemoDbChatApiRoute
-  DemoDrizzleRoute: typeof DemoDrizzleRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   CampaignIndexRoute: typeof CampaignIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
@@ -233,13 +220,6 @@ declare module '@tanstack/react-router' {
       path: '/demo/tanstack-query'
       fullPath: '/demo/tanstack-query'
       preLoaderRoute: typeof DemoTanstackQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/drizzle': {
-      id: '/demo/drizzle'
-      path: '/demo/drizzle'
-      fullPath: '/demo/drizzle'
-      preLoaderRoute: typeof DemoDrizzleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/db-chat-api': {
@@ -319,7 +299,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DemoDbChatRoute: DemoDbChatRoute,
   DemoDbChatApiRoute: DemoDbChatApiRoute,
-  DemoDrizzleRoute: DemoDrizzleRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   CampaignIndexRoute: CampaignIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,

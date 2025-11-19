@@ -1,118 +1,267 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { useId, useState } from "react";
+import { z } from "zod";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldError,
+	FieldLabel,
+} from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
+import { db } from "~/db";
+import { campaigns } from "~/db/schema";
 
-export const Route = createFileRoute('/')({ component: App })
+// Zod schema for campaign creation
+const createCampaignSchema = z.object({
+	name: z.string().min(1, "Campaign name is required"),
+	description: z.string().optional(),
+	startDate: z.coerce.date(),
+	endDate: z.coerce.date(),
+});
+
+// Server function to create a new campaign
+export const createCampaign = createServerFn({ method: "POST" })
+	.inputValidator(createCampaignSchema)
+	.handler(async ({ data }) => {
+		const [newCampaign] = await db
+			.insert(campaigns)
+			.values({
+				name: data.name,
+				description: data.description,
+				startDate: data.startDate,
+				endDate: data.endDate,
+			})
+			.returning();
+
+		return newCampaign;
+	});
+
+// Server function to fetch all campaigns
+export const getCampaigns = createServerFn({ method: "GET" }).handler(
+	async () => {
+		const allCampaigns = await db.select().from(campaigns);
+		return allCampaigns;
+	},
+);
+
+export const Route = createFileRoute("/")({
+	component: App,
+});
 
 function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+	const nameId = useId();
+	const descriptionId = useId();
+	const startDateId = useId();
+	const endDateId = useId();
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
-            </h1>
-          </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
-            </p>
-          </div>
-        </div>
-      </section>
+	const [formData, setFormData] = useState({
+		name: "",
+		description: "",
+		startDate: "",
+		endDate: "",
+	});
 
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
-            >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  )
+	// Fetch campaigns
+	const { data: campaignsList, refetch } = useQuery({
+		queryKey: ["campaigns"],
+		queryFn: () => getCampaigns(),
+	});
+
+	const mutation = useMutation({
+		mutationFn: createCampaign,
+		onSuccess: (data) => {
+			console.log("Campaign created successfully:", data);
+			// Reset form
+			setFormData({
+				name: "",
+				description: "",
+				startDate: "",
+				endDate: "",
+			});
+			// Refetch campaigns to show the new one
+			refetch();
+		},
+		onError: (error) => {
+			console.error("Error creating campaign:", error);
+		},
+	});
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		mutation.mutate({
+			data: {
+				name: formData.name,
+				description: formData.description,
+				startDate: new Date(formData.startDate),
+				endDate: new Date(formData.endDate),
+			},
+		});
+	};
+
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-zinc-800 to-black p-4">
+			<div className="mx-auto max-w-4xl pt-8">
+				<div className="mb-8 text-center">
+					<h1 className="mb-2 text-4xl font-bold text-white">Mord Stats</h1>
+					<p className="text-gray-400">
+						Track your Mordheim campaign statistics
+					</p>
+				</div>
+
+				<div className="grid gap-6 md:grid-cols-2">
+					{/* Create Campaign Form */}
+					<Card className="p-6">
+						<h2 className="mb-4 text-xl font-semibold">Create New Campaign</h2>
+
+						<form onSubmit={handleSubmit} className="space-y-4">
+							<Field>
+								<FieldLabel htmlFor={nameId}>Campaign Name</FieldLabel>
+								<FieldContent>
+									<Input
+										id={nameId}
+										type="text"
+										value={formData.name}
+										onChange={(e) =>
+											setFormData({ ...formData, name: e.target.value })
+										}
+										placeholder="Weekend Warband Campaign"
+										required
+									/>
+									<FieldDescription>
+										The name of your Mordheim campaign
+									</FieldDescription>
+									{mutation.error && (
+										<FieldError>
+											{mutation.error instanceof Error
+												? mutation.error.message
+												: "An error occurred"}
+										</FieldError>
+									)}
+								</FieldContent>
+							</Field>
+
+							<Field>
+								<FieldLabel htmlFor={descriptionId}>Description</FieldLabel>
+								<FieldContent>
+									<Input
+										id={descriptionId}
+										type="text"
+										value={formData.description}
+										onChange={(e) =>
+											setFormData({ ...formData, description: e.target.value })
+										}
+										placeholder="A thrilling weekend of Mordheim battles"
+									/>
+									<FieldDescription>
+										Optional description of the campaign
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+
+							<Field>
+								<FieldLabel htmlFor={startDateId}>Start Date</FieldLabel>
+								<FieldContent>
+									<Input
+										id={startDateId}
+										type="date"
+										value={formData.startDate}
+										onChange={(e) =>
+											setFormData({ ...formData, startDate: e.target.value })
+										}
+										required
+									/>
+									<FieldDescription>
+										When does the campaign start?
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+
+							<Field>
+								<FieldLabel htmlFor={endDateId}>End Date</FieldLabel>
+								<FieldContent>
+									<Input
+										id={endDateId}
+										type="date"
+										value={formData.endDate}
+										onChange={(e) =>
+											setFormData({ ...formData, endDate: e.target.value })
+										}
+										required
+									/>
+									<FieldDescription>
+										When does the campaign end?
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+
+							<div className="flex gap-2 pt-4">
+								<Button
+									type="submit"
+									disabled={mutation.isPending}
+									className="flex-1"
+								>
+									{mutation.isPending ? "Creating..." : "Create Campaign"}
+								</Button>
+
+								{mutation.isSuccess && (
+									<div className="flex flex-1 items-center justify-center rounded-md bg-green-500/10 text-green-500">
+										Campaign created successfully!
+									</div>
+								)}
+							</div>
+						</form>
+					</Card>
+
+					{/* Campaigns List */}
+					<div className="space-y-4">
+						<h2 className="text-xl font-semibold text-white">Your Campaigns</h2>
+
+						{!campaignsList || campaignsList.length === 0 ? (
+							<Card className="p-6">
+								<p className="text-center text-gray-400">
+									No campaigns yet. Create one to get started!
+								</p>
+							</Card>
+						) : (
+							<div className="space-y-4">
+								{campaignsList.map((campaign) => (
+									<Link
+										key={campaign.id}
+										to="/$campaign"
+										params={{ campaign: campaign.id.toString() }}
+										className="block"
+									>
+										<Card className="p-4 transition-all hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10">
+											<h3 className="mb-2 text-lg font-semibold text-white">
+												{campaign.name}
+											</h3>
+											{campaign.description && (
+												<p className="mb-2 text-sm text-gray-400">
+													{campaign.description}
+												</p>
+											)}
+											<div className="flex gap-4 text-xs text-gray-500">
+												<span>
+													Start:{" "}
+													{new Date(campaign.startDate).toLocaleDateString()}
+												</span>
+												<span>
+													End: {new Date(campaign.endDate).toLocaleDateString()}
+												</span>
+											</div>
+										</Card>
+									</Link>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
