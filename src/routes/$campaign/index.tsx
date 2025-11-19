@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
 import { CreateWarbandForm } from "~/components/warbands/create-warband-form";
@@ -103,9 +103,14 @@ function RouteComponent() {
 					) : (
 						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 							{campaign.warbands.map((warband) => (
-								<div
+								<Link
 									key={warband.id}
-									className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-5 shadow-lg transition-all hover:border-zinc-600 hover:shadow-xl"
+									to="/$campaign/warbands/$warband"
+									params={{
+										campaign: campaign.id.toString(),
+										warband: warband.id.toString(),
+									}}
+									className="block rounded-lg border border-zinc-700 bg-zinc-800/50 p-5 shadow-lg transition-all hover:border-zinc-600 hover:shadow-xl cursor-pointer"
 								>
 									{/* Warband Header */}
 									<div className="mb-3 flex items-start justify-between">
@@ -146,7 +151,7 @@ function RouteComponent() {
 											<p className="text-sm text-gray-300">{warband.notes}</p>
 										</div>
 									)}
-								</div>
+								</Link>
 							))}
 						</div>
 					)}
