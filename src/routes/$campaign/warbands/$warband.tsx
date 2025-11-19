@@ -55,9 +55,7 @@ function RouteComponent() {
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Warband Warriors</h1>
 				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-					<DialogTrigger asChild>
-						<Button>Add Warrior</Button>
-					</DialogTrigger>
+					<DialogTrigger render={<Button />}>Add Warrior</DialogTrigger>
 					<DialogContent className="max-w-2xl">
 						<DialogHeader>
 							<DialogTitle>Create New Warrior</DialogTitle>
