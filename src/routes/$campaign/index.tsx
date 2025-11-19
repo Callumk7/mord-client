@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
+import { CreateWarbandForm } from "~/components/warbands/create-warband-form";
 import { db } from "~/db";
 import { campaigns } from "~/db/schema";
 
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/$campaign/")({
 		return getCampaignData({ data: { campaignId } });
 	},
 	component: RouteComponent,
+	// WARN: This doesn't work - the error type must be incorrect
 	notFoundComponent: () => (
 		<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-800 to-black">
 			<div className="text-center">
@@ -149,6 +151,7 @@ function RouteComponent() {
 						</div>
 					)}
 				</div>
+				<CreateWarbandForm campaignId={campaign.id} />
 			</div>
 		</div>
 	);

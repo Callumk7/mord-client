@@ -14,10 +14,12 @@ import { Route as CampaignIndexRouteImport } from './routes/$campaign/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoDbChatApiRouteImport } from './routes/demo/db-chat-api'
 import { Route as DemoDbChatRouteImport } from './routes/demo/db-chat'
+import { Route as CampaignWarbandsIndexRouteImport } from './routes/$campaign/warbands/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as CampaignWarbandsWarbandRouteImport } from './routes/$campaign/warbands/$warband'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
@@ -48,6 +50,11 @@ const DemoDbChatRoute = DemoDbChatRouteImport.update({
   path: '/demo/db-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampaignWarbandsIndexRoute = CampaignWarbandsIndexRouteImport.update({
+  id: '/$campaign/warbands/',
+  path: '/$campaign/warbands/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
   path: '/demo/start/server-funcs',
@@ -66,6 +73,11 @@ const DemoApiTqTodosRoute = DemoApiTqTodosRouteImport.update({
 const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   id: '/demo/api/names',
   path: '/demo/api/names',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignWarbandsWarbandRoute = CampaignWarbandsWarbandRouteImport.update({
+  id: '/$campaign/warbands/$warband',
+  path: '/$campaign/warbands/$warband',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
@@ -95,10 +107,12 @@ export interface FileRoutesByFullPath {
   '/demo/db-chat-api': typeof DemoDbChatApiRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/$campaign': typeof CampaignIndexRoute
+  '/$campaign/warbands/$warband': typeof CampaignWarbandsWarbandRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -110,10 +124,12 @@ export interface FileRoutesByTo {
   '/demo/db-chat-api': typeof DemoDbChatApiRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/$campaign': typeof CampaignIndexRoute
+  '/$campaign/warbands/$warband': typeof CampaignWarbandsWarbandRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -126,10 +142,12 @@ export interface FileRoutesById {
   '/demo/db-chat-api': typeof DemoDbChatApiRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/$campaign/': typeof CampaignIndexRoute
+  '/$campaign/warbands/$warband': typeof CampaignWarbandsWarbandRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/$campaign/warbands/': typeof CampaignWarbandsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -143,10 +161,12 @@ export interface FileRouteTypes {
     | '/demo/db-chat-api'
     | '/demo/tanstack-query'
     | '/$campaign'
+    | '/$campaign/warbands/$warband'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/$campaign/warbands'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -158,10 +178,12 @@ export interface FileRouteTypes {
     | '/demo/db-chat-api'
     | '/demo/tanstack-query'
     | '/$campaign'
+    | '/$campaign/warbands/$warband'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/$campaign/warbands'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -173,10 +195,12 @@ export interface FileRouteTypes {
     | '/demo/db-chat-api'
     | '/demo/tanstack-query'
     | '/$campaign/'
+    | '/$campaign/warbands/$warband'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/$campaign/warbands/'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -189,10 +213,12 @@ export interface RootRouteChildren {
   DemoDbChatApiRoute: typeof DemoDbChatApiRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   CampaignIndexRoute: typeof CampaignIndexRoute
+  CampaignWarbandsWarbandRoute: typeof CampaignWarbandsWarbandRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
+  CampaignWarbandsIndexRoute: typeof CampaignWarbandsIndexRoute
   DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
   DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
   DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute
@@ -236,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoDbChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$campaign/warbands/': {
+      id: '/$campaign/warbands/'
+      path: '/$campaign/warbands'
+      fullPath: '/$campaign/warbands'
+      preLoaderRoute: typeof CampaignWarbandsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
       path: '/demo/start/server-funcs'
@@ -262,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/demo/api/names'
       fullPath: '/demo/api/names'
       preLoaderRoute: typeof DemoApiNamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$campaign/warbands/$warband': {
+      id: '/$campaign/warbands/$warband'
+      path: '/$campaign/warbands/$warband'
+      fullPath: '/$campaign/warbands/$warband'
+      preLoaderRoute: typeof CampaignWarbandsWarbandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/ssr/': {
@@ -301,10 +341,12 @@ const rootRouteChildren: RootRouteChildren = {
   DemoDbChatApiRoute: DemoDbChatApiRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   CampaignIndexRoute: CampaignIndexRoute,
+  CampaignWarbandsWarbandRoute: CampaignWarbandsWarbandRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTqTodosRoute: DemoApiTqTodosRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
+  CampaignWarbandsIndexRoute: CampaignWarbandsIndexRoute,
   DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
   DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
   DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,
