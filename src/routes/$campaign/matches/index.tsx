@@ -41,7 +41,7 @@ const matches = [
 	},
 ];
 
-export const Route = createFileRoute("/$campaign/matches")({
+export const Route = createFileRoute("/$campaign/matches/")({
 	component: RouteComponent,
 });
 
@@ -122,5 +122,5 @@ function RouteComponent() {
 				</CardContent>
 			</Card>
 		</div>
-	);
+	)
 }

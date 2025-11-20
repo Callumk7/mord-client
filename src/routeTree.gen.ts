@@ -14,8 +14,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReferenceIndexRouteImport } from './routes/reference/index'
 import { Route as CampaignIndexRouteImport } from './routes/$campaign/index'
 import { Route as ReferenceInjuriesRouteImport } from './routes/reference/injuries'
-import { Route as CampaignMatchesRouteImport } from './routes/$campaign/matches'
 import { Route as CampaignWarbandsIndexRouteImport } from './routes/$campaign/warbands/index'
+import { Route as CampaignMatchesIndexRouteImport } from './routes/$campaign/matches/index'
 import { Route as CampaignWarbandsWarbandIndexRouteImport } from './routes/$campaign/warbands/$warband/index'
 import { Route as CampaignWarbandsWarbandWarriorsWarriorRouteImport } from './routes/$campaign/warbands/$warband/warriors/$warrior'
 
@@ -44,14 +44,14 @@ const ReferenceInjuriesRoute = ReferenceInjuriesRouteImport.update({
   path: '/reference/injuries',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CampaignMatchesRoute = CampaignMatchesRouteImport.update({
-  id: '/matches',
-  path: '/matches',
-  getParentRoute: () => CampaignRouteRoute,
-} as any)
 const CampaignWarbandsIndexRoute = CampaignWarbandsIndexRouteImport.update({
   id: '/warbands/',
   path: '/warbands/',
+  getParentRoute: () => CampaignRouteRoute,
+} as any)
+const CampaignMatchesIndexRoute = CampaignMatchesIndexRouteImport.update({
+  id: '/matches/',
+  path: '/matches/',
   getParentRoute: () => CampaignRouteRoute,
 } as any)
 const CampaignWarbandsWarbandIndexRoute =
@@ -70,20 +70,20 @@ const CampaignWarbandsWarbandWarriorsWarriorRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$campaign': typeof CampaignRouteRouteWithChildren
-  '/$campaign/matches': typeof CampaignMatchesRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign/': typeof CampaignIndexRoute
   '/reference': typeof ReferenceIndexRoute
+  '/$campaign/matches': typeof CampaignMatchesIndexRoute
   '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
   '/$campaign/warbands/$warband': typeof CampaignWarbandsWarbandIndexRoute
   '/$campaign/warbands/$warband/warriors/$warrior': typeof CampaignWarbandsWarbandWarriorsWarriorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/$campaign/matches': typeof CampaignMatchesRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign': typeof CampaignIndexRoute
   '/reference': typeof ReferenceIndexRoute
+  '/$campaign/matches': typeof CampaignMatchesIndexRoute
   '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
   '/$campaign/warbands/$warband': typeof CampaignWarbandsWarbandIndexRoute
   '/$campaign/warbands/$warband/warriors/$warrior': typeof CampaignWarbandsWarbandWarriorsWarriorRoute
@@ -92,10 +92,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$campaign': typeof CampaignRouteRouteWithChildren
-  '/$campaign/matches': typeof CampaignMatchesRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign/': typeof CampaignIndexRoute
   '/reference/': typeof ReferenceIndexRoute
+  '/$campaign/matches/': typeof CampaignMatchesIndexRoute
   '/$campaign/warbands/': typeof CampaignWarbandsIndexRoute
   '/$campaign/warbands/$warband/': typeof CampaignWarbandsWarbandIndexRoute
   '/$campaign/warbands/$warband/warriors/$warrior': typeof CampaignWarbandsWarbandWarriorsWarriorRoute
@@ -105,20 +105,20 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$campaign'
-    | '/$campaign/matches'
     | '/reference/injuries'
     | '/$campaign/'
     | '/reference'
+    | '/$campaign/matches'
     | '/$campaign/warbands'
     | '/$campaign/warbands/$warband'
     | '/$campaign/warbands/$warband/warriors/$warrior'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/$campaign/matches'
     | '/reference/injuries'
     | '/$campaign'
     | '/reference'
+    | '/$campaign/matches'
     | '/$campaign/warbands'
     | '/$campaign/warbands/$warband'
     | '/$campaign/warbands/$warband/warriors/$warrior'
@@ -126,10 +126,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$campaign'
-    | '/$campaign/matches'
     | '/reference/injuries'
     | '/$campaign/'
     | '/reference/'
+    | '/$campaign/matches/'
     | '/$campaign/warbands/'
     | '/$campaign/warbands/$warband/'
     | '/$campaign/warbands/$warband/warriors/$warrior'
@@ -179,18 +179,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReferenceInjuriesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$campaign/matches': {
-      id: '/$campaign/matches'
-      path: '/matches'
-      fullPath: '/$campaign/matches'
-      preLoaderRoute: typeof CampaignMatchesRouteImport
-      parentRoute: typeof CampaignRouteRoute
-    }
     '/$campaign/warbands/': {
       id: '/$campaign/warbands/'
       path: '/warbands'
       fullPath: '/$campaign/warbands'
       preLoaderRoute: typeof CampaignWarbandsIndexRouteImport
+      parentRoute: typeof CampaignRouteRoute
+    }
+    '/$campaign/matches/': {
+      id: '/$campaign/matches/'
+      path: '/matches'
+      fullPath: '/$campaign/matches'
+      preLoaderRoute: typeof CampaignMatchesIndexRouteImport
       parentRoute: typeof CampaignRouteRoute
     }
     '/$campaign/warbands/$warband/': {
@@ -211,16 +211,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface CampaignRouteRouteChildren {
-  CampaignMatchesRoute: typeof CampaignMatchesRoute
   CampaignIndexRoute: typeof CampaignIndexRoute
+  CampaignMatchesIndexRoute: typeof CampaignMatchesIndexRoute
   CampaignWarbandsIndexRoute: typeof CampaignWarbandsIndexRoute
   CampaignWarbandsWarbandIndexRoute: typeof CampaignWarbandsWarbandIndexRoute
   CampaignWarbandsWarbandWarriorsWarriorRoute: typeof CampaignWarbandsWarbandWarriorsWarriorRoute
 }
 
 const CampaignRouteRouteChildren: CampaignRouteRouteChildren = {
-  CampaignMatchesRoute: CampaignMatchesRoute,
   CampaignIndexRoute: CampaignIndexRoute,
+  CampaignMatchesIndexRoute: CampaignMatchesIndexRoute,
   CampaignWarbandsIndexRoute: CampaignWarbandsIndexRoute,
   CampaignWarbandsWarbandIndexRoute: CampaignWarbandsWarbandIndexRoute,
   CampaignWarbandsWarbandWarriorsWarriorRoute:

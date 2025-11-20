@@ -68,6 +68,7 @@ export const matches = pgTable("matches", {
 	resultType: text("result_type")
 		.notNull()
 		.$type<"standard" | "team" | "placement">(),
+	status: text("status").notNull().$type<"active" | "ended" | "scheduled">(),
 	scenarioId: integer("scenario_id").notNull(),
 	winnerId: integer("winner_id").references(() => warbands.id),
 	loserId: integer("loser_id").references(() => warbands.id),
