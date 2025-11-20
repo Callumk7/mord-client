@@ -87,6 +87,20 @@ export const matchParticipants = pgTable("match_participants", {
 		.references(() => warbands.id),
 });
 
+export const events = pgTable("events", {
+	id: serial("id").primaryKey(),
+	matchId: integer("match_id")
+		.notNull()
+		.references(() => matches.id),
+	type: text("type").notNull().$type<"knock_down" | "moment">(),
+	description: text("description"),
+	timestamp: timestamp("timestamp").notNull().defaultNow(),
+	warriorId: integer("warrior_id")
+		.notNull()
+		.references(() => warriors.id),
+	defenderId: integer("defender_id").references(() => warriors.id),
+});
+
 // Teams Table
 export const teams = pgTable("teams", {
 	id: serial("id").primaryKey(),
@@ -179,6 +193,24 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
 	teams: many(teams),
 	placements: many(placements),
 	casualties: many(casualties),
+	events: many(events),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+	match: one(matches, {
+		fields: [events.matchId],
+		references: [matches.id],
+	}),
+	warrior: one(warriors, {
+		fields: [events.warriorId],
+		references: [warriors.id],
+		relationName: "eventWarrior",
+	}),
+	defender: one(warriors, {
+		fields: [events.defenderId],
+		references: [warriors.id],
+		relationName: "eventDefender",
+	}),
 }));
 
 export const matchParticipantsRelations = relations(

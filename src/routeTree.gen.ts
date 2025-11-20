@@ -13,6 +13,7 @@ import { Route as CampaignRouteRouteImport } from './routes/$campaign/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReferenceIndexRouteImport } from './routes/reference/index'
 import { Route as CampaignIndexRouteImport } from './routes/$campaign/index'
+import { Route as ReferenceInjuriesRouteImport } from './routes/reference/injuries'
 import { Route as CampaignMatchesRouteImport } from './routes/$campaign/matches'
 import { Route as CampaignWarbandsIndexRouteImport } from './routes/$campaign/warbands/index'
 import { Route as CampaignWarbandsWarbandIndexRouteImport } from './routes/$campaign/warbands/$warband/index'
@@ -37,6 +38,11 @@ const CampaignIndexRoute = CampaignIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CampaignRouteRoute,
+} as any)
+const ReferenceInjuriesRoute = ReferenceInjuriesRouteImport.update({
+  id: '/reference/injuries',
+  path: '/reference/injuries',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CampaignMatchesRoute = CampaignMatchesRouteImport.update({
   id: '/matches',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$campaign': typeof CampaignRouteRouteWithChildren
   '/$campaign/matches': typeof CampaignMatchesRoute
+  '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign/': typeof CampaignIndexRoute
   '/reference': typeof ReferenceIndexRoute
   '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$campaign/matches': typeof CampaignMatchesRoute
+  '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign': typeof CampaignIndexRoute
   '/reference': typeof ReferenceIndexRoute
   '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$campaign': typeof CampaignRouteRouteWithChildren
   '/$campaign/matches': typeof CampaignMatchesRoute
+  '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign/': typeof CampaignIndexRoute
   '/reference/': typeof ReferenceIndexRoute
   '/$campaign/warbands/': typeof CampaignWarbandsIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$campaign'
     | '/$campaign/matches'
+    | '/reference/injuries'
     | '/$campaign/'
     | '/reference'
     | '/$campaign/warbands'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$campaign/matches'
+    | '/reference/injuries'
     | '/$campaign'
     | '/reference'
     | '/$campaign/warbands'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$campaign'
     | '/$campaign/matches'
+    | '/reference/injuries'
     | '/$campaign/'
     | '/reference/'
     | '/$campaign/warbands/'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CampaignRouteRoute: typeof CampaignRouteRouteWithChildren
+  ReferenceInjuriesRoute: typeof ReferenceInjuriesRoute
   ReferenceIndexRoute: typeof ReferenceIndexRoute
 }
 
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$campaign/'
       preLoaderRoute: typeof CampaignIndexRouteImport
       parentRoute: typeof CampaignRouteRoute
+    }
+    '/reference/injuries': {
+      id: '/reference/injuries'
+      path: '/reference/injuries'
+      fullPath: '/reference/injuries'
+      preLoaderRoute: typeof ReferenceInjuriesRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/$campaign/matches': {
       id: '/$campaign/matches'
@@ -214,6 +234,7 @@ const CampaignRouteRouteWithChildren = CampaignRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CampaignRouteRoute: CampaignRouteRouteWithChildren,
+  ReferenceInjuriesRoute: ReferenceInjuriesRoute,
   ReferenceIndexRoute: ReferenceIndexRoute,
 }
 export const routeTree = rootRouteImport
