@@ -66,98 +66,94 @@ function RouteComponent() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-black p-6">
-			<div className="mx-auto max-w-6xl">
-				{/* Campaign Header */}
-				<div className="mb-8 rounded-lg border border-zinc-700 bg-zinc-800/50 p-6 shadow-xl backdrop-blur-sm">
-					<h1 className="mb-2 text-4xl font-bold text-white">
-						{campaign.name}
-					</h1>
-					{campaign.description && (
-						<p className="mb-4 text-lg text-gray-300">{campaign.description}</p>
-					)}
-					<div className="flex gap-6 text-sm text-gray-400">
-						<div>
-							<span className="font-semibold text-gray-300">Start:</span>{" "}
-							{formatDate(campaign.startDate)}
-						</div>
-						<div>
-							<span className="font-semibold text-gray-300">End:</span>{" "}
-							{formatDate(campaign.endDate)}
-						</div>
-						<div>
-							<span className="font-semibold text-gray-300">Warbands:</span>{" "}
-							{campaign.warbands.length}
-						</div>
+		<div className="mx-auto max-w-6xl">
+			{/* Campaign Header */}
+			<div className="mb-8 rounded-lg border border-zinc-700 bg-zinc-800/50 p-6 shadow-xl backdrop-blur-sm">
+				<h1 className="mb-2 text-4xl font-bold text-white">{campaign.name}</h1>
+				{campaign.description && (
+					<p className="mb-4 text-lg text-gray-300">{campaign.description}</p>
+				)}
+				<div className="flex gap-6 text-sm text-gray-400">
+					<div>
+						<span className="font-semibold text-gray-300">Start:</span>{" "}
+						{formatDate(campaign.startDate)}
+					</div>
+					<div>
+						<span className="font-semibold text-gray-300">End:</span>{" "}
+						{formatDate(campaign.endDate)}
+					</div>
+					<div>
+						<span className="font-semibold text-gray-300">Warbands:</span>{" "}
+						{campaign.warbands.length}
 					</div>
 				</div>
-
-				{/* Warbands Section */}
-				<div className="mb-6">
-					<h2 className="mb-4 text-2xl font-bold text-white">Warbands</h2>
-
-					{campaign.warbands.length === 0 ? (
-						<div className="rounded-lg border border-zinc-700 bg-zinc-800/30 p-8 text-center">
-							<p className="text-gray-400">No warbands in this campaign yet.</p>
-						</div>
-					) : (
-						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-							{campaign.warbands.map((warband) => (
-								<Link
-									key={warband.id}
-									to="/$campaign/warbands/$warband"
-									params={{
-										campaign: campaign.id.toString(),
-										warband: warband.id.toString(),
-									}}
-									className="block rounded-lg border border-zinc-700 bg-zinc-800/50 p-5 shadow-lg transition-all hover:border-zinc-600 hover:shadow-xl cursor-pointer"
-								>
-									{/* Warband Header */}
-									<div className="mb-3 flex items-start justify-between">
-										<div>
-											<h3 className="text-xl font-bold text-white">
-												{warband.name}
-											</h3>
-											<p className="text-sm text-gray-400">{warband.faction}</p>
-										</div>
-										{warband.icon && (
-											<div className="text-2xl">{warband.icon}</div>
-										)}
-									</div>
-
-									{/* Warband Stats */}
-									<div className="grid grid-cols-2 gap-3 border-t border-zinc-700 pt-3">
-										<div>
-											<div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-												Rating
-											</div>
-											<div className="text-2xl font-bold text-white">
-												{warband.rating}
-											</div>
-										</div>
-										<div>
-											<div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-												Treasury
-											</div>
-											<div className="text-2xl font-bold text-yellow-500">
-												{warband.treasury} gc
-											</div>
-										</div>
-									</div>
-
-									{/* Warband Notes */}
-									{warband.notes && (
-										<div className="mt-3 border-t border-zinc-700 pt-3">
-											<p className="text-sm text-gray-300">{warband.notes}</p>
-										</div>
-									)}
-								</Link>
-							))}
-						</div>
-					)}
-				</div>
-				<CreateWarbandForm campaignId={campaign.id} />
 			</div>
+
+			{/* Warbands Section */}
+			<div className="mb-6">
+				<h2 className="mb-4 text-2xl font-bold text-white">Warbands</h2>
+
+				{campaign.warbands.length === 0 ? (
+					<div className="rounded-lg border border-zinc-700 bg-zinc-800/30 p-8 text-center">
+						<p className="text-gray-400">No warbands in this campaign yet.</p>
+					</div>
+				) : (
+					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{campaign.warbands.map((warband) => (
+							<Link
+								key={warband.id}
+								to="/$campaign/warbands/$warband"
+								params={{
+									campaign: campaign.id.toString(),
+									warband: warband.id.toString(),
+								}}
+								className="block rounded-lg border border-zinc-700 bg-zinc-800/50 p-5 shadow-lg transition-all hover:border-zinc-600 hover:shadow-xl cursor-pointer"
+							>
+								{/* Warband Header */}
+								<div className="mb-3 flex items-start justify-between">
+									<div>
+										<h3 className="text-xl font-bold text-white">
+											{warband.name}
+										</h3>
+										<p className="text-sm text-gray-400">{warband.faction}</p>
+									</div>
+									{warband.icon && (
+										<div className="text-2xl">{warband.icon}</div>
+									)}
+								</div>
+
+								{/* Warband Stats */}
+								<div className="grid grid-cols-2 gap-3 border-t border-zinc-700 pt-3">
+									<div>
+										<div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+											Rating
+										</div>
+										<div className="text-2xl font-bold text-white">
+											{warband.rating}
+										</div>
+									</div>
+									<div>
+										<div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+											Treasury
+										</div>
+										<div className="text-2xl font-bold text-yellow-500">
+											{warband.treasury} gc
+										</div>
+									</div>
+								</div>
+
+								{/* Warband Notes */}
+								{warband.notes && (
+									<div className="mt-3 border-t border-zinc-700 pt-3">
+										<p className="text-sm text-gray-300">{warband.notes}</p>
+									</div>
+								)}
+							</Link>
+						))}
+					</div>
+				)}
+			</div>
+			<CreateWarbandForm campaignId={campaign.id} />
 		</div>
 	);
 }

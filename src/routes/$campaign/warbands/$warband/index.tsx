@@ -21,14 +21,25 @@ import {
 	TableRow,
 } from "~/components/ui/table";
 import { CreateWarriorForm } from "~/components/warriors/create-warrior-form";
+import { WarriorCard } from "~/components/warriors/warrior-card";
 import { getWarriorsByWarbandFn } from "~/lib/api/warriors";
 
-export const Route = createFileRoute("/$campaign/warbands/$warband")({
+export const Route = createFileRoute("/$campaign/warbands/$warband/")({
 	component: RouteComponent,
+	loader: async ({ context, params }) => {
+		// Parse warband ID from URL
+		const parsedWarbandId = Number.parseInt(params.warband, 10);
+
+		await context.queryClient.ensureQueryData({
+			queryFn: () =>
+				getWarriorsByWarbandFn({ data: { warbandId: parsedWarbandId } }),
+			queryKey: ["warband", parsedWarbandId],
+		});
+	},
 });
 
 function RouteComponent() {
-	const { warband: warbandId } = Route.useParams();
+	const { warband: warbandId, campaign: campaignId } = Route.useParams();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	// Parse warband ID from URL
@@ -231,6 +242,19 @@ function RouteComponent() {
 									))}
 							</TableBody>
 						</Table>
+					</CardContent>
+				</Card>
+			)}
+			{warriors && (
+				<Card>
+					<CardContent>
+						{warriors.map((warrior) => (
+							<WarriorCard
+								campaignId={campaignId}
+								key={warrior.id}
+								warrior={warrior}
+							/>
+						))}
 					</CardContent>
 				</Card>
 			)}

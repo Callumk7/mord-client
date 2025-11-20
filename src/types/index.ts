@@ -1,3 +1,5 @@
+import type { SeriousInjury } from "~/data/serious-injuries";
+
 export interface Campaign {
 	id: number;
 	name: string;
@@ -34,12 +36,13 @@ export interface Warrior {
 	injuriesReceived: number;
 	gamesPlayed: number;
 	isAlive: boolean;
-	deathDate?: Date;
+	deathDate?: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
-	deathDescription?: string;
-	equipment?: string[];
-	skills?: string[];
+	deathDescription?: string | null;
+	equipment?: string[] | null;
+	skills?: string[] | null;
+	injuries?: SeriousInjury[] | null;
 }
 
 export interface Match {

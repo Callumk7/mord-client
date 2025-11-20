@@ -11,8 +11,8 @@ import { Input } from "../ui/input";
 const formSchema = z.object({
 	name: z.string().min(1, "Warrior name is required"),
 	type: z.enum(["hero", "henchman"]),
-	equipment: z.string().optional(),
-	skills: z.string().optional(),
+	equipment: z.string(),
+	skills: z.string(),
 });
 
 export const createWarriorFn = createServerFn({ method: "POST" })
