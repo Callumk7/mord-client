@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CreateMatchForm } from "~/components/matches/create-match-form";
 import { Button } from "~/components/ui/button";
 import {
 	Card,
@@ -46,12 +47,15 @@ export const Route = createFileRoute("/$campaign/matches/")({
 });
 
 function RouteComponent() {
+	const { campaign } = Route.useParams();
 	return (
 		<div className="space-y-6">
 			<div className="flex justify-between items-center">
 				<h2 className="text-2xl font-bold text-foreground">Match Log</h2>
 				<Button>Log Match</Button>
 			</div>
+
+			<CreateMatchForm campaignId={Number(campaign)} />
 
 			<Card>
 				<CardHeader>
@@ -122,5 +126,5 @@ function RouteComponent() {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }

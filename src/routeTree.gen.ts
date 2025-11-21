@@ -9,16 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReferenceRouteRouteImport } from './routes/reference/route'
 import { Route as CampaignRouteRouteImport } from './routes/$campaign/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReferenceIndexRouteImport } from './routes/reference/index'
 import { Route as CampaignIndexRouteImport } from './routes/$campaign/index'
 import { Route as ReferenceInjuriesRouteImport } from './routes/reference/injuries'
+import { Route as CampaignAdminRouteImport } from './routes/$campaign/admin'
 import { Route as CampaignWarbandsIndexRouteImport } from './routes/$campaign/warbands/index'
 import { Route as CampaignMatchesIndexRouteImport } from './routes/$campaign/matches/index'
 import { Route as CampaignWarbandsWarbandIndexRouteImport } from './routes/$campaign/warbands/$warband/index'
 import { Route as CampaignWarbandsWarbandWarriorsWarriorRouteImport } from './routes/$campaign/warbands/$warband/warriors/$warrior'
 
+const ReferenceRouteRoute = ReferenceRouteRouteImport.update({
+  id: '/reference',
+  path: '/reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CampaignRouteRoute = CampaignRouteRouteImport.update({
   id: '/$campaign',
   path: '/$campaign',
@@ -30,9 +37,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReferenceIndexRoute = ReferenceIndexRouteImport.update({
-  id: '/reference/',
-  path: '/reference/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReferenceRouteRoute,
 } as any)
 const CampaignIndexRoute = CampaignIndexRouteImport.update({
   id: '/',
@@ -40,9 +47,14 @@ const CampaignIndexRoute = CampaignIndexRouteImport.update({
   getParentRoute: () => CampaignRouteRoute,
 } as any)
 const ReferenceInjuriesRoute = ReferenceInjuriesRouteImport.update({
-  id: '/reference/injuries',
-  path: '/reference/injuries',
-  getParentRoute: () => rootRouteImport,
+  id: '/injuries',
+  path: '/injuries',
+  getParentRoute: () => ReferenceRouteRoute,
+} as any)
+const CampaignAdminRoute = CampaignAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => CampaignRouteRoute,
 } as any)
 const CampaignWarbandsIndexRoute = CampaignWarbandsIndexRouteImport.update({
   id: '/warbands/',
@@ -70,9 +82,11 @@ const CampaignWarbandsWarbandWarriorsWarriorRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$campaign': typeof CampaignRouteRouteWithChildren
+  '/reference': typeof ReferenceRouteRouteWithChildren
+  '/$campaign/admin': typeof CampaignAdminRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign/': typeof CampaignIndexRoute
-  '/reference': typeof ReferenceIndexRoute
+  '/reference/': typeof ReferenceIndexRoute
   '/$campaign/matches': typeof CampaignMatchesIndexRoute
   '/$campaign/warbands': typeof CampaignWarbandsIndexRoute
   '/$campaign/warbands/$warband': typeof CampaignWarbandsWarbandIndexRoute
@@ -80,6 +94,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$campaign/admin': typeof CampaignAdminRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign': typeof CampaignIndexRoute
   '/reference': typeof ReferenceIndexRoute
@@ -92,6 +107,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$campaign': typeof CampaignRouteRouteWithChildren
+  '/reference': typeof ReferenceRouteRouteWithChildren
+  '/$campaign/admin': typeof CampaignAdminRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaign/': typeof CampaignIndexRoute
   '/reference/': typeof ReferenceIndexRoute
@@ -105,9 +122,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$campaign'
+    | '/reference'
+    | '/$campaign/admin'
     | '/reference/injuries'
     | '/$campaign/'
-    | '/reference'
+    | '/reference/'
     | '/$campaign/matches'
     | '/$campaign/warbands'
     | '/$campaign/warbands/$warband'
@@ -115,6 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$campaign/admin'
     | '/reference/injuries'
     | '/$campaign'
     | '/reference'
@@ -126,6 +146,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$campaign'
+    | '/reference'
+    | '/$campaign/admin'
     | '/reference/injuries'
     | '/$campaign/'
     | '/reference/'
@@ -138,12 +160,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CampaignRouteRoute: typeof CampaignRouteRouteWithChildren
-  ReferenceInjuriesRoute: typeof ReferenceInjuriesRoute
-  ReferenceIndexRoute: typeof ReferenceIndexRoute
+  ReferenceRouteRoute: typeof ReferenceRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reference': {
+      id: '/reference'
+      path: '/reference'
+      fullPath: '/reference'
+      preLoaderRoute: typeof ReferenceRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$campaign': {
       id: '/$campaign'
       path: '/$campaign'
@@ -160,10 +188,10 @@ declare module '@tanstack/react-router' {
     }
     '/reference/': {
       id: '/reference/'
-      path: '/reference'
-      fullPath: '/reference'
+      path: '/'
+      fullPath: '/reference/'
       preLoaderRoute: typeof ReferenceIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ReferenceRouteRoute
     }
     '/$campaign/': {
       id: '/$campaign/'
@@ -174,10 +202,17 @@ declare module '@tanstack/react-router' {
     }
     '/reference/injuries': {
       id: '/reference/injuries'
-      path: '/reference/injuries'
+      path: '/injuries'
       fullPath: '/reference/injuries'
       preLoaderRoute: typeof ReferenceInjuriesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ReferenceRouteRoute
+    }
+    '/$campaign/admin': {
+      id: '/$campaign/admin'
+      path: '/admin'
+      fullPath: '/$campaign/admin'
+      preLoaderRoute: typeof CampaignAdminRouteImport
+      parentRoute: typeof CampaignRouteRoute
     }
     '/$campaign/warbands/': {
       id: '/$campaign/warbands/'
@@ -211,6 +246,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface CampaignRouteRouteChildren {
+  CampaignAdminRoute: typeof CampaignAdminRoute
   CampaignIndexRoute: typeof CampaignIndexRoute
   CampaignMatchesIndexRoute: typeof CampaignMatchesIndexRoute
   CampaignWarbandsIndexRoute: typeof CampaignWarbandsIndexRoute
@@ -219,6 +255,7 @@ interface CampaignRouteRouteChildren {
 }
 
 const CampaignRouteRouteChildren: CampaignRouteRouteChildren = {
+  CampaignAdminRoute: CampaignAdminRoute,
   CampaignIndexRoute: CampaignIndexRoute,
   CampaignMatchesIndexRoute: CampaignMatchesIndexRoute,
   CampaignWarbandsIndexRoute: CampaignWarbandsIndexRoute,
@@ -231,11 +268,24 @@ const CampaignRouteRouteWithChildren = CampaignRouteRoute._addFileChildren(
   CampaignRouteRouteChildren,
 )
 
+interface ReferenceRouteRouteChildren {
+  ReferenceInjuriesRoute: typeof ReferenceInjuriesRoute
+  ReferenceIndexRoute: typeof ReferenceIndexRoute
+}
+
+const ReferenceRouteRouteChildren: ReferenceRouteRouteChildren = {
+  ReferenceInjuriesRoute: ReferenceInjuriesRoute,
+  ReferenceIndexRoute: ReferenceIndexRoute,
+}
+
+const ReferenceRouteRouteWithChildren = ReferenceRouteRoute._addFileChildren(
+  ReferenceRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CampaignRouteRoute: CampaignRouteRouteWithChildren,
-  ReferenceInjuriesRoute: ReferenceInjuriesRoute,
-  ReferenceIndexRoute: ReferenceIndexRoute,
+  ReferenceRouteRoute: ReferenceRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

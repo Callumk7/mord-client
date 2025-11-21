@@ -1,5 +1,4 @@
 import {
-	queryOptions,
 	useMutation,
 	useQueryClient,
 	useSuspenseQuery,
@@ -20,6 +19,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { db } from "~/db";
 import { campaigns } from "~/db/schema";
+import { campaignsQueryOptions } from "~/query/options";
 
 // Zod schema for campaign creation
 const createCampaignSchema = z.object({
@@ -53,12 +53,6 @@ export const getCampaigns = createServerFn({ method: "GET" }).handler(
 		return allCampaigns;
 	},
 );
-
-// Query options for campaigns
-const campaignsQueryOptions = queryOptions({
-	queryKey: ["campaigns"],
-	queryFn: () => getCampaigns(),
-});
 
 export const Route = createFileRoute("/")({
 	// Ensure campaigns data is loaded before rendering
