@@ -10,8 +10,8 @@ import {
 	NavigationMenuItem,
 	NavigationMenuLink,
 	NavigationMenuList,
-	NavigationMenuPositioner,
 	NavigationMenuPopup,
+	NavigationMenuPositioner,
 	NavigationMenuTrigger,
 } from "./ui/navigation-menu";
 
@@ -31,14 +31,6 @@ export function Header({ campaignId }: HeaderProps) {
 					>
 						Leaderboard
 					</NavigationMenuLink>
-				</NavigationMenuItem>
-				<NavigationMenuItem>
-					<NavigationMenuTrigger>Test</NavigationMenuTrigger>
-					<NavigationMenuContent>
-						<NavigationMenuLink>First Item</NavigationMenuLink>
-						<NavigationMenuLink>Second Item</NavigationMenuLink>
-						<NavigationMenuLink>Third Item</NavigationMenuLink>
-					</NavigationMenuContent>
 				</NavigationMenuItem>
 				{warbands && (
 					<NavigationMenuItem>
@@ -63,6 +55,15 @@ export function Header({ campaignId }: HeaderProps) {
 						</NavigationMenuContent>
 					</NavigationMenuItem>
 				)}
+				<NavigationMenuItem>
+					<NavigationMenuLink
+						render={
+							<Link to="/$campaign/matches" params={{ campaign: campaignId }} />
+						}
+					>
+						Matches
+					</NavigationMenuLink>
+				</NavigationMenuItem>
 			</NavigationMenuList>
 			<NavigationMenuPositioner>
 				<NavigationMenuPopup />

@@ -1,3 +1,4 @@
+import { Link, useParams } from "@tanstack/react-router";
 import { Button } from "~/components/ui/button";
 import type { MatchWithParticipants } from "~/lib/queries/matches";
 
@@ -6,6 +7,8 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match }: MatchCardProps) {
+	const { campaign } = useParams({ strict: false });
+
 	const formatDate = (date: Date) => {
 		return new Date(date).toLocaleDateString("en-US", {
 			month: "short",
@@ -77,12 +80,17 @@ export function MatchCard({ match }: MatchCardProps) {
 				</div>
 
 				<div className="flex items-center justify-end">
-					<Button
-						variant="ghost"
-						className="text-muted-foreground hover:text-foreground hover:bg-background/50"
+					<Link
+						to="/$campaign/matches/$matchId"
+						params={{ campaign: campaign || "", matchId: String(match.id) }}
 					>
-						View Details
-					</Button>
+						<Button
+							variant="ghost"
+							className="text-muted-foreground hover:text-foreground hover:bg-background/50"
+						>
+							View Details
+						</Button>
+					</Link>
 				</div>
 			</div>
 		</div>
