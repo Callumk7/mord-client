@@ -20,6 +20,8 @@ export const campaigns = pgTable("campaigns", {
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export type Campaign = typeof campaigns.$inferSelect;
+
 export const campaignsRelations = relations(campaigns, ({ many }) => ({
 	warbands: many(warbands),
 	warriors: many(warriors),
@@ -35,13 +37,17 @@ export const warbands = pgTable("warbands", {
 	faction: text("faction").notNull(),
 	rating: integer("rating").notNull(),
 	treasury: integer("treasury").notNull(),
-	campaignId: integer("campaign_id").references(() => campaigns.id),
+	campaignId: integer("campaign_id")
+		.notNull()
+		.references(() => campaigns.id),
 	color: text("color"),
 	icon: text("icon"),
 	notes: text("notes"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export type Warband = typeof warbands.$inferSelect;
 
 export const warbandsRelations = relations(warbands, ({ one, many }) => ({
 	campaign: one(campaigns, {
@@ -79,6 +85,8 @@ export const warriors = pgTable("warriors", {
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export type Warrior = typeof warriors.$inferSelect;
+
 export const warriorsRelations = relations(warriors, ({ one, many }) => ({
 	warband: one(warbands, {
 		fields: [warriors.warbandId],
@@ -109,6 +117,8 @@ export const matches = pgTable("matches", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export type Match = typeof matches.$inferSelect;
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
 	winner: one(warbands, {
@@ -147,6 +157,8 @@ export const matchParticipants = pgTable("match_participants", {
 		.references(() => warbands.id),
 });
 
+export type MatchParticipant = typeof matchParticipants.$inferSelect;
+
 export const matchParticipantsRelations = relations(
 	matchParticipants,
 	({ one }) => ({
@@ -177,6 +189,8 @@ export const events = pgTable("events", {
 		.references(() => warriors.id),
 	defenderId: integer("defender_id").references(() => warriors.id),
 });
+
+export type Event = typeof events.$inferSelect;
 
 export const eventsRelations = relations(events, ({ one }) => ({
 	campaign: one(campaigns, {
@@ -209,6 +223,8 @@ export const teams = pgTable("teams", {
 	isWinner: boolean("is_winner").notNull(),
 });
 
+export type Team = typeof teams.$inferSelect;
+
 export const teamsRelations = relations(teams, ({ one, many }) => ({
 	match: one(matches, {
 		fields: [teams.matchId],
@@ -227,6 +243,8 @@ export const teamMembers = pgTable("team_members", {
 		.notNull()
 		.references(() => warbands.id),
 });
+
+export type TeamMember = typeof teamMembers.$inferSelect;
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
 	team: one(teams, {
@@ -250,6 +268,8 @@ export const placements = pgTable("placements", {
 		.references(() => warbands.id),
 	position: integer("position").notNull(),
 });
+
+export type Placement = typeof placements.$inferSelect;
 
 export const placementsRelations = relations(placements, ({ one }) => ({
 	match: one(matches, {
@@ -281,6 +301,8 @@ export const casualties = pgTable("casualties", {
 	description: text("description"),
 	timestamp: timestamp("timestamp").notNull(),
 });
+
+export type Casualty = typeof casualties.$inferSelect;
 
 export const casualtiesRelations = relations(casualties, ({ one }) => ({
 	campaign: one(campaigns, {
