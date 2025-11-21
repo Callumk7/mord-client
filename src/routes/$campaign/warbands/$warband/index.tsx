@@ -44,6 +44,7 @@ function RouteComponent() {
 
 	// Parse warband ID from URL
 	const parsedWarbandId = Number.parseInt(warbandId, 10);
+	const parsedCampaignId = Number.parseInt(campaignId, 10);
 
 	// Fetch warriors for this warband
 	const { data: warriors, isLoading } = useQuery({
@@ -76,6 +77,7 @@ function RouteComponent() {
 							</DialogDescription>
 						</DialogHeader>
 						<CreateWarriorForm
+							campaignId={parsedCampaignId}
 							warbandId={parsedWarbandId}
 							onSuccess={handleWarriorCreated}
 						/>

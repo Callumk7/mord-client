@@ -16,7 +16,9 @@ const formSchema = z.object({
 });
 
 export const createWarriorFn = createServerFn({ method: "POST" })
-	.inputValidator(formSchema.extend({ warbandId: z.number() }))
+	.inputValidator(
+		formSchema.extend({ warbandId: z.number(), campaignId: z.number() }),
+	)
 	.handler(async ({ data }) => {
 		// Parse comma-separated equipment and skills strings into arrays
 		const equipment = data.equipment
@@ -31,6 +33,7 @@ export const createWarriorFn = createServerFn({ method: "POST" })
 			.values({
 				name: data.name,
 				warbandId: data.warbandId,
+				campaignId: data.campaignId,
 				type: data.type,
 				experience: 0,
 				kills: 0,
@@ -49,11 +52,13 @@ export const createWarriorFn = createServerFn({ method: "POST" })
 const { useAppForm } = createFormHook();
 
 interface CreateWarriorFormProps {
+	campaignId: number;
 	warbandId: number;
 	onSuccess?: () => void;
 }
 
 export function CreateWarriorForm({
+	campaignId,
 	warbandId,
 	onSuccess,
 }: CreateWarriorFormProps) {
@@ -89,6 +94,7 @@ export function CreateWarriorForm({
 					equipment: value.equipment,
 					skills: value.skills,
 					warbandId: warbandId,
+					campaignId: campaignId,
 				},
 			});
 		},
