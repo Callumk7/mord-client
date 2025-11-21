@@ -10,7 +10,7 @@ function RouteComponent() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-black">
 			<Header campaignId={campaign} />
-			<div className="container mx-auto">
+			<div className="container mx-auto mt-18">
 				<Outlet />
 			</div>
 		</div>
