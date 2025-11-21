@@ -44,11 +44,13 @@ function RouteComponent() {
 
 	return (
 		<div className="mb-6">
-			<h2 className="mb-4 text-2xl font-bold text-white">Warbands</h2>
+			<h2 className="mb-4 text-2xl font-bold text-foreground">Warbands</h2>
 
 			{warbands.length === 0 ? (
-				<div className="rounded-lg border border-zinc-700 bg-zinc-800/30 p-8 text-center">
-					<p className="text-gray-400">No warbands in this campaign yet.</p>
+				<div className="rounded-lg border bg-muted p-8 text-center">
+					<p className="text-muted-foreground">
+						No warbands in this campaign yet.
+					</p>
 				</div>
 			) : (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

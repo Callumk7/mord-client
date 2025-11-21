@@ -41,12 +41,12 @@ export const Route = createFileRoute("/$campaign/")({
 	component: RouteComponent,
 	// WARN: This doesn't work - the error type must be incorrect
 	notFoundComponent: () => (
-		<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-800 to-black">
+		<div className="flex min-h-screen items-center justify-center bg-background">
 			<div className="text-center">
-				<h1 className="mb-4 text-4xl font-bold text-white">
+				<h1 className="mb-4 text-4xl font-bold text-foreground">
 					Campaign Not Found
 				</h1>
-				<p className="text-gray-400">
+				<p className="text-muted-foreground">
 					The campaign you're looking for doesn't exist.
 				</p>
 			</div>
@@ -68,22 +68,24 @@ function RouteComponent() {
 	return (
 		<div className="mx-auto max-w-6xl">
 			{/* Campaign Header */}
-			<div className="mb-8 rounded-lg border border-zinc-700 bg-zinc-800/50 p-6 shadow-xl backdrop-blur-sm">
-				<h1 className="mb-2 text-4xl font-bold text-white">{campaign.name}</h1>
+			<div className="mb-8 rounded-lg border bg-card p-6 shadow-xl">
+				<h1 className="mb-2 text-4xl font-bold text-foreground">
+					{campaign.name}
+				</h1>
 				{campaign.description && (
-					<p className="mb-4 text-lg text-gray-300">{campaign.description}</p>
+					<p className="mb-4 text-lg text-foreground">{campaign.description}</p>
 				)}
-				<div className="flex gap-6 text-sm text-gray-400">
+				<div className="flex gap-6 text-sm text-muted-foreground">
 					<div>
-						<span className="font-semibold text-gray-300">Start:</span>{" "}
+						<span className="font-semibold text-foreground">Start:</span>{" "}
 						{formatDate(campaign.startDate)}
 					</div>
 					<div>
-						<span className="font-semibold text-gray-300">End:</span>{" "}
+						<span className="font-semibold text-foreground">End:</span>{" "}
 						{formatDate(campaign.endDate)}
 					</div>
 					<div>
-						<span className="font-semibold text-gray-300">Warbands:</span>{" "}
+						<span className="font-semibold text-foreground">Warbands:</span>{" "}
 						{campaign.warbands.length}
 					</div>
 				</div>
@@ -91,11 +93,13 @@ function RouteComponent() {
 
 			{/* Warbands Section */}
 			<div className="mb-6">
-				<h2 className="mb-4 text-2xl font-bold text-white">Warbands</h2>
+				<h2 className="mb-4 text-2xl font-bold text-foreground">Warbands</h2>
 
 				{campaign.warbands.length === 0 ? (
-					<div className="rounded-lg border border-zinc-700 bg-zinc-800/30 p-8 text-center">
-						<p className="text-gray-400">No warbands in this campaign yet.</p>
+					<div className="rounded-lg border bg-muted p-8 text-center">
+						<p className="text-muted-foreground">
+							No warbands in this campaign yet.
+						</p>
 					</div>
 				) : (
 					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -107,15 +111,17 @@ function RouteComponent() {
 									campaign: campaign.id.toString(),
 									warband: warband.id.toString(),
 								}}
-								className="block rounded-lg border border-zinc-700 bg-zinc-800/50 p-5 shadow-lg transition-all hover:border-zinc-600 hover:shadow-xl cursor-pointer"
+								className="block rounded-lg border bg-card p-5 shadow-lg transition-all hover:border-primary cursor-pointer"
 							>
 								{/* Warband Header */}
 								<div className="mb-3 flex items-start justify-between">
 									<div>
-										<h3 className="text-xl font-bold text-white">
+										<h3 className="text-xl font-bold text-foreground">
 											{warband.name}
 										</h3>
-										<p className="text-sm text-gray-400">{warband.faction}</p>
+										<p className="text-sm text-muted-foreground">
+											{warband.faction}
+										</p>
 									</div>
 									{warband.icon && (
 										<div className="text-2xl">{warband.icon}</div>
@@ -123,20 +129,20 @@ function RouteComponent() {
 								</div>
 
 								{/* Warband Stats */}
-								<div className="grid grid-cols-2 gap-3 border-t border-zinc-700 pt-3">
+								<div className="grid grid-cols-2 gap-3 border-t pt-3">
 									<div>
-										<div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+										<div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 											Rating
 										</div>
-										<div className="text-2xl font-bold text-white">
+										<div className="text-2xl font-bold text-foreground">
 											{warband.rating}
 										</div>
 									</div>
 									<div>
-										<div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+										<div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 											Treasury
 										</div>
-										<div className="text-2xl font-bold text-yellow-500">
+										<div className="text-2xl font-bold text-chart-1">
 											{warband.treasury} gc
 										</div>
 									</div>
@@ -144,8 +150,8 @@ function RouteComponent() {
 
 								{/* Warband Notes */}
 								{warband.notes && (
-									<div className="mt-3 border-t border-zinc-700 pt-3">
-										<p className="text-sm text-gray-300">{warband.notes}</p>
+									<div className="mt-3 border-t pt-3">
+										<p className="text-sm text-foreground">{warband.notes}</p>
 									</div>
 								)}
 							</Link>

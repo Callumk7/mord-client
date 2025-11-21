@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 export function Header({ campaignId }: HeaderProps) {
 	return (
-		<header className="p-4 flex justify-between items-center bg-gray-800 text-white shadow-lg">
+		<header className="p-4 flex justify-between items-center bg-card border-b shadow-lg">
 			<div className="flex items-center gap-4">
 				<Link to="/$campaign" params={{ campaign: campaignId }}>
 					Leaderboard
@@ -32,7 +32,7 @@ export function Header({ campaignId }: HeaderProps) {
 export function ReferenceHeader() {
 	const { data: campaigns } = useQuery(campaignsQueryOptions);
 	return (
-		<header className="p-4 flex justify-between items-center bg-gray-800 text-white shadow-lg">
+		<header className="p-4 flex justify-between items-center bg-card border-b shadow-lg">
 			{campaigns && (
 				<div className="flex items-center gap-4">
 					{campaigns.map((campaign) => (

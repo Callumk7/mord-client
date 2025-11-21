@@ -47,7 +47,7 @@ const { useAppForm } = createFormHook();
 
 interface CreateMatchFormProps {
 	campaignId: number;
-	onSuccess?: () => void;
+	onSuccess?: (match: typeof matches.$inferSelect) => void;
 }
 export function CreateMatchForm({
 	campaignId,
@@ -57,12 +57,12 @@ export function CreateMatchForm({
 
 	const mutation = useMutation({
 		mutationFn: createMatchFn,
-		onSuccess: () => {
+		onSuccess: (data) => {
 			// Invalidate matches query to refetch the list
 			queryClient.invalidateQueries({
 				queryKey: ["matches", campaignId],
 			});
-			onSuccess?.();
+			onSuccess?.(data);
 		},
 	});
 
@@ -123,6 +123,8 @@ export function CreateMatchForm({
 							<field.Label>Match Type</field.Label>
 							<field.Control>
 								<Select
+									value={field.state.value}
+									onValueChange={(value) => field.handleChange(value)}
 									itemToStringLabel={(item) =>
 										item === "battle_royale"
 											? "Battle Royale"
@@ -155,7 +157,10 @@ export function CreateMatchForm({
 						<form.Item>
 							<field.Label>Result Type</field.Label>
 							<field.Control>
-								<Select>
+								<Select
+									value={field.state.value}
+									onValueChange={(value) => field.handleChange(value)}
+								>
 									<SelectTrigger className="min-w-sm">
 										<SelectValue placeholder="Select a result type" />
 									</SelectTrigger>

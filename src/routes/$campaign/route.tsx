@@ -8,7 +8,7 @@ export const Route = createFileRoute("/$campaign")({
 function RouteComponent() {
 	const { campaign } = Route.useParams();
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-black">
+		<div className="min-h-screen bg-background">
 			<Header campaignId={campaign} />
 			<div className="container mx-auto mt-18">
 				<Outlet />

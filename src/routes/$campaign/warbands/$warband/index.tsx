@@ -181,7 +181,7 @@ function RouteComponent() {
 							</div>
 							<div className="flex justify-between">
 								<span className="text-muted-foreground">Casualties:</span>
-								<span className="font-semibold text-red-600">
+								<span className="font-semibold text-destructive">
 									{warriors.filter((w) => !w.isAlive).length}
 								</span>
 							</div>
@@ -207,7 +207,7 @@ function RouteComponent() {
 			{warriors && warriors.filter((w) => !w.isAlive).length > 0 && (
 				<Card>
 					<CardHeader>
-						<CardTitle className="text-red-600">Fallen Warriors</CardTitle>
+						<CardTitle className="text-destructive">Fallen Warriors</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<Table>
