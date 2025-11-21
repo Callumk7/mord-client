@@ -1,17 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { campaignsQueryOptions } from "~/query/options";
 
 interface HeaderProps {
 	campaignId: string;
 }
 export function Header({ campaignId }: HeaderProps) {
 	return (
-		<header className="p-4 flex gap-12 items-center bg-gray-800 text-white shadow-lg">
-			<h1 className="ml-4 text-xl font-semibold">
-				<Link to="/">Mord Stats</Link>
-			</h1>
+		<header className="p-4 flex justify-between items-center bg-gray-800 text-white shadow-lg">
 			<div className="flex items-center gap-4">
 				<Link to="/$campaign" params={{ campaign: campaignId }}>
-					Campaign
+					Leaderboard
 				</Link>
 				<Link to="/$campaign/warbands" params={{ campaign: campaignId }}>
 					Warbands
@@ -19,8 +18,35 @@ export function Header({ campaignId }: HeaderProps) {
 				<Link to="/$campaign/matches" params={{ campaign: campaignId }}>
 					Matches
 				</Link>
+			</div>
+			<div className="flex items-center gap-4">
+				<Link to="/$campaign/admin" params={{ campaign: campaignId }}>
+					Admin
+				</Link>
 				<Link to="/reference">Reference</Link>
 			</div>
+		</header>
+	);
+}
+
+export function ReferenceHeader() {
+	const { data: campaigns } = useQuery(campaignsQueryOptions);
+	return (
+		<header className="p-4 flex justify-between items-center bg-gray-800 text-white shadow-lg">
+			{campaigns && (
+				<div className="flex items-center gap-4">
+					{campaigns.map((campaign) => (
+						<Link
+							key={campaign.id}
+							to="/$campaign"
+							params={{ campaign: campaign.id.toString() }}
+						>
+							{campaign.name}
+						</Link>
+					))}
+				</div>
+			)}
+			<Link to="/reference">Reference</Link>
 		</header>
 	);
 }
