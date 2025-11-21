@@ -23,20 +23,33 @@ export function Header({ campaignId }: HeaderProps) {
 		campaignWarbandQueryOptions(Number(campaignId)),
 	);
 	return (
-		<NavigationMenu>
-			<NavigationMenuList>
-				<NavigationMenuItem>
-					<NavigationMenuLink
-						render={<Link to="/$campaign" params={{ campaign: campaignId }} />}
-					>
-						Leaderboard
-					</NavigationMenuLink>
-				</NavigationMenuItem>
-				{warbands && (
+		<NavigationMenu className="p-4 w-full max-w-full">
+			<NavigationMenuList className="justify-between w-full">
+				<div className="flex items-center gap-1">
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							render={
+								<Link to="/$campaign" params={{ campaign: campaignId }} />
+							}
+						>
+							Leaderboard
+						</NavigationMenuLink>
+					</NavigationMenuItem>
 					<NavigationMenuItem>
 						<NavigationMenuTrigger>Warbands</NavigationMenuTrigger>
 						<NavigationMenuContent>
-							{warbands.map((warband) => (
+							<NavigationMenuLink
+								className="font-bold"
+								render={
+									<Link
+										to="/$campaign/warbands"
+										params={{ campaign: campaignId }}
+									/>
+								}
+							>
+								All Warbands
+							</NavigationMenuLink>
+							{warbands?.map((warband) => (
 								<NavigationMenuLink
 									key={warband.id}
 									render={
@@ -54,16 +67,44 @@ export function Header({ campaignId }: HeaderProps) {
 							))}
 						</NavigationMenuContent>
 					</NavigationMenuItem>
-				)}
-				<NavigationMenuItem>
-					<NavigationMenuLink
-						render={
-							<Link to="/$campaign/matches" params={{ campaign: campaignId }} />
-						}
-					>
-						Matches
-					</NavigationMenuLink>
-				</NavigationMenuItem>
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							render={
+								<Link
+									to="/$campaign/matches"
+									params={{ campaign: campaignId }}
+								/>
+							}
+						>
+							Matches
+						</NavigationMenuLink>
+					</NavigationMenuItem>
+				</div>
+				<div className="flex items-center gap-1">
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							render={
+								<Link to="/$campaign/admin" params={{ campaign: campaignId }} />
+							}
+						>
+							Admin
+						</NavigationMenuLink>
+					</NavigationMenuItem>
+					<NavigationMenuItem>
+						<NavigationMenuTrigger>Reference</NavigationMenuTrigger>
+						<NavigationMenuContent>
+							<NavigationMenuLink
+								className="font-bold"
+								render={<Link to="/reference" />}
+							>
+								Reference Home
+							</NavigationMenuLink>
+							<NavigationMenuLink render={<Link to="/reference/injuries" />}>
+								Injuries
+							</NavigationMenuLink>
+						</NavigationMenuContent>
+					</NavigationMenuItem>
+				</div>
 			</NavigationMenuList>
 			<NavigationMenuPositioner>
 				<NavigationMenuPopup />
@@ -75,21 +116,46 @@ export function Header({ campaignId }: HeaderProps) {
 export function ReferenceHeader() {
 	const { data: campaigns } = useQuery(campaignsQueryOptions);
 	return (
-		<header className="p-4 flex justify-between items-center bg-card border-b shadow-lg">
-			{campaigns && (
-				<div className="flex items-center gap-4">
-					{campaigns.map((campaign) => (
-						<Link
-							key={campaign.id}
-							to="/$campaign"
-							params={{ campaign: campaign.id.toString() }}
+		<NavigationMenu className="p-4 w-full max-w-full">
+			<NavigationMenuList className="justify-between w-full">
+				{campaigns && (
+					<NavigationMenuItem>
+						<NavigationMenuTrigger>Campaigns</NavigationMenuTrigger>
+						<NavigationMenuContent>
+							{campaigns.map((campaign) => (
+								<NavigationMenuLink
+									key={campaign.id}
+									render={
+										<Link
+											to="/$campaign"
+											params={{ campaign: campaign.id.toString() }}
+										/>
+									}
+								>
+									{campaign.name}
+								</NavigationMenuLink>
+							))}
+						</NavigationMenuContent>
+					</NavigationMenuItem>
+				)}
+				<NavigationMenuItem>
+					<NavigationMenuTrigger>Reference</NavigationMenuTrigger>
+					<NavigationMenuContent>
+						<NavigationMenuLink
+							className="font-bold"
+							render={<Link to="/reference" />}
 						>
-							{campaign.name}
-						</Link>
-					))}
-				</div>
-			)}
-			<Link to="/reference">Reference</Link>
-		</header>
+							Reference Home
+						</NavigationMenuLink>
+						<NavigationMenuLink render={<Link to="/reference/injuries" />}>
+							Injuries
+						</NavigationMenuLink>
+					</NavigationMenuContent>
+				</NavigationMenuItem>
+			</NavigationMenuList>
+			<NavigationMenuPositioner>
+				<NavigationMenuPopup />
+			</NavigationMenuPositioner>
+		</NavigationMenu>
 	);
 }
