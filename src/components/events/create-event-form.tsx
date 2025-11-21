@@ -21,30 +21,36 @@ const formSchema = z.object({
 	type: z.enum(["knock_down", "moment"]),
 	description: z.string(),
 	warriorId: z.string().min(1, "Warrior is required"),
+	defenderId: z.string(),
+});
+
+const serverSchema = z.object({
+	type: z.enum(["knock_down", "moment"]),
+	description: z.string(),
+	warriorId: z.string().min(1, "Warrior is required"),
 	defenderId: z.string().optional(),
+	matchId: z.number(),
+	campaignId: z.number(),
 });
 
 export const createEventFn = createServerFn({ method: "POST" })
-	.inputValidator(
-		formSchema.extend({
-			matchId: z.number(),
-			campaignId: z.number(),
-		}),
-	)
+	.inputValidator(serverSchema)
 	.handler(async ({ data }) => {
+		const values = {
+			matchId: data.matchId,
+			campaignId: data.campaignId,
+			type: data.type,
+			description: data.description || null,
+			warriorId: Number.parseInt(data.warriorId, 10),
+			defenderId: data.defenderId
+				? Number.parseInt(data.defenderId, 10)
+				: null,
+			timestamp: new Date(),
+		};
+
 		const [newEvent] = await db
 			.insert(events)
-			.values({
-				matchId: data.matchId,
-				campaignId: data.campaignId,
-				type: data.type,
-				description: data.description || null,
-				warriorId: Number.parseInt(data.warriorId, 10),
-				defenderId: data.defenderId
-					? Number.parseInt(data.defenderId, 10)
-					: null,
-				timestamp: new Date(),
-			})
+			.values(values)
 			.returning();
 
 		return newEvent;
@@ -91,7 +97,7 @@ export function CreateEventForm({
 			defenderId: "",
 		},
 		validators: {
-			onChange: (value) => formSchema.safeParse(value),
+			onChange: formSchema,
 		},
 		onSubmit: ({ value }) => {
 			mutation.mutate({

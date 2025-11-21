@@ -352,11 +352,9 @@ function RouteComponent() {
 							</CardDescription>
 						</div>
 						<Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
-							<DialogTrigger asChild>
-								<Button size="sm">
-									<Plus className="h-4 w-4 mr-2" />
-									Add Event
-								</Button>
+							<DialogTrigger render={<Button size="sm" />}>
+								<Plus className="h-4 w-4 mr-2" />
+								Add Event
 							</DialogTrigger>
 							<DialogContent>
 								<DialogHeader>
