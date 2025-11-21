@@ -88,11 +88,20 @@ export const warriors = pgTable("warriors", {
 export type Warrior = typeof warriors.$inferSelect;
 
 export const warriorsRelations = relations(warriors, ({ one, many }) => ({
+	campaign: one(campaigns, {
+		fields: [warriors.campaignId],
+		references: [campaigns.id],
+	}),
 	warband: one(warbands, {
 		fields: [warriors.warbandId],
 		references: [warbands.id],
 	}),
-	events: many(events),
+	eventsAsWarrior: many(events, {
+		relationName: "eventWarrior",
+	}),
+	eventsAsDefender: many(events, {
+		relationName: "eventDefender",
+	}),
 }));
 
 // Matches Table
@@ -140,7 +149,7 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
 	placements: many(placements),
 	casualties: many(casualties),
 	events: many(events),
-	capaign: one(campaigns, {
+	campaign: one(campaigns, {
 		fields: [matches.campaignId],
 		references: [campaigns.id],
 	}),
