@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Coins, Shield, Trash2, TrendingUp, Users } from "lucide-react";
+import { Coins, Edit, Shield, Trash2, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
 import type { Warband } from "~/db/schema";
 import { deleteWarbandMutation } from "~/query/mutations";
@@ -14,6 +14,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "../ui/dialog";
+import { UpdateWarbandForm } from "./update-warband-form";
 
 interface WarbandCardProps {
 	warband: Warband;
@@ -23,6 +24,7 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 	const queryClient = useQueryClient();
 	const deleteMutation = useMutation(deleteWarbandMutation);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [showEditDialog, setShowEditDialog] = useState(false);
 
 	const handleDelete = () => {
 		deleteMutation.mutate(warband.id, {
@@ -62,15 +64,26 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 								</Link>
 							</CardTitle>
 						</div>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
-							onClick={() => setShowDeleteDialog(true)}
-							aria-label="Delete warband"
-						>
-							<Trash2 className="h-4 w-4" />
-						</Button>
+						<div className="flex items-center gap-1 shrink-0">
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8 text-muted-foreground hover:text-foreground"
+								onClick={() => setShowEditDialog(true)}
+								aria-label="Edit warband"
+							>
+								<Edit className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8 text-muted-foreground hover:text-destructive"
+								onClick={() => setShowDeleteDialog(true)}
+								aria-label="Delete warband"
+							>
+								<Trash2 className="h-4 w-4" />
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -96,9 +109,7 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 							<Coins className="w-4 h-4 text-muted-foreground shrink-0" />
 							<div className="flex-1 min-w-0">
 								<p className="text-xs text-muted-foreground">Treasury</p>
-								<p className="font-semibold text-sm">
-									{warband.treasury} gc
-								</p>
+								<p className="font-semibold text-sm">{warband.treasury} gc</p>
 							</div>
 						</div>
 						<div className="flex items-center gap-2">
@@ -119,6 +130,22 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 					)}
 				</CardContent>
 			</Card>
+
+			{/* Edit Warband Dialog */}
+			<Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+				<DialogContent className="max-w-2xl">
+					<DialogHeader>
+						<DialogTitle>Edit Warband</DialogTitle>
+						<DialogDescription>
+							Update the details of your warband.
+						</DialogDescription>
+					</DialogHeader>
+					<UpdateWarbandForm
+						warband={warband}
+						onSuccess={() => setShowEditDialog(false)}
+					/>
+				</DialogContent>
+			</Dialog>
 
 			{/* Delete Confirmation Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

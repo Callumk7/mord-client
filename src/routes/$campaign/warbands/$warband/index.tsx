@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Edit } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -20,9 +21,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "~/components/ui/table";
+import { UpdateWarbandForm } from "~/components/warbands/update-warband-form";
 import { CreateWarriorForm } from "~/components/warriors/create-warrior-form";
 import { WarriorCard } from "~/components/warriors/warrior-card";
 import { getWarriorsByWarbandFn } from "~/lib/api/warriors";
+import { getWarbandByIdFn } from "~/routes/$campaign/warbands";
 
 export const Route = createFileRoute("/$campaign/warbands/$warband/")({
 	component: RouteComponent,
@@ -30,21 +33,38 @@ export const Route = createFileRoute("/$campaign/warbands/$warband/")({
 		// Parse warband ID from URL
 		const parsedWarbandId = Number.parseInt(params.warband, 10);
 
-		await context.queryClient.ensureQueryData({
-			queryFn: () =>
-				getWarriorsByWarbandFn({ data: { warbandId: parsedWarbandId } }),
-			queryKey: ["warband", parsedWarbandId],
-		});
+		await Promise.all([
+			context.queryClient.ensureQueryData({
+				queryFn: () =>
+					getWarriorsByWarbandFn({ data: { warbandId: parsedWarbandId } }),
+				queryKey: ["warriors", parsedWarbandId],
+			}),
+			context.queryClient.ensureQueryData({
+				queryFn: () =>
+					getWarbandByIdFn({ data: { warbandId: parsedWarbandId } }),
+				queryKey: ["warband", parsedWarbandId, "details"],
+			}),
+		]);
 	},
 });
 
 function RouteComponent() {
 	const { warband: warbandId, campaign: campaignId } = Route.useParams();
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const queryClient = useQueryClient();
+	const [isWarriorDialogOpen, setIsWarriorDialogOpen] = useState(false);
+	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
 	// Parse warband ID from URL
 	const parsedWarbandId = Number.parseInt(warbandId, 10);
 	const parsedCampaignId = Number.parseInt(campaignId, 10);
+
+	// Fetch warband details
+	const { data: warband } = useQuery({
+		queryKey: ["warband", parsedWarbandId, "details"],
+		queryFn: () =>
+			getWarbandByIdFn({ data: { warbandId: parsedWarbandId } }),
+		enabled: !Number.isNaN(parsedWarbandId),
+	});
 
 	// Fetch warriors for this warband
 	const { data: warriors, isLoading } = useQuery({
@@ -55,7 +75,14 @@ function RouteComponent() {
 	});
 
 	const handleWarriorCreated = () => {
-		setIsDialogOpen(false);
+		setIsWarriorDialogOpen(false);
+	};
+
+	const handleWarbandUpdated = () => {
+		queryClient.invalidateQueries({
+			queryKey: ["warband", parsedWarbandId, "details"],
+		});
+		setIsEditDialogOpen(false);
 	};
 
 	if (Number.isNaN(parsedWarbandId)) {
@@ -65,27 +92,72 @@ function RouteComponent() {
 	return (
 		<div className="container mx-auto py-8 space-y-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-3xl font-bold">Warband Warriors</h1>
-				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-					<DialogTrigger render={<Button />}>Add Warrior</DialogTrigger>
-					<DialogContent className="max-w-2xl">
-						<DialogHeader>
-							<DialogTitle>Create New Warrior</DialogTitle>
-							<DialogDescription>
-								Add a new warrior to your warband. Heroes can gain experience
-								and skills, while henchmen are basic troops.
-							</DialogDescription>
-						</DialogHeader>
-						<CreateWarriorForm
-							campaignId={parsedCampaignId}
-							warbandId={parsedWarbandId}
-							onSuccess={handleWarriorCreated}
-						/>
-					</DialogContent>
-				</Dialog>
+				<h1 className="text-3xl font-bold">
+					{warband ? warband.name : "Warband Warriors"}
+				</h1>
+				<div className="flex items-center gap-2">
+					{warband && (
+						<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+							<DialogTrigger render={<Button variant="outline" />}>
+								<Edit className="mr-2 h-4 w-4" />
+								Edit Warband
+							</DialogTrigger>
+							<DialogContent className="max-w-2xl">
+								<DialogHeader>
+									<DialogTitle>Edit Warband</DialogTitle>
+									<DialogDescription>
+										Update the details of your warband.
+									</DialogDescription>
+								</DialogHeader>
+								<UpdateWarbandForm
+									warband={warband}
+									onSuccess={handleWarbandUpdated}
+								/>
+							</DialogContent>
+						</Dialog>
+					)}
+					<Dialog
+						open={isWarriorDialogOpen}
+						onOpenChange={setIsWarriorDialogOpen}
+					>
+						<DialogTrigger render={<Button />}>Add Warrior</DialogTrigger>
+						<DialogContent className="max-w-2xl">
+							<DialogHeader>
+								<DialogTitle>Create New Warrior</DialogTitle>
+								<DialogDescription>
+									Add a new warrior to your warband. Heroes can gain experience
+									and skills, while henchmen are basic troops.
+								</DialogDescription>
+							</DialogHeader>
+							<CreateWarriorForm
+								campaignId={parsedCampaignId}
+								warbandId={parsedWarbandId}
+								onSuccess={handleWarriorCreated}
+							/>
+						</DialogContent>
+					</Dialog>
+				</div>
 			</div>
 
 			<Separator />
+
+			{/* Notes Section */}
+			{warband && (
+				<Card>
+					<CardHeader>
+						<CardTitle>Notes</CardTitle>
+					</CardHeader>
+					<CardContent>
+						{warband.notes ? (
+							<p className="text-sm whitespace-pre-wrap">{warband.notes}</p>
+						) : (
+							<p className="text-sm text-muted-foreground">
+								No notes added yet. Click "Edit Warband" to add notes.
+							</p>
+						)}
+					</CardContent>
+				</Card>
+			)}
 
 			{isLoading ? (
 				<Card>

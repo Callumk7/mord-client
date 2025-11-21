@@ -16,6 +16,18 @@ export const getCampaignWarbandsFn = createServerFn({ method: "GET" })
 		});
 	});
 
+export const getWarbandByIdFn = createServerFn({ method: "GET" })
+	.inputValidator((data: { warbandId: number }) => data)
+	.handler(async ({ data }) => {
+		const warband = await db.query.warbands.findFirst({
+			where: eq(warbands.id, data.warbandId),
+		});
+		if (!warband) {
+			throw new Error(`Warband with id ${data.warbandId} not found`);
+		}
+		return warband;
+	});
+
 export const deleteWarbandFn = createServerFn({ method: "POST" })
 	.inputValidator((data: { warbandId: number }) => data)
 	.handler(async ({ data }) => {
