@@ -4,7 +4,7 @@ import type { Warrior } from "~/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 interface WarriorCardProps {
-	campaignId: string;
+	campaignId: number;
 	warrior: Warrior;
 }
 
@@ -22,11 +22,11 @@ export function WarriorCard({ campaignId, warrior }: WarriorCardProps) {
 				<div className="flex items-start justify-between gap-4">
 					<CardTitle className="text-lg">
 						<Link
-							to="/$campaign/warbands/$warband/warriors/$warrior"
+							to="/$campaignId/warbands/$warbandId/warriors/$warriorId"
 							params={{
-								campaign: campaignId,
-								warband: warrior.warbandId.toString(),
-								warrior: warrior.id.toString(),
+								campaignId,
+								warbandId: warrior.warbandId.toString(),
+								warriorId: warrior.id.toString(),
 							}}
 							className={`hover:underline ${
 								!isAlive ? "line-through text-muted-foreground" : ""

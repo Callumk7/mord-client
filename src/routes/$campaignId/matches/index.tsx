@@ -9,26 +9,24 @@ import {
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
-import { getMatchesFn } from "~/lib/queries/matches";
+import { campaignMatchesQueryOptions } from "~/query/options";
 
-export const Route = createFileRoute("/$campaign/matches/")({
+export const Route = createFileRoute("/$campaignId/matches/")({
 	component: RouteComponent,
 });
 
 function RouteComponent() {
-	const { campaign } = Route.useParams();
-	const campaignId = Number(campaign);
+	const { campaignId } = Route.useParams();
 
-	const { data: matches, isLoading } = useQuery({
-		queryKey: ["matches", campaignId],
-		queryFn: () => getMatchesFn({ data: { campaignId } }),
-	});
+	const { data: matches, isLoading } = useQuery(
+		campaignMatchesQueryOptions(campaignId),
+	);
 
 	return (
 		<div className="space-y-6">
 			<div className="flex justify-between items-center">
 				<h2 className="text-2xl font-bold text-foreground">Match Log</h2>
-				<CreateMatchWorkflow campaignId={campaignId} />
+				<CreateMatchWorkflow campaignId={Number(campaignId)} />
 			</div>
 
 			<Card>

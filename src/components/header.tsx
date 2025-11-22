@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type { Warband } from "~/db/schema";
 import {
+	campaignMatchesQueryOptions,
 	campaignsQueryOptions,
 	campaignWarbandQueryOptions,
 } from "~/query/options";
@@ -16,21 +18,24 @@ import {
 } from "./ui/navigation-menu";
 
 interface HeaderProps {
-	campaignId: string;
+	campaignId: number;
 }
 export function Header({ campaignId }: HeaderProps) {
 	const { data: warbands } = useQuery(
 		campaignWarbandQueryOptions(Number(campaignId)),
 	);
+
+	const { data: matches } = useQuery(
+		campaignMatchesQueryOptions(Number(campaignId)),
+	);
+
 	return (
 		<NavigationMenu className="p-4 w-full max-w-full">
 			<NavigationMenuList className="justify-between w-full">
 				<div className="flex items-center gap-1">
 					<NavigationMenuItem>
 						<NavigationMenuLink
-							render={
-								<Link to="/$campaign" params={{ campaign: campaignId }} />
-							}
+							render={<Link to="/$campaignId" params={{ campaignId }} />}
 						>
 							Leaderboard
 						</NavigationMenuLink>
@@ -41,23 +46,20 @@ export function Header({ campaignId }: HeaderProps) {
 							<NavigationMenuLink
 								className="font-bold"
 								render={
-									<Link
-										to="/$campaign/warbands"
-										params={{ campaign: campaignId }}
-									/>
+									<Link to="/$campaignId/warbands" params={{ campaignId }} />
 								}
 							>
 								All Warbands
 							</NavigationMenuLink>
-							{warbands?.map((warband) => (
+							{warbands?.map((warband: Warband) => (
 								<NavigationMenuLink
 									key={warband.id}
 									render={
 										<Link
-											to="/$campaign/warbands/$warband"
+											to="/$campaignId/warbands/$warbandId"
 											params={{
-												campaign: campaignId,
-												warband: warband.id.toString(),
+												campaignId,
+												warbandId: warband.id,
 											}}
 										/>
 									}
@@ -68,24 +70,38 @@ export function Header({ campaignId }: HeaderProps) {
 						</NavigationMenuContent>
 					</NavigationMenuItem>
 					<NavigationMenuItem>
-						<NavigationMenuLink
-							render={
-								<Link
-									to="/$campaign/matches"
-									params={{ campaign: campaignId }}
-								/>
-							}
-						>
-							Matches
-						</NavigationMenuLink>
+						<NavigationMenuTrigger>Matches</NavigationMenuTrigger>
+						<NavigationMenuContent>
+							<NavigationMenuLink
+								render={
+									<Link to="/$campaignId/matches" params={{ campaignId }} />
+								}
+							>
+								All Matches
+							</NavigationMenuLink>
+							{matches?.map((match) => (
+								<NavigationMenuLink
+									key={match.id}
+									render={
+										<Link
+											to="/$campaignId/matches/$matchId"
+											params={{
+												campaignId,
+												matchId: match.id,
+											}}
+										/>
+									}
+								>
+									{match.name}
+								</NavigationMenuLink>
+							))}
+						</NavigationMenuContent>
 					</NavigationMenuItem>
 				</div>
 				<div className="flex items-center gap-1">
 					<NavigationMenuItem>
 						<NavigationMenuLink
-							render={
-								<Link to="/$campaign/admin" params={{ campaign: campaignId }} />
-							}
+							render={<Link to="/$campaignId/admin" params={{ campaignId }} />}
 						>
 							Admin
 						</NavigationMenuLink>
@@ -127,8 +143,8 @@ export function ReferenceHeader() {
 									key={campaign.id}
 									render={
 										<Link
-											to="/$campaign"
-											params={{ campaign: campaign.id.toString() }}
+											to="/$campaignId"
+											params={{ campaignId: campaign.id }}
 										/>
 									}
 								>

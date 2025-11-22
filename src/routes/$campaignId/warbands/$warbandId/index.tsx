@@ -25,53 +25,47 @@ import { UpdateWarbandForm } from "~/components/warbands/update-warband-form";
 import { CreateWarriorForm } from "~/components/warriors/create-warrior-form";
 import { WarriorCard } from "~/components/warriors/warrior-card";
 import { getWarriorsByWarbandFn } from "~/lib/api/warriors";
-import { getWarbandByIdFn } from "~/routes/$campaign/warbands";
+import { getWarbandByIdFn } from "~/routes/$campaignId/warbands";
 
-export const Route = createFileRoute("/$campaign/warbands/$warband/")({
+export const Route = createFileRoute("/$campaignId/warbands/$warbandId/")({
 	component: RouteComponent,
+	params: {
+		parse: (params) => ({
+			warbandId: Number(params.warbandId),
+		}),
+	},
 	loader: async ({ context, params }) => {
-		// Parse warband ID from URL
-		const parsedWarbandId = Number.parseInt(params.warband, 10);
+		const { warbandId } = params;
 
 		await Promise.all([
 			context.queryClient.ensureQueryData({
-				queryFn: () =>
-					getWarriorsByWarbandFn({ data: { warbandId: parsedWarbandId } }),
-				queryKey: ["warriors", parsedWarbandId],
+				queryFn: () => getWarriorsByWarbandFn({ data: { warbandId } }),
+				queryKey: ["warriors", warbandId],
 			}),
 			context.queryClient.ensureQueryData({
-				queryFn: () =>
-					getWarbandByIdFn({ data: { warbandId: parsedWarbandId } }),
-				queryKey: ["warband", parsedWarbandId, "details"],
+				queryFn: () => getWarbandByIdFn({ data: { warbandId } }),
+				queryKey: ["warband", warbandId, "details"],
 			}),
 		]);
 	},
 });
 
 function RouteComponent() {
-	const { warband: warbandId, campaign: campaignId } = Route.useParams();
+	const { warbandId, campaignId } = Route.useParams();
 	const queryClient = useQueryClient();
 	const [isWarriorDialogOpen, setIsWarriorDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-	// Parse warband ID from URL
-	const parsedWarbandId = Number.parseInt(warbandId, 10);
-	const parsedCampaignId = Number.parseInt(campaignId, 10);
-
 	// Fetch warband details
 	const { data: warband } = useQuery({
-		queryKey: ["warband", parsedWarbandId, "details"],
-		queryFn: () =>
-			getWarbandByIdFn({ data: { warbandId: parsedWarbandId } }),
-		enabled: !Number.isNaN(parsedWarbandId),
+		queryKey: ["warband", warbandId, "details"],
+		queryFn: () => getWarbandByIdFn({ data: { warbandId } }),
 	});
 
 	// Fetch warriors for this warband
 	const { data: warriors, isLoading } = useQuery({
-		queryKey: ["warriors", parsedWarbandId],
-		queryFn: () =>
-			getWarriorsByWarbandFn({ data: { warbandId: parsedWarbandId } }),
-		enabled: !Number.isNaN(parsedWarbandId),
+		queryKey: ["warriors", warbandId],
+		queryFn: () => getWarriorsByWarbandFn({ data: { warbandId } }),
 	});
 
 	const handleWarriorCreated = () => {
@@ -80,14 +74,10 @@ function RouteComponent() {
 
 	const handleWarbandUpdated = () => {
 		queryClient.invalidateQueries({
-			queryKey: ["warband", parsedWarbandId, "details"],
+			queryKey: ["warband", warbandId, "details"],
 		});
 		setIsEditDialogOpen(false);
 	};
-
-	if (Number.isNaN(parsedWarbandId)) {
-		return <div>Invalid warband ID</div>;
-	}
 
 	return (
 		<div className="container mx-auto py-8 space-y-6">
@@ -130,8 +120,8 @@ function RouteComponent() {
 								</DialogDescription>
 							</DialogHeader>
 							<CreateWarriorForm
-								campaignId={parsedCampaignId}
-								warbandId={parsedWarbandId}
+								campaignId={campaignId}
+								warbandId={warbandId}
 								onSuccess={handleWarriorCreated}
 							/>
 						</DialogContent>

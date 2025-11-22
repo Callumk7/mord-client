@@ -21,13 +21,18 @@ import {
 } from "~/components/ui/dialog";
 import { getMatchDetailsFn } from "~/lib/queries/matches";
 
-export const Route = createFileRoute("/$campaign/matches/$matchId")({
+export const Route = createFileRoute("/$campaignId/matches/$matchId")({
 	component: RouteComponent,
+	params: {
+		parse: (params) => ({
+			matchId: Number(params.matchId),
+		}),
+	},
 });
 
 function RouteComponent() {
-	const { campaign, matchId } = Route.useParams();
-	const campaignId = Number(campaign);
+	const { campaignId, matchId } = Route.useParams();
+	const campaignIdNum = Number(campaignId);
 	const matchIdNum = Number(matchId);
 	const [eventDialogOpen, setEventDialogOpen] = useState(false);
 
@@ -76,7 +81,7 @@ function RouteComponent() {
 		return (
 			<div className="space-y-6">
 				<div className="flex items-center gap-4">
-					<Link to="/$campaign/matches" params={{ campaign }}>
+					<Link to="/$campaignId/matches" params={{ campaignId }}>
 						<Button variant="ghost" size="icon">
 							<ArrowLeft className="h-4 w-4" />
 						</Button>
@@ -87,28 +92,11 @@ function RouteComponent() {
 		);
 	}
 
-	if (!match) {
-		return (
-			<div className="space-y-6">
-				<div className="flex items-center gap-4">
-					<Link to="/$campaign/matches" params={{ campaign }}>
-						<Button variant="ghost" size="icon">
-							<ArrowLeft className="h-4 w-4" />
-						</Button>
-					</Link>
-					<h2 className="text-2xl font-bold text-foreground">
-						Match not found
-					</h2>
-				</div>
-			</div>
-		);
-	}
-
 	return (
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center gap-4">
-				<Link to="/$campaign/matches" params={{ campaign }}>
+				<Link to="/$campaignId/matches" params={{ campaignId }}>
 					<Button variant="ghost" size="icon">
 						<ArrowLeft className="h-4 w-4" />
 					</Button>
@@ -364,7 +352,7 @@ function RouteComponent() {
 									</DialogDescription>
 								</DialogHeader>
 								<CreateEventForm
-									campaignId={campaignId}
+									campaignId={campaignIdNum}
 									matchId={matchIdNum}
 									onSuccess={() => setEventDialogOpen(false)}
 								/>

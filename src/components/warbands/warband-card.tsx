@@ -53,10 +53,10 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 							)}
 							<CardTitle className="text-lg min-w-0">
 								<Link
-									to="/$campaign/warbands/$warband"
+									to="/$campaignId/warbands/$warbandId"
 									params={{
-										campaign: warband.campaignId.toString(),
-										warband: warband.id.toString(),
+										campaignId: warband.campaignId.toString(),
+										warbandId: warband.id.toString(),
 									}}
 									className="hover:underline block truncate"
 								>

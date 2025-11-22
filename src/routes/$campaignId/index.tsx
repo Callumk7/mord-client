@@ -110,9 +110,9 @@ export const getCampaignLeaderboards = createServerFn({ method: "GET" })
 		};
 	});
 
-export const Route = createFileRoute("/$campaign/")({
+export const Route = createFileRoute("/$campaignId/")({
 	loader: async ({ params }) => {
-		const campaignId = Number.parseInt(params.campaign, 10);
+		const campaignId = Number.parseInt(params.campaignId, 10);
 
 		if (Number.isNaN(campaignId)) {
 			throw notFound();
@@ -198,7 +198,7 @@ function RouteComponent() {
 						<LeaderboardCard
 							title="The Survivor"
 							subtitle="Most Experience"
-							icon="⚔️"
+							icon="⚔"
 							entries={data.survivorLeaderboard.map((entry) => ({
 								rank: 0,
 								name: entry.name,

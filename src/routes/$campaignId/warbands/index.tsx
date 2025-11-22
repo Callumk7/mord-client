@@ -39,19 +39,19 @@ export const deleteWarbandFn = createServerFn({ method: "POST" })
 		}
 	});
 
-export const Route = createFileRoute("/$campaign/warbands/")({
+export const Route = createFileRoute("/$campaignId/warbands/")({
 	component: RouteComponent,
 	loader: async ({ params, context }) => {
 		await context.queryClient.ensureQueryData(
-			campaignWarbandQueryOptions(Number(params.campaign)),
+			campaignWarbandQueryOptions(Number(params.campaignId)),
 		);
 	},
 });
 
 function RouteComponent() {
-	const { campaign } = Route.useParams();
+	const { campaignId } = Route.useParams();
 	const { data: warbands } = useSuspenseQuery(
-		campaignWarbandQueryOptions(Number(campaign)),
+		campaignWarbandQueryOptions(Number(campaignId)),
 	);
 
 	return (

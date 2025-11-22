@@ -7,7 +7,7 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match }: MatchCardProps) {
-	const { campaign } = useParams({ strict: false });
+	const { campaignId } = useParams({ strict: false });
 
 	const formatDate = (date: Date) => {
 		return new Date(date).toLocaleDateString("en-US", {
@@ -81,8 +81,8 @@ export function MatchCard({ match }: MatchCardProps) {
 
 				<div className="flex items-center justify-end">
 					<Link
-						to="/$campaign/matches/$matchId"
-						params={{ campaign: campaign || "", matchId: String(match.id) }}
+						to="/$campaignId/matches/$matchId"
+						params={{ campaignId: campaignId || "", matchId: String(match.id) }}
 					>
 						<Button
 							variant="ghost"

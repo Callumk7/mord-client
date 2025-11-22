@@ -238,8 +238,8 @@ function App() {
 								{campaignsList.map((campaign) => (
 									<Link
 										key={campaign.id}
-										to="/$campaign"
-										params={{ campaign: campaign.id.toString() }}
+										to="/$campaignId"
+										params={{ campaignId: campaign.id.toString() }}
 										className="block"
 									>
 										<Card className="p-4 transition-all hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10">
