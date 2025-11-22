@@ -17,10 +17,12 @@ function RouteComponent() {
 	return (
 		<Table>
 			<TableHeader>
-				<TableHead>Injury</TableHead>
-				<TableHead>Role</TableHead>
-				<TableHead>Description</TableHead>
-				<TableHead>Stat Effect</TableHead>
+				<TableRow>
+					<TableHead>Injury</TableHead>
+					<TableHead>Role</TableHead>
+					<TableHead>Description</TableHead>
+					<TableHead>Stat Effect</TableHead>
+				</TableRow>
 			</TableHeader>
 			<TableBody>
 				{seriousInjuries.map((i) => (
