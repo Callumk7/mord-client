@@ -9,198 +9,214 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReferenceRouteRouteImport } from './routes/reference/route'
+import { Route as CampaignIdRouteRouteImport } from './routes/$campaignId/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CampaignIndexRouteImport } from './routes/$campaign/index'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as DemoDbChatApiRouteImport } from './routes/demo/db-chat-api'
-import { Route as DemoDbChatRouteImport } from './routes/demo/db-chat'
-import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
-import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
-import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
-import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
-import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
-import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
-import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
-import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
+import { Route as ReferenceIndexRouteImport } from './routes/reference/index'
+import { Route as CampaignIdIndexRouteImport } from './routes/$campaignId/index'
+import { Route as ReferenceInjuriesRouteImport } from './routes/reference/injuries'
+import { Route as CampaignIdAdminRouteImport } from './routes/$campaignId/admin'
+import { Route as ReferenceScenariosIndexRouteImport } from './routes/reference/scenarios.index'
+import { Route as CampaignIdWarbandsIndexRouteImport } from './routes/$campaignId/warbands/index'
+import { Route as CampaignIdMatchesIndexRouteImport } from './routes/$campaignId/matches/index'
+import { Route as ReferenceScenariosScenarioIdRouteImport } from './routes/reference/scenarios.$scenarioId'
+import { Route as CampaignIdMatchesMatchIdRouteImport } from './routes/$campaignId/matches/$matchId'
+import { Route as CampaignIdWarbandsWarbandIdIndexRouteImport } from './routes/$campaignId/warbands/$warbandId/index'
+import { Route as CampaignIdWarbandsWarbandIdWarriorsWarriorIdRouteImport } from './routes/$campaignId/warbands/$warbandId/warriors/$warriorId'
 
+const ReferenceRouteRoute = ReferenceRouteRouteImport.update({
+  id: '/reference',
+  path: '/reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignIdRouteRoute = CampaignIdRouteRouteImport.update({
+  id: '/$campaignId',
+  path: '/$campaignId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CampaignIndexRoute = CampaignIndexRouteImport.update({
-  id: '/$campaign/',
-  path: '/$campaign/',
-  getParentRoute: () => rootRouteImport,
+const ReferenceIndexRoute = ReferenceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReferenceRouteRoute,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
-  getParentRoute: () => rootRouteImport,
+const CampaignIdIndexRoute = CampaignIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CampaignIdRouteRoute,
 } as any)
-const DemoDbChatApiRoute = DemoDbChatApiRouteImport.update({
-  id: '/demo/db-chat-api',
-  path: '/demo/db-chat-api',
-  getParentRoute: () => rootRouteImport,
+const ReferenceInjuriesRoute = ReferenceInjuriesRouteImport.update({
+  id: '/injuries',
+  path: '/injuries',
+  getParentRoute: () => ReferenceRouteRoute,
 } as any)
-const DemoDbChatRoute = DemoDbChatRouteImport.update({
-  id: '/demo/db-chat',
-  path: '/demo/db-chat',
-  getParentRoute: () => rootRouteImport,
+const CampaignIdAdminRoute = CampaignIdAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => CampaignIdRouteRoute,
 } as any)
-const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
-  id: '/demo/start/server-funcs',
-  path: '/demo/start/server-funcs',
-  getParentRoute: () => rootRouteImport,
+const ReferenceScenariosIndexRoute = ReferenceScenariosIndexRouteImport.update({
+  id: '/scenarios/',
+  path: '/scenarios/',
+  getParentRoute: () => ReferenceRouteRoute,
 } as any)
-const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
-  id: '/demo/start/api-request',
-  path: '/demo/start/api-request',
-  getParentRoute: () => rootRouteImport,
+const CampaignIdWarbandsIndexRoute = CampaignIdWarbandsIndexRouteImport.update({
+  id: '/warbands/',
+  path: '/warbands/',
+  getParentRoute: () => CampaignIdRouteRoute,
 } as any)
-const DemoApiTqTodosRoute = DemoApiTqTodosRouteImport.update({
-  id: '/demo/api/tq-todos',
-  path: '/demo/api/tq-todos',
-  getParentRoute: () => rootRouteImport,
+const CampaignIdMatchesIndexRoute = CampaignIdMatchesIndexRouteImport.update({
+  id: '/matches/',
+  path: '/matches/',
+  getParentRoute: () => CampaignIdRouteRoute,
 } as any)
-const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
-  id: '/demo/api/names',
-  path: '/demo/api/names',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
-  id: '/demo/start/ssr/',
-  path: '/demo/start/ssr/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
-  id: '/demo/start/ssr/spa-mode',
-  path: '/demo/start/ssr/spa-mode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrFullSsrRoute = DemoStartSsrFullSsrRouteImport.update({
-  id: '/demo/start/ssr/full-ssr',
-  path: '/demo/start/ssr/full-ssr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
-  id: '/demo/start/ssr/data-only',
-  path: '/demo/start/ssr/data-only',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ReferenceScenariosScenarioIdRoute =
+  ReferenceScenariosScenarioIdRouteImport.update({
+    id: '/scenarios/$scenarioId',
+    path: '/scenarios/$scenarioId',
+    getParentRoute: () => ReferenceRouteRoute,
+  } as any)
+const CampaignIdMatchesMatchIdRoute =
+  CampaignIdMatchesMatchIdRouteImport.update({
+    id: '/matches/$matchId',
+    path: '/matches/$matchId',
+    getParentRoute: () => CampaignIdRouteRoute,
+  } as any)
+const CampaignIdWarbandsWarbandIdIndexRoute =
+  CampaignIdWarbandsWarbandIdIndexRouteImport.update({
+    id: '/warbands/$warbandId/',
+    path: '/warbands/$warbandId/',
+    getParentRoute: () => CampaignIdRouteRoute,
+  } as any)
+const CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute =
+  CampaignIdWarbandsWarbandIdWarriorsWarriorIdRouteImport.update({
+    id: '/warbands/$warbandId/warriors/$warriorId',
+    path: '/warbands/$warbandId/warriors/$warriorId',
+    getParentRoute: () => CampaignIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo/db-chat': typeof DemoDbChatRoute
-  '/demo/db-chat-api': typeof DemoDbChatApiRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/$campaign': typeof CampaignIndexRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/$campaignId': typeof CampaignIdRouteRouteWithChildren
+  '/reference': typeof ReferenceRouteRouteWithChildren
+  '/$campaignId/admin': typeof CampaignIdAdminRoute
+  '/reference/injuries': typeof ReferenceInjuriesRoute
+  '/$campaignId/': typeof CampaignIdIndexRoute
+  '/reference/': typeof ReferenceIndexRoute
+  '/$campaignId/matches/$matchId': typeof CampaignIdMatchesMatchIdRoute
+  '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
+  '/$campaignId/matches': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/warbands': typeof CampaignIdWarbandsIndexRoute
+  '/reference/scenarios': typeof ReferenceScenariosIndexRoute
+  '/$campaignId/warbands/$warbandId': typeof CampaignIdWarbandsWarbandIdIndexRoute
+  '/$campaignId/warbands/$warbandId/warriors/$warriorId': typeof CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/demo/db-chat': typeof DemoDbChatRoute
-  '/demo/db-chat-api': typeof DemoDbChatApiRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/$campaign': typeof CampaignIndexRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/$campaignId/admin': typeof CampaignIdAdminRoute
+  '/reference/injuries': typeof ReferenceInjuriesRoute
+  '/$campaignId': typeof CampaignIdIndexRoute
+  '/reference': typeof ReferenceIndexRoute
+  '/$campaignId/matches/$matchId': typeof CampaignIdMatchesMatchIdRoute
+  '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
+  '/$campaignId/matches': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/warbands': typeof CampaignIdWarbandsIndexRoute
+  '/reference/scenarios': typeof ReferenceScenariosIndexRoute
+  '/$campaignId/warbands/$warbandId': typeof CampaignIdWarbandsWarbandIdIndexRoute
+  '/$campaignId/warbands/$warbandId/warriors/$warriorId': typeof CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/demo/db-chat': typeof DemoDbChatRoute
-  '/demo/db-chat-api': typeof DemoDbChatApiRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/$campaign/': typeof CampaignIndexRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
+  '/$campaignId': typeof CampaignIdRouteRouteWithChildren
+  '/reference': typeof ReferenceRouteRouteWithChildren
+  '/$campaignId/admin': typeof CampaignIdAdminRoute
+  '/reference/injuries': typeof ReferenceInjuriesRoute
+  '/$campaignId/': typeof CampaignIdIndexRoute
+  '/reference/': typeof ReferenceIndexRoute
+  '/$campaignId/matches/$matchId': typeof CampaignIdMatchesMatchIdRoute
+  '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
+  '/$campaignId/matches/': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/warbands/': typeof CampaignIdWarbandsIndexRoute
+  '/reference/scenarios/': typeof ReferenceScenariosIndexRoute
+  '/$campaignId/warbands/$warbandId/': typeof CampaignIdWarbandsWarbandIdIndexRoute
+  '/$campaignId/warbands/$warbandId/warriors/$warriorId': typeof CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/demo/db-chat'
-    | '/demo/db-chat-api'
-    | '/demo/tanstack-query'
-    | '/$campaign'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr'
+    | '/$campaignId'
+    | '/reference'
+    | '/$campaignId/admin'
+    | '/reference/injuries'
+    | '/$campaignId/'
+    | '/reference/'
+    | '/$campaignId/matches/$matchId'
+    | '/reference/scenarios/$scenarioId'
+    | '/$campaignId/matches'
+    | '/$campaignId/warbands'
+    | '/reference/scenarios'
+    | '/$campaignId/warbands/$warbandId'
+    | '/$campaignId/warbands/$warbandId/warriors/$warriorId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/demo/db-chat'
-    | '/demo/db-chat-api'
-    | '/demo/tanstack-query'
-    | '/$campaign'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr'
+    | '/$campaignId/admin'
+    | '/reference/injuries'
+    | '/$campaignId'
+    | '/reference'
+    | '/$campaignId/matches/$matchId'
+    | '/reference/scenarios/$scenarioId'
+    | '/$campaignId/matches'
+    | '/$campaignId/warbands'
+    | '/reference/scenarios'
+    | '/$campaignId/warbands/$warbandId'
+    | '/$campaignId/warbands/$warbandId/warriors/$warriorId'
   id:
     | '__root__'
     | '/'
-    | '/demo/db-chat'
-    | '/demo/db-chat-api'
-    | '/demo/tanstack-query'
-    | '/$campaign/'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr/'
+    | '/$campaignId'
+    | '/reference'
+    | '/$campaignId/admin'
+    | '/reference/injuries'
+    | '/$campaignId/'
+    | '/reference/'
+    | '/$campaignId/matches/$matchId'
+    | '/reference/scenarios/$scenarioId'
+    | '/$campaignId/matches/'
+    | '/$campaignId/warbands/'
+    | '/reference/scenarios/'
+    | '/$campaignId/warbands/$warbandId/'
+    | '/$campaignId/warbands/$warbandId/warriors/$warriorId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DemoDbChatRoute: typeof DemoDbChatRoute
-  DemoDbChatApiRoute: typeof DemoDbChatApiRoute
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
-  CampaignIndexRoute: typeof CampaignIndexRoute
-  DemoApiNamesRoute: typeof DemoApiNamesRoute
-  DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
-  DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
-  DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
-  DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
-  DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
-  DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute
-  DemoStartSsrIndexRoute: typeof DemoStartSsrIndexRoute
+  CampaignIdRouteRoute: typeof CampaignIdRouteRouteWithChildren
+  ReferenceRouteRoute: typeof ReferenceRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reference': {
+      id: '/reference'
+      path: '/reference'
+      fullPath: '/reference'
+      preLoaderRoute: typeof ReferenceRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$campaignId': {
+      id: '/$campaignId'
+      path: '/$campaignId'
+      fullPath: '/$campaignId'
+      preLoaderRoute: typeof CampaignIdRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -208,107 +224,133 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$campaign/': {
-      id: '/$campaign/'
-      path: '/$campaign'
-      fullPath: '/$campaign'
-      preLoaderRoute: typeof CampaignIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/reference/': {
+      id: '/reference/'
+      path: '/'
+      fullPath: '/reference/'
+      preLoaderRoute: typeof ReferenceIndexRouteImport
+      parentRoute: typeof ReferenceRouteRoute
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/': {
+      id: '/$campaignId/'
+      path: '/'
+      fullPath: '/$campaignId/'
+      preLoaderRoute: typeof CampaignIdIndexRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
-    '/demo/db-chat-api': {
-      id: '/demo/db-chat-api'
-      path: '/demo/db-chat-api'
-      fullPath: '/demo/db-chat-api'
-      preLoaderRoute: typeof DemoDbChatApiRouteImport
-      parentRoute: typeof rootRouteImport
+    '/reference/injuries': {
+      id: '/reference/injuries'
+      path: '/injuries'
+      fullPath: '/reference/injuries'
+      preLoaderRoute: typeof ReferenceInjuriesRouteImport
+      parentRoute: typeof ReferenceRouteRoute
     }
-    '/demo/db-chat': {
-      id: '/demo/db-chat'
-      path: '/demo/db-chat'
-      fullPath: '/demo/db-chat'
-      preLoaderRoute: typeof DemoDbChatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/admin': {
+      id: '/$campaignId/admin'
+      path: '/admin'
+      fullPath: '/$campaignId/admin'
+      preLoaderRoute: typeof CampaignIdAdminRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
-    '/demo/start/server-funcs': {
-      id: '/demo/start/server-funcs'
-      path: '/demo/start/server-funcs'
-      fullPath: '/demo/start/server-funcs'
-      preLoaderRoute: typeof DemoStartServerFuncsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/reference/scenarios/': {
+      id: '/reference/scenarios/'
+      path: '/scenarios'
+      fullPath: '/reference/scenarios'
+      preLoaderRoute: typeof ReferenceScenariosIndexRouteImport
+      parentRoute: typeof ReferenceRouteRoute
     }
-    '/demo/start/api-request': {
-      id: '/demo/start/api-request'
-      path: '/demo/start/api-request'
-      fullPath: '/demo/start/api-request'
-      preLoaderRoute: typeof DemoStartApiRequestRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/warbands/': {
+      id: '/$campaignId/warbands/'
+      path: '/warbands'
+      fullPath: '/$campaignId/warbands'
+      preLoaderRoute: typeof CampaignIdWarbandsIndexRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
-    '/demo/api/tq-todos': {
-      id: '/demo/api/tq-todos'
-      path: '/demo/api/tq-todos'
-      fullPath: '/demo/api/tq-todos'
-      preLoaderRoute: typeof DemoApiTqTodosRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/matches/': {
+      id: '/$campaignId/matches/'
+      path: '/matches'
+      fullPath: '/$campaignId/matches'
+      preLoaderRoute: typeof CampaignIdMatchesIndexRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
-    '/demo/api/names': {
-      id: '/demo/api/names'
-      path: '/demo/api/names'
-      fullPath: '/demo/api/names'
-      preLoaderRoute: typeof DemoApiNamesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/reference/scenarios/$scenarioId': {
+      id: '/reference/scenarios/$scenarioId'
+      path: '/scenarios/$scenarioId'
+      fullPath: '/reference/scenarios/$scenarioId'
+      preLoaderRoute: typeof ReferenceScenariosScenarioIdRouteImport
+      parentRoute: typeof ReferenceRouteRoute
     }
-    '/demo/start/ssr/': {
-      id: '/demo/start/ssr/'
-      path: '/demo/start/ssr'
-      fullPath: '/demo/start/ssr'
-      preLoaderRoute: typeof DemoStartSsrIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/matches/$matchId': {
+      id: '/$campaignId/matches/$matchId'
+      path: '/matches/$matchId'
+      fullPath: '/$campaignId/matches/$matchId'
+      preLoaderRoute: typeof CampaignIdMatchesMatchIdRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
-    '/demo/start/ssr/spa-mode': {
-      id: '/demo/start/ssr/spa-mode'
-      path: '/demo/start/ssr/spa-mode'
-      fullPath: '/demo/start/ssr/spa-mode'
-      preLoaderRoute: typeof DemoStartSsrSpaModeRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/warbands/$warbandId/': {
+      id: '/$campaignId/warbands/$warbandId/'
+      path: '/warbands/$warbandId'
+      fullPath: '/$campaignId/warbands/$warbandId'
+      preLoaderRoute: typeof CampaignIdWarbandsWarbandIdIndexRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
-    '/demo/start/ssr/full-ssr': {
-      id: '/demo/start/ssr/full-ssr'
-      path: '/demo/start/ssr/full-ssr'
-      fullPath: '/demo/start/ssr/full-ssr'
-      preLoaderRoute: typeof DemoStartSsrFullSsrRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/data-only': {
-      id: '/demo/start/ssr/data-only'
-      path: '/demo/start/ssr/data-only'
-      fullPath: '/demo/start/ssr/data-only'
-      preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport
-      parentRoute: typeof rootRouteImport
+    '/$campaignId/warbands/$warbandId/warriors/$warriorId': {
+      id: '/$campaignId/warbands/$warbandId/warriors/$warriorId'
+      path: '/warbands/$warbandId/warriors/$warriorId'
+      fullPath: '/$campaignId/warbands/$warbandId/warriors/$warriorId'
+      preLoaderRoute: typeof CampaignIdWarbandsWarbandIdWarriorsWarriorIdRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
     }
   }
 }
 
+interface CampaignIdRouteRouteChildren {
+  CampaignIdAdminRoute: typeof CampaignIdAdminRoute
+  CampaignIdIndexRoute: typeof CampaignIdIndexRoute
+  CampaignIdMatchesMatchIdRoute: typeof CampaignIdMatchesMatchIdRoute
+  CampaignIdMatchesIndexRoute: typeof CampaignIdMatchesIndexRoute
+  CampaignIdWarbandsIndexRoute: typeof CampaignIdWarbandsIndexRoute
+  CampaignIdWarbandsWarbandIdIndexRoute: typeof CampaignIdWarbandsWarbandIdIndexRoute
+  CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute: typeof CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute
+}
+
+const CampaignIdRouteRouteChildren: CampaignIdRouteRouteChildren = {
+  CampaignIdAdminRoute: CampaignIdAdminRoute,
+  CampaignIdIndexRoute: CampaignIdIndexRoute,
+  CampaignIdMatchesMatchIdRoute: CampaignIdMatchesMatchIdRoute,
+  CampaignIdMatchesIndexRoute: CampaignIdMatchesIndexRoute,
+  CampaignIdWarbandsIndexRoute: CampaignIdWarbandsIndexRoute,
+  CampaignIdWarbandsWarbandIdIndexRoute: CampaignIdWarbandsWarbandIdIndexRoute,
+  CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute:
+    CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute,
+}
+
+const CampaignIdRouteRouteWithChildren = CampaignIdRouteRoute._addFileChildren(
+  CampaignIdRouteRouteChildren,
+)
+
+interface ReferenceRouteRouteChildren {
+  ReferenceInjuriesRoute: typeof ReferenceInjuriesRoute
+  ReferenceIndexRoute: typeof ReferenceIndexRoute
+  ReferenceScenariosScenarioIdRoute: typeof ReferenceScenariosScenarioIdRoute
+  ReferenceScenariosIndexRoute: typeof ReferenceScenariosIndexRoute
+}
+
+const ReferenceRouteRouteChildren: ReferenceRouteRouteChildren = {
+  ReferenceInjuriesRoute: ReferenceInjuriesRoute,
+  ReferenceIndexRoute: ReferenceIndexRoute,
+  ReferenceScenariosScenarioIdRoute: ReferenceScenariosScenarioIdRoute,
+  ReferenceScenariosIndexRoute: ReferenceScenariosIndexRoute,
+}
+
+const ReferenceRouteRouteWithChildren = ReferenceRouteRoute._addFileChildren(
+  ReferenceRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DemoDbChatRoute: DemoDbChatRoute,
-  DemoDbChatApiRoute: DemoDbChatApiRoute,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
-  CampaignIndexRoute: CampaignIndexRoute,
-  DemoApiNamesRoute: DemoApiNamesRoute,
-  DemoApiTqTodosRoute: DemoApiTqTodosRoute,
-  DemoStartApiRequestRoute: DemoStartApiRequestRoute,
-  DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
-  DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
-  DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
-  DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,
-  DemoStartSsrIndexRoute: DemoStartSsrIndexRoute,
+  CampaignIdRouteRoute: CampaignIdRouteRouteWithChildren,
+  ReferenceRouteRoute: ReferenceRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

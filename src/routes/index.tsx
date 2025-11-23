@@ -1,4 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useId, useState } from "react";
@@ -15,6 +19,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { db } from "~/db";
 import { campaigns } from "~/db/schema";
+import { campaignsQueryOptions } from "~/query/options";
 
 // Zod schema for campaign creation
 const createCampaignSchema = z.object({
@@ -50,6 +55,9 @@ export const getCampaigns = createServerFn({ method: "GET" }).handler(
 );
 
 export const Route = createFileRoute("/")({
+	// Ensure campaigns data is loaded before rendering
+	loader: ({ context }) =>
+		context.queryClient.ensureQueryData(campaignsQueryOptions),
 	component: App,
 });
 
@@ -58,6 +66,7 @@ function App() {
 	const descriptionId = useId();
 	const startDateId = useId();
 	const endDateId = useId();
+	const queryClient = useQueryClient();
 
 	const [formData, setFormData] = useState({
 		name: "",
@@ -66,11 +75,8 @@ function App() {
 		endDate: "",
 	});
 
-	// Fetch campaigns
-	const { data: campaignsList, refetch } = useQuery({
-		queryKey: ["campaigns"],
-		queryFn: () => getCampaigns(),
-	});
+	// Fetch campaigns from cache and subscribe to updates
+	const { data: campaignsList } = useSuspenseQuery(campaignsQueryOptions);
 
 	const mutation = useMutation({
 		mutationFn: createCampaign,
@@ -83,8 +89,8 @@ function App() {
 				startDate: "",
 				endDate: "",
 			});
-			// Refetch campaigns to show the new one
-			refetch();
+			// Invalidate campaigns query to refetch
+			queryClient.invalidateQueries({ queryKey: ["campaigns"] });
 		},
 		onError: (error) => {
 			console.error("Error creating campaign:", error);
@@ -104,7 +110,7 @@ function App() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-zinc-800 to-black p-4">
+		<div className="min-h-screen bg-linear-to-br from-zinc-800 to-black p-4">
 			<div className="mx-auto max-w-4xl pt-8">
 				<div className="mb-8 text-center">
 					<h1 className="mb-2 text-4xl font-bold text-white">Mord Stats</h1>
@@ -232,8 +238,8 @@ function App() {
 								{campaignsList.map((campaign) => (
 									<Link
 										key={campaign.id}
-										to="/$campaign"
-										params={{ campaign: campaign.id.toString() }}
+										to="/$campaignId"
+										params={{ campaignId: campaign.id.toString() }}
 										className="block"
 									>
 										<Card className="p-4 transition-all hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10">
