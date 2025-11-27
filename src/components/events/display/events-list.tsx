@@ -1,0 +1,106 @@
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "~/components/ui/card";
+import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import type { EventWithParticipants } from "~/db/schema";
+import { ResolveEventForm } from "../resolve-event-form";
+
+interface EventsListProps {
+	events: EventWithParticipants[];
+}
+
+export function EventsList({ events }: EventsListProps) {
+	return (
+		<Card>
+			<CardHeader>
+				<div className="flex items-center justify-between">
+					<div>
+						<CardTitle>Notable Events</CardTitle>
+						<CardDescription>
+							Memorable moments and knock downs during the match
+						</CardDescription>
+					</div>
+				</div>
+			</CardHeader>
+			<CardContent>
+				{events.length > 0 ? (
+					<div className="space-y-2">
+						{events.map((event) => (
+							<EventListItem key={event.id} event={event} />
+						))}
+					</div>
+				) : (
+					<div className="p-8 text-center text-muted-foreground">
+						<p>No events recorded yet.</p>
+						<p className="text-sm mt-2">
+							Click "Add Event" to record knock downs or memorable moments!
+						</p>
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
+}
+
+interface EventListItemProps {
+	event: EventWithParticipants;
+}
+
+function EventListItem({ event }: EventListItemProps) {
+	return (
+		<div
+			key={event.id}
+			className="p-3 bg-muted rounded-lg border-l-4 border-primary"
+		>
+			<div className="flex items-start justify-between">
+				<div className="flex-1">
+					<div className="flex items-center gap-2 mb-1">
+						<p className="text-sm font-medium capitalize">
+							{event.type.replace("_", " ")}
+						</p>
+						{event.warrior && (
+							<span className="text-xs text-muted-foreground">
+								by {event.warrior.name}
+							</span>
+						)}
+						{event.defender && (
+							<span className="text-xs text-muted-foreground">
+								→ {event.defender.name}
+							</span>
+						)}
+					</div>
+					{event.description && (
+						<p className="text-sm text-muted-foreground mt-1">
+							{event.description}
+						</p>
+					)}
+				</div>
+				<div className="flex justify-end items-end flex-col gap-1">
+					<p className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+						{new Date(event.timestamp).toLocaleTimeString()}
+					</p>
+					{event.resolved ? (
+						<Badge variant={"success"}>Resolved</Badge>
+					) : (
+						<Dialog>
+							<DialogTrigger
+								render={<Button size={"sm"} variant={"outline"} />}
+							>
+								Resolve
+							</DialogTrigger>
+							<DialogContent>
+								<ResolveEventForm event={event} />
+							</DialogContent>
+						</Dialog>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}

@@ -6,25 +6,12 @@ import {
 	warriors,
 	matches,
 	matchParticipants,
-	teams,
-	teamMembers,
-	placements,
-	casualties,
+	matchWinners,
 	events,
 } from "../src/db/schema.ts";
 import { eq } from "drizzle-orm";
 
 config({ path: ".env.local" });
-
-// Warband factions for Mordheim
-const factions = [
-	"Reiklanders",
-	"Marienburgers",
-	"Middenheimers",
-	"Witch Hunters",
-	"Skaven",
-	"Undead",
-];
 
 // Warrior names by faction
 const warriorNames: Record<string, { heroes: string[]; henchmen: string[] }> = {
@@ -100,11 +87,8 @@ async function seed() {
 	try {
 		// Clear existing data (in reverse order of dependencies)
 		console.log("🧹 Clearing existing data...");
-		await db.delete(casualties);
 		await db.delete(events);
-		await db.delete(placements);
-		await db.delete(teamMembers);
-		await db.delete(teams);
+		await db.delete(matchWinners);
 		await db.delete(matchParticipants);
 		await db.delete(matches);
 		await db.delete(warriors);
@@ -242,59 +226,27 @@ async function seed() {
 
 		// Create 5 1v1 matches
 		for (let i = 1; i <= 5; i++) {
-			const warband1 = randomElement(createdWarbands);
-			const warband2 = randomElement(
-				createdWarbands.filter((w) => w.id !== warband1.id),
-			);
-			const winner = Math.random() > 0.5 ? warband1 : warband2;
-			const loser = winner.id === warband1.id ? warband2 : warband1;
-
 			matchData.push({
 				name: `Match ${i}`,
 				date: randomDate(startDate, endDate),
 				matchType: "1v1",
-				resultType: "standard",
 				status: "ended",
 				scenarioId: randomInt(1, 9),
 				campaignId: campaign.id,
-				winnerId: winner.id,
-				loserId: loser.id,
 			});
 		}
 
-		// Create 2 2v2 matches
-		for (let i = 1; i <= 2; i++) {
-			const availableWarbands = [...createdWarbands];
-			const team1Warbands = [
-				availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-				availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-			];
-			const team2Warbands = [
-				availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-				availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-			];
-
+		// Create 3 multiplayer matches (2-4 players each)
+		for (let i = 1; i <= 3; i++) {
 			matchData.push({
-				name: `Team Battle ${i}`,
+				name: `Multiplayer Battle ${i}`,
 				date: randomDate(startDate, endDate),
-				matchType: "2v2",
-				resultType: "team",
+				matchType: "multiplayer",
 				status: "ended",
 				scenarioId: randomInt(1, 9),
 				campaignId: campaign.id,
 			});
 		}
-
-		// Create 1 battle royale match
-		matchData.push({
-			name: "The Grand Melee",
-			date: randomDate(startDate, endDate),
-			matchType: "battle_royale",
-			resultType: "placement",
-			status: "ended",
-			scenarioId: randomInt(1, 9),
-			campaignId: campaign.id,
-		});
 
 		const createdMatches = await db
 			.insert(matches)
@@ -303,149 +255,63 @@ async function seed() {
 
 		console.log(`✅ Created ${createdMatches.length} matches`);
 
-		// Create match participants and teams
-		console.log("👥 Creating match participants and teams...");
-		let matchIndex = 0;
+		// Create match participants and winners
+		console.log("👥 Creating match participants and winners...");
 
 		for (const match of createdMatches) {
 			if (match.matchType === "1v1") {
+				// Pick 2 random warbands
+				const warband1 = randomElement(createdWarbands);
+				const warband2 = randomElement(
+					createdWarbands.filter((w) => w.id !== warband1.id),
+				);
+
 				// Add both warbands as participants
 				await db.insert(matchParticipants).values([
-					{ matchId: match.id, warbandId: match.winnerId! },
-					{ matchId: match.id, warbandId: match.loserId! },
+					{ matchId: match.id, warbandId: warband1.id },
+					{ matchId: match.id, warbandId: warband2.id },
 				]);
-			} else if (match.matchType === "2v2") {
-				// Get the warbands for this 2v2 match
+
+				// Randomly pick winner
+				const winner = Math.random() > 0.5 ? warband1 : warband2;
+				await db.insert(matchWinners).values({
+					matchId: match.id,
+					warbandId: winner.id,
+				});
+			} else if (match.matchType === "multiplayer") {
+				// Pick 2-4 random warbands for this match
+				const participantCount = randomInt(2, 4);
 				const availableWarbands = [...createdWarbands];
-				const team1Warbands = [
-					availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-					availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-				];
-				const team2Warbands = [
-					availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-					availableWarbands.splice(randomInt(0, availableWarbands.length - 1), 1)[0]!,
-				];
+				const selectedWarbands = [];
+
+				for (let i = 0; i < participantCount; i++) {
+					const index = randomInt(0, availableWarbands.length - 1);
+					selectedWarbands.push(availableWarbands.splice(index, 1)[0]!);
+				}
 
 				// Add all participants
 				await db.insert(matchParticipants).values(
-					[...team1Warbands, ...team2Warbands].map((w) => ({
+					selectedWarbands.map((w) => ({
 						matchId: match.id,
 						warbandId: w.id,
 					})),
 				);
 
-				// Create teams
-				const winningTeam = Math.random() > 0.5 ? team1Warbands : team2Warbands;
-				const losingTeam = winningTeam === team1Warbands ? team2Warbands : team1Warbands;
+				// Pick 1-2 winners randomly
+				const winnerCount = Math.random() > 0.7 ? 2 : 1; // 30% chance of 2 winners (draw/team)
+				const shuffledWarbands = [...selectedWarbands].sort(() => Math.random() - 0.5);
+				const winners = shuffledWarbands.slice(0, winnerCount);
 
-				const [team1] = await db
-					.insert(teams)
-					.values({
-						matchId: match.id,
-						name: "Team 1",
-						isWinner: winningTeam === team1Warbands,
-					})
-					.returning();
-
-				const [team2] = await db
-					.insert(teams)
-					.values({
-						matchId: match.id,
-						name: "Team 2",
-						isWinner: winningTeam === team2Warbands,
-					})
-					.returning();
-
-				await db.insert(teamMembers).values([
-					...team1Warbands.map((w) => ({ teamId: team1.id, warbandId: w.id })),
-					...team2Warbands.map((w) => ({ teamId: team2.id, warbandId: w.id })),
-				]);
-
-				// Update match with winning team
-				await db
-					.update(matches)
-					.set({ winningTeamId: winningTeam === team1Warbands ? team1.id : team2.id })
-					.where(eq(matches.id, match.id));
-			} else if (match.matchType === "battle_royale") {
-				// Add all warbands as participants
-				await db.insert(matchParticipants).values(
-					createdWarbands.map((w) => ({
+				await db.insert(matchWinners).values(
+					winners.map((w) => ({
 						matchId: match.id,
 						warbandId: w.id,
-					})),
-				);
-
-				// Create placements (random order)
-				const shuffledWarbands = [...createdWarbands].sort(() => Math.random() - 0.5);
-				await db.insert(placements).values(
-					shuffledWarbands.map((w, index) => ({
-						matchId: match.id,
-						warbandId: w.id,
-						position: index + 1,
 					})),
 				);
 			}
-
-			matchIndex++;
 		}
 
-		console.log("✅ Created match participants and teams");
-
-		// Create casualties
-		console.log("💀 Creating casualties...");
-		const casualtyData: Array<typeof casualties.$inferInsert> = [];
-
-		for (const match of createdMatches) {
-			const matchParticipantsData = await db
-				.select()
-				.from(matchParticipants)
-				.where(eq(matchParticipants.matchId, match.id));
-
-			const participantWarbandIds = matchParticipantsData.map((mp) => mp.warbandId);
-			const participantWarbands = createdWarbands.filter((w) =>
-				participantWarbandIds.includes(w.id),
-			);
-
-			// Create 2-5 casualties per match
-			const casualtyCount = randomInt(2, 5);
-			for (let i = 0; i < casualtyCount; i++) {
-				const victimWarband = randomElement(participantWarbands);
-				const killerWarband = randomElement(
-					participantWarbands.filter((w) => w.id !== victimWarband.id),
-				);
-
-				const victimWarriors = createdWarriors.filter(
-					(w) => w.warbandId === victimWarband.id && w.isAlive,
-				);
-				const killerWarriors = createdWarriors.filter(
-					(w) => w.warbandId === killerWarband.id && w.isAlive,
-				);
-
-				if (victimWarriors.length > 0 && killerWarriors.length > 0) {
-					casualtyData.push({
-						campaignId: campaign.id,
-						matchId: match.id,
-						victimWarriorId: randomElement(victimWarriors).id,
-						victimWarbandId: victimWarband.id,
-						killerWarriorId: randomElement(killerWarriors).id,
-						killerWarbandId: killerWarband.id,
-						type: randomElement(["killed", "injured", "stunned", "escaped"]),
-						description: randomElement([
-							"Struck down in melee",
-							"Shot from a distance",
-							"Knocked unconscious",
-							"Fled the battlefield",
-						]),
-						timestamp: match.date,
-					});
-				}
-			}
-		}
-
-		if (casualtyData.length > 0) {
-			await db.insert(casualties).values(casualtyData);
-			console.log(`✅ Created ${casualtyData.length} casualties`);
-		}
+		console.log("✅ Created match participants and winners");
 
 		// Create events
 		console.log("📝 Creating events...");
@@ -470,10 +336,38 @@ async function seed() {
 					matchWarriors.filter((w) => w.id !== warrior.id),
 				);
 
+				const eventType = randomElement(["knock_down", "moment"] as const);
+				const isKnockDown = eventType === "knock_down";
+				const hasInjury = isKnockDown && Math.random() > 0.6; // 40% chance of injury on knock down
+				const hasDeath = hasInjury && Math.random() > 0.9; // 10% chance of death if injured
+
+				const injuryTypes = [
+					"leg_wound",
+					"arm_wound",
+					"madness",
+					"smashed_leg",
+					"chest_wound",
+					"blinded_in_one_eye",
+					"old_battle_wound",
+					"nervous",
+					"hand_injury",
+					"deep_wound",
+					"robbed",
+					"full_recovery",
+					"bitter_emnity",
+					"captured",
+					"hardened",
+					"horrible_scars",
+					"sold_to_pits",
+					"survive_against_odds",
+					"multiple",
+					"dead",
+				] as const;
+
 				eventData.push({
 					campaignId: campaign.id,
 					matchId: match.id,
-					type: randomElement(["knock_down", "moment"]),
+					type: eventType,
 					description: randomElement([
 						"Delivered a crushing blow",
 						"Performed an incredible dodge",
@@ -485,6 +379,12 @@ async function seed() {
 					timestamp: match.date,
 					warriorId: warrior.id,
 					defenderId: defender.id,
+					resolved: Math.random() > 0.3, // 70% of events are resolved
+					injury: hasInjury,
+					death: hasDeath,
+					injuryType: hasInjury
+						? (hasDeath ? "dead" : randomElement(injuryTypes.filter((t) => t !== "dead")))
+						: undefined,
 				});
 			}
 		}
@@ -500,7 +400,6 @@ async function seed() {
 		console.log(`   Warbands: ${createdWarbands.length}`);
 		console.log(`   Warriors: ${createdWarriors.length}`);
 		console.log(`   Matches: ${createdMatches.length}`);
-		console.log(`   Casualties: ${casualtyData.length}`);
 		console.log(`   Events: ${eventData.length}`);
 	} catch (error) {
 		console.error("❌ Error seeding database:", error);

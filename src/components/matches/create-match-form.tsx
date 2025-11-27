@@ -1,8 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createServerFn } from "@tanstack/react-start";
-import z from "zod";
-import { db } from "~/db";
-import { matches } from "~/db/schema";
+import type z from "zod";
+import { createMatchFn, createMatchFormSchema, matchKeys } from "~/api/matches";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
@@ -15,39 +13,13 @@ import {
 	SelectValue,
 } from "../ui/select";
 
-const formSchema = z.object({
-	name: z.string().min(1, "Match name is required"),
-	matchType: z.enum(["1v1", "2v2", "2v1", "3v3", "battle_royale"]),
-	resultType: z.enum(["standard", "team", "placement"]),
-	scenarioId: z.number(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-export const createMatchFn = createServerFn({ method: "POST" })
-	.inputValidator(formSchema.extend({ campaignId: z.number() }))
-	.handler(async ({ data }) => {
-		const [newMatch] = await db
-			.insert(matches)
-			.values({
-				name: data.name,
-				date: new Date(),
-				matchType: data.matchType,
-				resultType: data.resultType,
-				scenarioId: data.scenarioId,
-				status: "scheduled",
-				campaignId: data.campaignId,
-			})
-			.returning();
-
-		return newMatch;
-	});
+type FormValues = z.infer<typeof createMatchFormSchema>;
 
 const { useAppForm } = createFormHook();
 
 interface CreateMatchFormProps {
 	campaignId: number;
-	onSuccess?: (match: typeof matches.$inferSelect) => void;
+	onSuccess?: (match: Awaited<ReturnType<typeof createMatchFn>>) => void;
 }
 export function CreateMatchForm({
 	campaignId,
@@ -60,7 +32,7 @@ export function CreateMatchForm({
 		onSuccess: (data) => {
 			// Invalidate matches query to refetch the list
 			queryClient.invalidateQueries({
-				queryKey: ["matches", campaignId],
+				queryKey: matchKeys.list(campaignId),
 			});
 			onSuccess?.(data);
 		},
@@ -70,18 +42,16 @@ export function CreateMatchForm({
 		defaultValues: {
 			name: "",
 			matchType: "1v1" as FormValues["matchType"],
-			resultType: "standard" as FormValues["resultType"],
 			scenarioId: 1,
 		},
 		validators: {
-			onChange: formSchema,
+			onChange: createMatchFormSchema,
 		},
 		onSubmit: ({ value }) => {
 			mutation.mutate({
 				data: {
 					name: value.name,
 					matchType: value.matchType,
-					resultType: value.resultType,
 					scenarioId: value.scenarioId,
 					campaignId: campaignId,
 				},
@@ -125,55 +95,19 @@ export function CreateMatchForm({
 								<Select
 									value={field.state.value}
 									onValueChange={(value) => field.handleChange(value)}
-									itemToStringLabel={(item) =>
-										item === "battle_royale"
-											? "Battle Royale"
-											: (item as string)
-									}
 								>
-									<SelectTrigger className="min-w-sm">
+									<SelectTrigger className="w-full">
 										<SelectValue placeholder="Select a match type" />
 									</SelectTrigger>
 									<SelectPositioner>
 										<SelectContent>
 											<SelectItem value={"1v1"}>1v1</SelectItem>
-											<SelectItem value={"2v2"}>2v2</SelectItem>
-											<SelectItem value={"2v1"}>2v1</SelectItem>
-											<SelectItem value={"3v3"}>3v3</SelectItem>
-											<SelectItem value={"battle_royale"}>
-												Battle Royale
-											</SelectItem>
+											<SelectItem value={"multiplayer"}>Multiplayer</SelectItem>
 										</SelectContent>
 									</SelectPositioner>
 								</Select>
 							</field.Control>
 							<field.Description>Type of match format</field.Description>
-						</form.Item>
-					)}
-				</form.AppField>
-
-				<form.AppField name="resultType">
-					{(field) => (
-						<form.Item>
-							<field.Label>Result Type</field.Label>
-							<field.Control>
-								<Select
-									value={field.state.value}
-									onValueChange={(value) => field.handleChange(value)}
-								>
-									<SelectTrigger className="min-w-sm">
-										<SelectValue placeholder="Select a result type" />
-									</SelectTrigger>
-									<SelectPositioner>
-										<SelectContent>
-											<SelectItem value={"standard"}>Standard</SelectItem>
-											<SelectItem value={"team"}>Team</SelectItem>
-											<SelectItem value={"placement"}>Placement</SelectItem>
-										</SelectContent>
-									</SelectPositioner>
-								</Select>
-							</field.Control>
-							<field.Description>How results are recorded</field.Description>
 						</form.Item>
 					)}
 				</form.AppField>

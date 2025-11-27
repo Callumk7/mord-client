@@ -1,142 +1,59 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { count, desc, eq, sql } from "drizzle-orm";
-import { db } from "~/db";
-import { campaigns, matches, warbands, warriors } from "~/db/schema";
-
-// Server function to fetch campaign leaderboard data
-export const getCampaignLeaderboards = createServerFn({ method: "GET" })
-	.inputValidator((data: { campaignId: number }) => data)
-	.handler(async ({ data }) => {
-		const campaignId = data.campaignId;
-
-		// Fetch campaign
-		const campaign = await db.query.campaigns.findFirst({
-			where: eq(campaigns.id, campaignId),
-		});
-
-		if (!campaign) {
-			throw notFound();
-		}
-
-		// The Tyrant: Most games won
-		const tyrantLeaderboard = await db
-			.select({
-				warbandId: warbands.id,
-				name: warbands.name,
-				faction: warbands.faction,
-				icon: warbands.icon,
-				color: warbands.color,
-				wins: count(matches.id),
-			})
-			.from(warbands)
-			.leftJoin(matches, eq(matches.winnerId, warbands.id))
-			.where(eq(warbands.campaignId, campaignId))
-			.groupBy(warbands.id)
-			.orderBy(desc(count(matches.id)))
-			.limit(5);
-
-		// The Survivor: Most experience (sum of all warriors in warband)
-		const survivorLeaderboard = await db
-			.select({
-				warbandId: warbands.id,
-				name: warbands.name,
-				faction: warbands.faction,
-				icon: warbands.icon,
-				color: warbands.color,
-				totalExperience: sql<number>`COALESCE(SUM(${warriors.experience}), 0)`,
-			})
-			.from(warbands)
-			.leftJoin(warriors, eq(warriors.warbandId, warbands.id))
-			.where(eq(warbands.campaignId, campaignId))
-			.groupBy(warbands.id)
-			.orderBy(desc(sql`COALESCE(SUM(${warriors.experience}), 0)`))
-			.limit(5);
-
-		// The Opportunist: Highest gold
-		const opportunistLeaderboard = await db
-			.select({
-				warbandId: warbands.id,
-				name: warbands.name,
-				faction: warbands.faction,
-				icon: warbands.icon,
-				color: warbands.color,
-				treasury: warbands.treasury,
-			})
-			.from(warbands)
-			.where(eq(warbands.campaignId, campaignId))
-			.orderBy(desc(warbands.treasury))
-			.limit(5);
-
-		// Most Kills (individual warriors)
-		const killsLeaderboard = await db
-			.select({
-				warriorId: warriors.id,
-				name: warriors.name,
-				warbandName: warbands.name,
-				warbandIcon: warbands.icon,
-				warbandColor: warbands.color,
-				kills: warriors.kills,
-			})
-			.from(warriors)
-			.innerJoin(warbands, eq(warriors.warbandId, warbands.id))
-			.where(eq(warriors.campaignId, campaignId))
-			.orderBy(desc(warriors.kills))
-			.limit(5);
-
-		// Most Injuries Taken (individual warriors)
-		const injuriesLeaderboard = await db
-			.select({
-				warriorId: warriors.id,
-				name: warriors.name,
-				warbandName: warbands.name,
-				warbandIcon: warbands.icon,
-				warbandColor: warbands.color,
-				injuriesReceived: warriors.injuriesReceived,
-			})
-			.from(warriors)
-			.innerJoin(warbands, eq(warriors.warbandId, warbands.id))
-			.where(eq(warriors.campaignId, campaignId))
-			.orderBy(desc(warriors.injuriesReceived))
-			.limit(5);
-
-		return {
-			campaign,
-			tyrantLeaderboard,
-			survivorLeaderboard,
-			opportunistLeaderboard,
-			killsLeaderboard,
-			injuriesLeaderboard,
-		};
-	});
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+	getCampaignOptions,
+	getMostExperienceOptions,
+	getMostGamesWonOptions,
+	getMostInjuriesFromEventsOptions,
+	getMostInjuriesInflictedFromEventsOptions,
+	getMostKillsFromEventsOptions,
+	getMostTreasuryOptions,
+} from "~/api/campaign";
 
 export const Route = createFileRoute("/$campaignId/")({
-	loader: async ({ params }) => {
-		const campaignId = Number.parseInt(params.campaignId, 10);
+	loader: async ({ params, context }) => {
+		const campaignId = params.campaignId;
 
-		if (Number.isNaN(campaignId)) {
-			throw notFound();
-		}
-
-		return getCampaignLeaderboards({ data: { campaignId } });
+		context.queryClient.ensureQueryData(getCampaignOptions(campaignId));
+		context.queryClient.ensureQueryData(getMostGamesWonOptions(campaignId));
+		context.queryClient.ensureQueryData(getMostExperienceOptions(campaignId));
+		context.queryClient.ensureQueryData(getMostTreasuryOptions(campaignId));
+		context.queryClient.ensureQueryData(
+			getMostKillsFromEventsOptions(campaignId),
+		);
+		context.queryClient.ensureQueryData(
+			getMostInjuriesFromEventsOptions(campaignId),
+		);
+		context.queryClient.ensureQueryData(
+			getMostInjuriesInflictedFromEventsOptions(campaignId),
+		);
 	},
 	component: RouteComponent,
-	notFoundComponent: () => (
-		<div className="flex min-h-screen items-center justify-center bg-background">
-			<div className="text-center">
-				<h1 className="mb-4 text-4xl font-bold text-foreground">
-					Campaign Not Found
-				</h1>
-				<p className="text-muted-foreground">
-					The campaign you're looking for doesn't exist.
-				</p>
-			</div>
-		</div>
-	),
 });
 
 function RouteComponent() {
-	const data = Route.useLoaderData();
+	const { campaignId } = Route.useParams();
+
+	// Fetch all data with React Query
+	const { data: campaign } = useSuspenseQuery(getCampaignOptions(campaignId));
+	const { data: gamesWon } = useSuspenseQuery(
+		getMostGamesWonOptions(campaignId),
+	);
+	const { data: experience } = useSuspenseQuery(
+		getMostExperienceOptions(campaignId),
+	);
+	const { data: treasury } = useSuspenseQuery(
+		getMostTreasuryOptions(campaignId),
+	);
+	const { data: killsFromEvents } = useSuspenseQuery(
+		getMostKillsFromEventsOptions(campaignId),
+	);
+	const { data: injuriesFromEvents } = useSuspenseQuery(
+		getMostInjuriesFromEventsOptions(campaignId),
+	);
+	const { data: injuriesInflictedFromEvents } = useSuspenseQuery(
+		getMostInjuriesInflictedFromEventsOptions(campaignId),
+	);
 
 	const formatDate = (date: Date) => {
 		return new Date(date).toLocaleDateString("en-US", {
@@ -146,26 +63,85 @@ function RouteComponent() {
 		});
 	};
 
+	// Transform and limit data to match component expectations
+	const tyrantLeaderboard = gamesWon.slice(0, 5).map((entry) => ({
+		warbandId: entry.warbandId,
+		name: entry.warband.name,
+		faction: entry.warband.faction,
+		icon: entry.warband.icon,
+		color: entry.warband.color,
+		wins: entry.wins,
+	}));
+
+	const survivorLeaderboard = experience.slice(0, 5).map((entry) => ({
+		warbandId: entry.warbandId,
+		name: entry.warband.name,
+		faction: entry.warband.faction,
+		icon: entry.warband.icon,
+		color: entry.warband.color,
+		totalExperience: entry.totalExperience,
+	}));
+
+	const opportunistLeaderboard = treasury.slice(0, 5).map((entry) => ({
+		warbandId: entry.warbandId,
+		name: entry.warband.name,
+		faction: entry.warband.faction,
+		icon: entry.warband.icon,
+		color: entry.warband.color,
+		treasury: entry.treasury,
+	}));
+
+	const killsFromEventsLeaderboard = killsFromEvents
+		.slice(0, 5)
+		.map((entry) => ({
+			warriorId: entry.warriorId,
+			name: entry.warrior.name,
+			warbandName: entry.warbandName,
+			warbandIcon: entry.warbandIcon,
+			warbandColor: entry.warbandColor,
+			kills: entry.kills,
+		}));
+
+	const injuriesFromEventsLeaderboard = injuriesFromEvents
+		.slice(0, 5)
+		.map((entry) => ({
+			warriorId: entry.warriorId,
+			name: entry.warrior.name,
+			warbandName: entry.warbandName,
+			warbandIcon: entry.warbandIcon,
+			warbandColor: entry.warbandColor,
+			injuriesReceived: entry.injuriesReceived,
+		}));
+
+	const injuriesInflictedLeaderboard = injuriesInflictedFromEvents
+		.slice(0, 5)
+		.map((entry) => ({
+			warriorId: entry.warriorId,
+			name: entry.warrior.name,
+			warbandName: entry.warbandName,
+			warbandIcon: entry.warbandIcon,
+			warbandColor: entry.warbandColor,
+			injuriesInflicted: entry.injuriesInflicted,
+		}));
+
 	return (
 		<div className="mx-auto max-w-7xl">
 			{/* Campaign Header */}
 			<div className="mb-8 rounded-lg border bg-card p-6 shadow-xl">
 				<h1 className="mb-2 text-4xl font-bold text-foreground">
-					{data.campaign.name}
+					{campaign?.name}
 				</h1>
-				{data.campaign.description && (
-					<p className="mb-4 text-lg text-foreground">
-						{data.campaign.description}
-					</p>
+				{campaign?.description && (
+					<p className="mb-4 text-lg text-foreground">{campaign.description}</p>
 				)}
 				<div className="flex gap-6 text-sm text-muted-foreground">
 					<div>
 						<span className="font-semibold text-foreground">Start:</span>{" "}
-						{formatDate(data.campaign.startDate)}
+						{campaign && formatDate(campaign.startDate)}
 					</div>
 					<div>
 						<span className="font-semibold text-foreground">End:</span>{" "}
-						{formatDate(data.campaign.endDate)}
+						{campaign && formatDate(campaign.endDate)}
 					</div>
 				</div>
 			</div>
@@ -183,7 +159,7 @@ function RouteComponent() {
 							title="The Tyrant"
 							subtitle="Most Games Won"
 							icon="👑"
-							entries={data.tyrantLeaderboard.map((entry) => ({
+							entries={tyrantLeaderboard.map((entry) => ({
 								rank: 0,
 								name: entry.name,
 								subtitle: entry.faction,
@@ -199,7 +175,7 @@ function RouteComponent() {
 							title="The Survivor"
 							subtitle="Most Experience"
 							icon="⚔"
-							entries={data.survivorLeaderboard.map((entry) => ({
+							entries={survivorLeaderboard.map((entry) => ({
 								rank: 0,
 								name: entry.name,
 								subtitle: entry.faction,
@@ -215,7 +191,7 @@ function RouteComponent() {
 							title="The Opportunist"
 							subtitle="Richest Warband"
 							icon="💰"
-							entries={data.opportunistLeaderboard.map((entry) => ({
+							entries={opportunistLeaderboard.map((entry) => ({
 								rank: 0,
 								name: entry.name,
 								subtitle: entry.faction,
@@ -233,13 +209,13 @@ function RouteComponent() {
 					<h2 className="mb-4 text-3xl font-bold text-foreground">
 						Warrior Leaderboards
 					</h2>
-					<div className="grid gap-6 md:grid-cols-2">
-						{/* Most Kills */}
+					<div className="grid gap-6 md:grid-cols-3">
+						{/* Most Kills from Events */}
 						<LeaderboardCard
-							title="Most Kills"
-							subtitle="Deadliest Warriors"
-							icon="💀"
-							entries={data.killsLeaderboard.map((entry) => ({
+							title="Most Kills from Events"
+							subtitle="Event Warriors"
+							icon="⚡"
+							entries={killsFromEventsLeaderboard.map((entry) => ({
 								rank: 0,
 								name: entry.name,
 								subtitle: entry.warbandName,
@@ -250,12 +226,28 @@ function RouteComponent() {
 							}))}
 						/>
 
-						{/* Most Injuries Taken */}
+						{/* Most Injuries Inflicted from Events */}
+						<LeaderboardCard
+							title="Most Injuries Inflicted from Events"
+							subtitle="Event Casualties"
+							icon="🔥"
+							entries={injuriesInflictedLeaderboard.map((entry) => ({
+								rank: 0,
+								name: entry.name,
+								subtitle: entry.warbandName,
+								value: entry.injuriesInflicted,
+								suffix: entry.injuriesInflicted === 1 ? "injury" : "injuries",
+								icon: entry.warbandIcon,
+								color: entry.warbandColor,
+							}))}
+						/>
+
+						{/* Most Injuries from Events */}
 						<LeaderboardCard
 							title="Most Injuries Taken"
 							subtitle="Toughest Warriors"
 							icon="🩹"
-							entries={data.injuriesLeaderboard.map((entry) => ({
+							entries={injuriesFromEventsLeaderboard.map((entry) => ({
 								rank: 0,
 								name: entry.name,
 								subtitle: entry.warbandName,
@@ -322,7 +314,7 @@ function LeaderboardCard({
 								className="flex items-center gap-3 rounded-lg border bg-background p-3 transition-colors hover:bg-muted/50"
 							>
 								{/* Rank */}
-								<div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted font-bold text-foreground">
+								<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted font-bold text-foreground">
 									{index + 1}
 								</div>
 
@@ -347,7 +339,7 @@ function LeaderboardCard({
 								</div>
 
 								{/* Value */}
-								<div className="flex-shrink-0 text-right">
+								<div className="shrink-0 text-right">
 									<div className="text-lg font-bold text-foreground">
 										{entry.value}
 									</div>

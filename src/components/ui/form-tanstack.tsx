@@ -1,150 +1,147 @@
-"use client";
-
 import { useRender } from "@base-ui-components/react/use-render";
 import {
-  createFormHookContexts,
-  createFormHook as createTanstackFormHook,
+	createFormHookContexts,
+	createFormHook as createTanstackFormHook,
 } from "@tanstack/react-form";
 import * as React from "react";
-
-import { cn } from "~/lib/utils";
 import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
 
 const { fieldContext, formContext, useFieldContext } = createFormHookContexts();
 
 const useFormField = () => {
-  const itemContext = React.useContext(FormItemContext);
-  const fieldContext = useFieldContext();
+	const itemContext = React.useContext(FormItemContext);
+	const fieldContext = useFieldContext();
 
-  if (!fieldContext) {
-    throw new Error("useFormField should be used within <field.Container>");
-  }
+	if (!fieldContext) {
+		throw new Error("useFormField should be used within <field.Container>");
+	}
 
-  const { id } = itemContext;
+	const { id } = itemContext;
 
-  return {
-    id,
-    name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
-    ...fieldContext.state.meta,
-  };
+	return {
+		id,
+		name: fieldContext.name,
+		formItemId: `${id}-form-item`,
+		formDescriptionId: `${id}-form-item-description`,
+		formMessageId: `${id}-form-item-message`,
+		...fieldContext.state.meta,
+	};
 };
 
 type FormItemContextValue = {
-  id: string;
+	id: string;
 };
 
 const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
+	{} as FormItemContextValue,
 );
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
-  const id = React.useId();
+	const id = React.useId();
 
-  return (
-    <FormItemContext.Provider value={{ id }}>
-      <div
-        data-slot="form-item"
-        className={cn("grid gap-2", className)}
-        {...props}
-      />
-    </FormItemContext.Provider>
-  );
+	return (
+		<FormItemContext.Provider value={{ id }}>
+			<div
+				data-slot="form-item"
+				className={cn("grid gap-2", className)}
+				{...props}
+			/>
+		</FormItemContext.Provider>
+	);
 }
 
 function FieldLabel({
-  className,
-  ...props
+	className,
+	...props
 }: React.ComponentProps<typeof Label>) {
-  const { formItemId, isValid } = useFormField();
+	const { formItemId, isValid } = useFormField();
 
-  return (
-    <Label
-      data-slot="field-label"
-      data-error={!isValid}
-      className={cn("data-[error=true]:text-destructive", className)}
-      htmlFor={formItemId}
-      {...props}
-    />
-  );
+	return (
+		<Label
+			data-slot="field-label"
+			data-error={!isValid}
+			className={cn("data-[error=true]:text-destructive", className)}
+			htmlFor={formItemId}
+			{...props}
+		/>
+	);
 }
 
 function FieldControl({
-  children = <div />,
+	children = <div />,
 }: {
-  children?: useRender.RenderProp;
+	children?: useRender.RenderProp;
 }) {
-  const { formItemId, isValid, formDescriptionId, formMessageId } =
-    useFormField();
+	const { formItemId, isValid, formDescriptionId, formMessageId } =
+		useFormField();
 
-  return useRender({
-    render: children,
-    props: {
-      "data-slot": "field-control",
-      id: formItemId,
-      "aria-describedby": isValid
-        ? `${formDescriptionId}`
-        : `${formDescriptionId} ${formMessageId}`,
-      "aria-invalid": !isValid,
-    },
-  });
+	return useRender({
+		render: children,
+		props: {
+			"data-slot": "field-control",
+			id: formItemId,
+			"aria-describedby": isValid
+				? `${formDescriptionId}`
+				: `${formDescriptionId} ${formMessageId}`,
+			"aria-invalid": !isValid,
+		},
+	});
 }
 
 function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
-  const { formDescriptionId } = useFormField();
+	const { formDescriptionId } = useFormField();
 
-  return (
-    <p
-      data-slot="field-description"
-      id={formDescriptionId}
-      className={cn("text-muted-foreground text-sm", className)}
-      {...props}
-    />
-  );
+	return (
+		<p
+			data-slot="field-description"
+			id={formDescriptionId}
+			className={cn("text-muted-foreground text-sm", className)}
+			{...props}
+		/>
+	);
 }
 
 function FieldMessage({ className, ...props }: React.ComponentProps<"p">) {
-  const { formMessageId, isValid, errors } = useFormField();
+	const { formMessageId, isValid, errors } = useFormField();
 
-  if (props.children) return props.children;
+	if (props.children) return props.children;
 
-  const body = isValid
-    ? props.children
-    : String(errors.map((error) => error.message).join(", ") ?? "");
+	const body = isValid
+		? props.children
+		: String(errors.map((error) => error.message).join(", ") ?? "");
 
-  if (!body) return null;
+	if (!body) return null;
 
-  return (
-    <p
-      data-slot="field-message"
-      id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
-      {...props}
-    >
-      {body}
-    </p>
-  );
+	return (
+		<p
+			data-slot="field-message"
+			id={formMessageId}
+			className={cn("text-destructive text-sm", className)}
+			{...props}
+		>
+			{body}
+		</p>
+	);
 }
 
 const createFormHook = (
-  args?: Parameters<typeof createTanstackFormHook>[0]
+	args?: Parameters<typeof createTanstackFormHook>[0],
 ) => {
-  const formHook = createTanstackFormHook({
-    fieldComponents: {
-      ...args?.fieldComponents,
-      Label: FieldLabel,
-      Control: FieldControl,
-      Description: FieldDescription,
-      Message: FieldMessage,
-    },
-    formComponents: { ...args?.formComponents, Item: FormItem },
-    fieldContext,
-    formContext,
-  });
+	const formHook = createTanstackFormHook({
+		fieldComponents: {
+			...args?.fieldComponents,
+			Label: FieldLabel,
+			Control: FieldControl,
+			Description: FieldDescription,
+			Message: FieldMessage,
+		},
+		formComponents: { ...args?.formComponents, Item: FormItem },
+		fieldContext,
+		formContext,
+	});
 
-  return formHook;
+	return formHook;
 };
 
 export { createFormHook };

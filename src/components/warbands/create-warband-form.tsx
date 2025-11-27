@@ -1,8 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { createServerFn } from "@tanstack/react-start";
 import z from "zod";
-import { db } from "~/db";
-import { warbands } from "~/db/schema";
+import { createWarbandFn } from "~/api/warbands";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
@@ -12,33 +10,23 @@ const formSchema = z.object({
 	faction: z.string().min(1, "Warband faction is required"),
 });
 
-export const createWarbandFn = createServerFn({ method: "POST" })
-	.inputValidator(formSchema.extend({ campaignId: z.number() }))
-	.handler(async ({ data }) => {
-		const [newWarband] = await db
-			.insert(warbands)
-			.values({
-				name: data.name,
-				faction: data.faction,
-				rating: 0,
-				treasury: 0,
-				campaignId: data.campaignId,
-			})
-			.returning();
-
-		return newWarband;
-	});
 
 const { useAppForm } = createFormHook();
 
 interface CreateWarbandFormProps {
 	campaignId: number;
+	onSuccess?: () => void;
 }
-export function CreateWarbandForm({ campaignId }: CreateWarbandFormProps) {
+export function CreateWarbandForm({
+	campaignId,
+	onSuccess,
+}: CreateWarbandFormProps) {
 	const mutation = useMutation({
 		mutationFn: createWarbandFn,
 		onSuccess: (data) => {
 			console.log("Warband created successfully:", data);
+			// Call the onSuccess callback if provided
+			onSuccess?.();
 		},
 	});
 
@@ -94,7 +82,7 @@ export function CreateWarbandForm({ campaignId }: CreateWarbandFormProps) {
 							<field.Label>Warband Faction</field.Label>
 							<field.Control>
 								<Input
-									placeholder="Grogz Boyz"
+									placeholder="Orcs"
 									name={field.name}
 									value={field.state.value}
 									onBlur={field.handleBlur}
@@ -105,7 +93,9 @@ export function CreateWarbandForm({ campaignId }: CreateWarbandFormProps) {
 						</form.Item>
 					)}
 				</form.AppField>
-				<Button type="submit">Create Warband</Button>
+				<Button type="submit" disabled={mutation.isPending}>
+					{mutation.isPending ? "Creating..." : "Create Warband"}
+				</Button>
 			</form>
 		</form.AppForm>
 	);

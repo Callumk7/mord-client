@@ -3,6 +3,7 @@ import {
 	boolean,
 	integer,
 	jsonb,
+	pgEnum,
 	pgTable,
 	serial,
 	text,
@@ -27,7 +28,6 @@ export const campaignsRelations = relations(campaigns, ({ many }) => ({
 	warriors: many(warriors),
 	matches: many(matches),
 	events: many(events),
-	casualties: many(casualties),
 }));
 
 // Warbands Table
@@ -48,6 +48,9 @@ export const warbands = pgTable("warbands", {
 });
 
 export type Warband = typeof warbands.$inferSelect;
+export type WarbandWithWarriors = Warband & {
+	warriors: Warrior[];
+};
 
 export const warbandsRelations = relations(warbands, ({ one, many }) => ({
 	campaign: one(campaigns, {
@@ -56,8 +59,7 @@ export const warbandsRelations = relations(warbands, ({ one, many }) => ({
 	}),
 	warriors: many(warriors),
 	matchParticipants: many(matchParticipants),
-	teamMembers: many(teamMembers),
-	placements: many(placements),
+	wins: many(matchWinners),
 }));
 
 // Warriors Table
@@ -76,6 +78,7 @@ export const warriors = pgTable("warriors", {
 	injuriesCaused: integer("injuries_caused").notNull(),
 	injuriesReceived: integer("injuries_received").notNull(),
 	gamesPlayed: integer("games_played").notNull(),
+	isLeader: boolean("is_leader").notNull().default(false),
 	isAlive: boolean("is_alive").notNull(),
 	deathDate: timestamp("death_date"),
 	deathDescription: text("death_description"),
@@ -109,20 +112,14 @@ export const matches = pgTable("matches", {
 	id: serial("id").primaryKey(),
 	name: text("name").notNull(),
 	date: timestamp("date").notNull(),
-	matchType: text("match_type")
+	matchType: text("match_type").notNull().$type<"1v1" | "multiplayer">(),
+	status: text("status")
 		.notNull()
-		.$type<"1v1" | "2v2" | "2v1" | "3v3" | "battle_royale">(),
-	resultType: text("result_type")
-		.notNull()
-		.$type<"standard" | "team" | "placement">(),
-	status: text("status").notNull().$type<"active" | "ended" | "scheduled">(),
+		.$type<"active" | "ended" | "scheduled" | "resolved">(),
 	scenarioId: integer("scenario_id").notNull(),
 	campaignId: integer("campaign_id")
 		.notNull()
 		.references(() => campaigns.id),
-	winnerId: integer("winner_id").references(() => warbands.id),
-	loserId: integer("loser_id").references(() => warbands.id),
-	winningTeamId: integer("winning_team_id"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -130,24 +127,8 @@ export const matches = pgTable("matches", {
 export type Match = typeof matches.$inferSelect;
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
-	winner: one(warbands, {
-		fields: [matches.winnerId],
-		references: [warbands.id],
-		relationName: "matchWinner",
-	}),
-	loser: one(warbands, {
-		fields: [matches.loserId],
-		references: [warbands.id],
-		relationName: "matchLoser",
-	}),
-	winningTeam: one(teams, {
-		fields: [matches.winningTeamId],
-		references: [teams.id],
-	}),
+	winners: many(matchWinners),
 	participants: many(matchParticipants),
-	teams: many(teams),
-	placements: many(placements),
-	casualties: many(casualties),
 	events: many(events),
 	campaign: one(campaigns, {
 		fields: [matches.campaignId],
@@ -182,6 +163,52 @@ export const matchParticipantsRelations = relations(
 	}),
 );
 
+export const matchWinners = pgTable("match_winners", {
+	id: serial("id").primaryKey(),
+	matchId: integer("match_id")
+		.notNull()
+		.references(() => matches.id),
+	warbandId: integer("warband_id")
+		.notNull()
+		.references(() => warbands.id),
+});
+
+export type MatchWinner = typeof matchWinners.$inferSelect;
+
+export const matchWinnersRelations = relations(matchWinners, ({ one }) => ({
+	match: one(matches, {
+		fields: [matchWinners.matchId],
+		references: [matches.id],
+	}),
+	warband: one(warbands, {
+		fields: [matchWinners.warbandId],
+		references: [warbands.id],
+	}),
+}));
+
+export const injuryEnum = pgEnum("injury_type", [
+	"dead",
+	"multiple",
+	"leg_wound",
+	"arm_wound",
+	"madness",
+	"smashed_leg",
+	"chest_wound",
+	"blinded_in_one_eye",
+	"old_battle_wound",
+	"nervous",
+	"hand_injury",
+	"deep_wound",
+	"robbed",
+	"full_recovery",
+	"bitter_emnity",
+	"captured",
+	"hardened",
+	"horrible_scars",
+	"sold_to_pits",
+	"survive_against_odds",
+]);
+
 export const events = pgTable("events", {
 	id: serial("id").primaryKey(),
 	campaignId: integer("campaign_id")
@@ -197,9 +224,19 @@ export const events = pgTable("events", {
 		.notNull()
 		.references(() => warriors.id),
 	defenderId: integer("defender_id").references(() => warriors.id),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	resolved: boolean("resolved").notNull().default(false),
+	injuryType: injuryEnum("injury_type"),
+	death: boolean("death").notNull().default(false),
+	injury: boolean("injury").notNull().default(false),
 });
 
 export type Event = typeof events.$inferSelect;
+export type EventWithParticipants = Event & {
+	warrior: Warrior;
+	defender: Warrior | null;
+};
 
 export const eventsRelations = relations(events, ({ one }) => ({
 	campaign: one(campaigns, {
@@ -219,107 +256,5 @@ export const eventsRelations = relations(events, ({ one }) => ({
 		fields: [events.defenderId],
 		references: [warriors.id],
 		relationName: "eventDefender",
-	}),
-}));
-
-// Teams Table
-export const teams = pgTable("teams", {
-	id: serial("id").primaryKey(),
-	matchId: integer("match_id")
-		.notNull()
-		.references(() => matches.id),
-	name: text("name"),
-	isWinner: boolean("is_winner").notNull(),
-});
-
-export type Team = typeof teams.$inferSelect;
-
-export const teamsRelations = relations(teams, ({ one, many }) => ({
-	match: one(matches, {
-		fields: [teams.matchId],
-		references: [matches.id],
-	}),
-	members: many(teamMembers),
-}));
-
-// Team Members Table
-export const teamMembers = pgTable("team_members", {
-	id: serial("id").primaryKey(),
-	teamId: integer("team_id")
-		.notNull()
-		.references(() => teams.id),
-	warbandId: integer("warband_id")
-		.notNull()
-		.references(() => warbands.id),
-});
-
-export type TeamMember = typeof teamMembers.$inferSelect;
-
-export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
-	team: one(teams, {
-		fields: [teamMembers.teamId],
-		references: [teams.id],
-	}),
-	warband: one(warbands, {
-		fields: [teamMembers.warbandId],
-		references: [warbands.id],
-	}),
-}));
-
-// Placements Table
-export const placements = pgTable("placements", {
-	id: serial("id").primaryKey(),
-	matchId: integer("match_id")
-		.notNull()
-		.references(() => matches.id),
-	warbandId: integer("warband_id")
-		.notNull()
-		.references(() => warbands.id),
-	position: integer("position").notNull(),
-});
-
-export type Placement = typeof placements.$inferSelect;
-
-export const placementsRelations = relations(placements, ({ one }) => ({
-	match: one(matches, {
-		fields: [placements.matchId],
-		references: [matches.id],
-	}),
-	warband: one(warbands, {
-		fields: [placements.warbandId],
-		references: [warbands.id],
-	}),
-}));
-
-// Casualties Table
-export const casualties = pgTable("casualties", {
-	id: serial("id").primaryKey(),
-	campaignId: integer("campaign_id")
-		.notNull()
-		.references(() => campaigns.id),
-	matchId: integer("match_id")
-		.notNull()
-		.references(() => matches.id),
-	victimWarriorId: integer("victim_warrior_id").notNull(),
-	victimWarbandId: integer("victim_warband_id").notNull(),
-	killerWarriorId: integer("killer_warrior_id").notNull(),
-	killerWarbandId: integer("killer_warband_id").notNull(),
-	type: text("type")
-		.notNull()
-		.$type<"killed" | "injured" | "stunned" | "escaped">(),
-	description: text("description"),
-	timestamp: timestamp("timestamp").notNull(),
-});
-
-export type Casualty = typeof casualties.$inferSelect;
-
-export const casualtiesRelations = relations(casualties, ({ one }) => ({
-	campaign: one(campaigns, {
-		fields: [casualties.campaignId],
-		references: [campaigns.id],
-	}),
-	match: one(matches, {
-		fields: [casualties.matchId],
-		references: [matches.id],
 	}),
 }));

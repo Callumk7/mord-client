@@ -2,8 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Coins, Edit, Shield, Trash2, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
-import type { Warband } from "~/db/schema";
-import { deleteWarbandMutation } from "~/query/mutations";
+import { deleteWarbandMutation } from "~/api/warbands";
+import type { WarbandWithWarriors } from "~/db/schema";
+import { calculateWarbandRating } from "~/lib/rating";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
@@ -17,7 +18,7 @@ import {
 import { UpdateWarbandForm } from "./update-warband-form";
 
 interface WarbandCardProps {
-	warband: Warband;
+	warband: WarbandWithWarriors;
 }
 
 export function WarbandCard({ warband }: WarbandCardProps) {
@@ -25,6 +26,8 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 	const deleteMutation = useMutation(deleteWarbandMutation);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [showEditDialog, setShowEditDialog] = useState(false);
+
+	const rating = calculateWarbandRating(warband.warriors);
 
 	const handleDelete = () => {
 		deleteMutation.mutate(warband.id, {
@@ -55,8 +58,8 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 								<Link
 									to="/$campaignId/warbands/$warbandId"
 									params={{
-										campaignId: warband.campaignId.toString(),
-										warbandId: warband.id.toString(),
+										campaignId: warband.campaignId,
+										warbandId: warband.id,
 									}}
 									className="hover:underline block truncate"
 								>
@@ -102,7 +105,7 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 							<TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
 							<div className="flex-1 min-w-0">
 								<p className="text-xs text-muted-foreground">Rating</p>
-								<p className="font-semibold text-sm">{warband.rating}</p>
+								<p className="font-semibold text-sm">{rating}</p>
 							</div>
 						</div>
 						<div className="flex items-center gap-2">

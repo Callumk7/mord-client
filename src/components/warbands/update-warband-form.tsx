@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
 import z from "zod";
+import { campaignWarbandsQueryOptions } from "~/api/warbands";
 import { db } from "~/db";
 import type { Warband } from "~/db/schema";
 import { warbands } from "~/db/schema";
-import { campaignWarbandQueryOptions } from "~/query/options";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
@@ -62,7 +62,7 @@ export function UpdateWarbandForm({
 		onSuccess: () => {
 			// Invalidate warbands query to refetch the list
 			queryClient.invalidateQueries(
-				campaignWarbandQueryOptions(warband.campaignId),
+				campaignWarbandsQueryOptions(warband.campaignId),
 			);
 			onSuccess?.();
 		},
@@ -80,7 +80,7 @@ export function UpdateWarbandForm({
 		validators: {
 			onChange: formSchema,
 		},
-				onSubmit: ({ value }) => {
+		onSubmit: ({ value }) => {
 			mutation.mutate({
 				data: {
 					name: value.name,
@@ -191,7 +191,7 @@ export function UpdateWarbandForm({
 							<field.Label>Icon (Optional)</field.Label>
 							<field.Control>
 								<Input
-									placeholder="⚔️"
+									placeholder="⚔"
 									name={field.name}
 									value={field.state.value}
 									onBlur={field.handleBlur}
@@ -241,4 +241,3 @@ export function UpdateWarbandForm({
 		</form.AppForm>
 	);
 }
-

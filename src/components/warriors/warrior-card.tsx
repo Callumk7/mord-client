@@ -25,8 +25,8 @@ export function WarriorCard({ campaignId, warrior }: WarriorCardProps) {
 							to="/$campaignId/warbands/$warbandId/warriors/$warriorId"
 							params={{
 								campaignId,
-								warbandId: warrior.warbandId.toString(),
-								warriorId: warrior.id.toString(),
+								warbandId: warrior.warbandId,
+								warriorId: warrior.id,
 							}}
 							className={`hover:underline ${
 								!isAlive ? "line-through text-muted-foreground" : ""

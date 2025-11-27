@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Edit } from "lucide-react";
 import { useState } from "react";
+import { getWarbandOptions, getWarriorsByWarbandOptions } from "~/api/warbands";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -24,8 +25,6 @@ import {
 import { UpdateWarbandForm } from "~/components/warbands/update-warband-form";
 import { CreateWarriorForm } from "~/components/warriors/create-warrior-form";
 import { WarriorCard } from "~/components/warriors/warrior-card";
-import { getWarriorsByWarbandFn } from "~/lib/api/warriors";
-import { getWarbandByIdFn } from "~/routes/$campaignId/warbands";
 
 export const Route = createFileRoute("/$campaignId/warbands/$warbandId/")({
 	component: RouteComponent,
@@ -33,20 +32,15 @@ export const Route = createFileRoute("/$campaignId/warbands/$warbandId/")({
 		parse: (params) => ({
 			warbandId: Number(params.warbandId),
 		}),
+		stringify: (params) => ({
+			warbandId: String(params.warbandId),
+		}),
 	},
 	loader: async ({ context, params }) => {
 		const { warbandId } = params;
 
-		await Promise.all([
-			context.queryClient.ensureQueryData({
-				queryFn: () => getWarriorsByWarbandFn({ data: { warbandId } }),
-				queryKey: ["warriors", warbandId],
-			}),
-			context.queryClient.ensureQueryData({
-				queryFn: () => getWarbandByIdFn({ data: { warbandId } }),
-				queryKey: ["warband", warbandId, "details"],
-			}),
-		]);
+		context.queryClient.ensureQueryData(getWarriorsByWarbandOptions(warbandId));
+		context.queryClient.ensureQueryData(getWarbandOptions(warbandId));
 	},
 });
 
@@ -57,16 +51,12 @@ function RouteComponent() {
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
 	// Fetch warband details
-	const { data: warband } = useQuery({
-		queryKey: ["warband", warbandId, "details"],
-		queryFn: () => getWarbandByIdFn({ data: { warbandId } }),
-	});
+	const { data: warband } = useQuery(getWarbandOptions(warbandId));
 
 	// Fetch warriors for this warband
-	const { data: warriors, isLoading } = useQuery({
-		queryKey: ["warriors", warbandId],
-		queryFn: () => getWarriorsByWarbandFn({ data: { warbandId } }),
-	});
+	const { data: warriors, isLoading } = useQuery(
+		getWarriorsByWarbandOptions(warbandId),
+	);
 
 	const handleWarriorCreated = () => {
 		setIsWarriorDialogOpen(false);

@@ -1,43 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
 import { useState } from "react";
-import z from "zod";
-import { db } from "~/db";
-import { matchParticipants, warbands } from "~/db/schema";
+import { addParticipantsFn, matchKeys } from "~/api/matches";
+import { campaignWarbandsQueryOptions } from "~/api/warbands";
 import { Button } from "../ui/button";
-
-const addParticipantsSchema = z.object({
-	matchId: z.number(),
-	warbandIds: z.array(z.number()).min(2, "At least 2 participants required"),
-});
-
-export const getWarbandsFn = createServerFn({ method: "GET" })
-	.inputValidator(z.object({ campaignId: z.number() }))
-	.handler(async ({ data }) => {
-		return db
-			.select()
-			.from(warbands)
-			.where(eq(warbands.campaignId, data.campaignId));
-	});
-
-export const addParticipantsFn = createServerFn({ method: "POST" })
-	.inputValidator(addParticipantsSchema)
-	.handler(async ({ data }) => {
-		const participants = data.warbandIds.map((warbandId) => ({
-			matchId: data.matchId,
-			warbandId,
-		}));
-
-		await db.insert(matchParticipants).values(participants);
-
-		return { success: true };
-	});
 
 interface AddParticipantsFormProps {
 	matchId: number;
 	campaignId: number;
-	matchType: "1v1" | "2v2" | "2v1" | "3v3" | "battle_royale";
 	onSuccess?: () => void;
 	onBack?: () => void;
 }
@@ -45,23 +14,21 @@ interface AddParticipantsFormProps {
 export function AddParticipantsForm({
 	matchId,
 	campaignId,
-	matchType,
 	onSuccess,
 	onBack,
 }: AddParticipantsFormProps) {
 	const [selectedWarbandIds, setSelectedWarbandIds] = useState<number[]>([]);
 	const queryClient = useQueryClient();
 
-	const { data: warbandsData, isLoading } = useQuery({
-		queryKey: ["warbands", campaignId],
-		queryFn: () => getWarbandsFn({ data: { campaignId } }),
-	});
+	const { data: warbandsData, isLoading } = useQuery(
+		campaignWarbandsQueryOptions(campaignId),
+	);
 
 	const mutation = useMutation({
 		mutationFn: addParticipantsFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["matches", campaignId],
+				queryKey: matchKeys.list(campaignId),
 			});
 			onSuccess?.();
 		},
@@ -92,23 +59,6 @@ export function AddParticipantsForm({
 		});
 	};
 
-	const getExpectedParticipants = () => {
-		switch (matchType) {
-			case "1v1":
-				return 2;
-			case "2v2":
-				return 4;
-			case "2v1":
-				return 3;
-			case "3v3":
-				return 6;
-			case "battle_royale":
-				return "2+";
-			default:
-				return "2+";
-		}
-	};
-
 	if (isLoading) {
 		return <div className="p-4 text-center">Loading warbands...</div>;
 	}
@@ -117,8 +67,7 @@ export function AddParticipantsForm({
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<div>
 				<p className="text-sm text-muted-foreground mb-4">
-					Select warbands that participated in this match. Expected participants
-					for {matchType}: {getExpectedParticipants()}
+					Select warbands that participated in this match.
 				</p>
 
 				<div className="space-y-2">

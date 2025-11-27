@@ -4,7 +4,7 @@ import { getMostGamesWon } from "~/api/campaign";
 export const Route = createFileRoute("/$campaignId/admin")({
 	component: RouteComponent,
 	loader: async ({ params }) => {
-		return getMostGamesWon({ data: { campaignId: Number(params.campaignId) } });
+		return getMostGamesWon({ data: { campaignId: params.campaignId } });
 	},
 });
 

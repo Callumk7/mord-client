@@ -38,7 +38,7 @@
 ### Styling & UI
 - **Tailwind CSS v4** - Utility-first CSS framework
 - **shadcn/ui** - Component library (New York style)
-- **Base UI Components** - Headless UI primitives
+- **Base UI Components** - Headless UI primitives. NOTE: IT IS IMPORTANT TO NOT USE THE RADIX API. Please read the Components section below for more information. 
 - **Lucide React** - Icon library
 - **class-variance-authority** - Component variant management
 - **next-themes** - Dark mode support
@@ -50,6 +50,136 @@
 - **Testing Library** - React testing utilities
 - **TanStack Devtools** - React Query and Router devtools
 - **pnpm** - Fast, efficient package manager
+
+### Components (Differences from Radix)
+Radix UI and Base UI are both excellent libraries for building web applications. However, they differ in their approach to component architecture. This guide will help you migrate your shadcn/ui components from Radix UI to Base UI.
+
+<Steps>
+  <Step>
+    ### `asChild` to `render` Prop
+
+    Radix UI uses an `asChild` prop, while Base UI uses a `render` prop.
+
+    In Radix UI, the `Slot` component lets you implement an `asChild` prop.
+
+    ```tsx
+    import { Slot } from 'radix-ui';
+
+    function Button({ asChild, ...props }) {
+      const Comp = asChild ? Slot.Root : 'button';
+      return <Comp {...props} />;
+    }
+
+    // Usage
+    <Button asChild>
+      <a href="/contact">Contact</a>
+    </Button>
+    ```
+
+    In Base UI, `useRender` lets you implement a render prop. The example below shows the equivalent implementation to the Radix example above.
+
+    ```tsx
+    import { useRender } from '@base-ui-components/react/use-render';
+
+    function Button({ render = <button />, ...props }) {
+      return useRender({ render, props });
+    }
+
+    // Usage 1
+    <Button render={<a href="/contact">Contact</a>} />
+
+    // Usage 2
+    <Button render={<a href="/contact"/>}>Contact</Button>
+    ```
+  </Step>
+  <Step>
+    ### Positioning Content Popups
+
+    In Radix UI, for components such as `Select`, `Tooltip`, `Popover`, `Dropdown Menu`, `HoverCard`, etc., you can position or align the content popup by passing props such as `side` or `align` to the `Content` component.
+
+    ```tsx
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Open</Button>
+      </DropdownMenuTrigger>
+
+      // [!code highlight]
+      <DropdownMenuContent side="left" align="start">
+        <DropdownMenuItem>Profile</DropdownMenuItem>
+        <DropdownMenuItem>Billing</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    ```
+
+    With Base UI, to position or align the content popup by passing props such as `side` or `align`, you'll need to use the positioner component instead of the content component. This is a required component, and your `Content` component should be wrapped with `Positioner`. The example below shows the equivalent implementation to the Radix example above.
+
+    ```tsx
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="outline" />}>
+        Open
+      </DropdownMenuTrigger>
+
+      // [!code highlight]
+      <DropdownMenuPositioner side="left" align="start">
+        <DropdownMenuContent>
+          <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuItem>Billing</DropdownMenuItem>
+        </DropdownMenuContent>
+      // [!code highlight]
+      </DropdownMenuPositioner>
+    </DropdownMenu>
+    ```
+  </Step>
+  <Step>
+    ### Using Labels in Popups
+
+    In Radix UI, you can use the `Label` component to add a label to the popup content. It can be used anywhere in the popup content.
+
+    ```tsx
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Open</Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent>
+        // [!code highlight]
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuItem>Billing</DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    ```
+
+    With Base UI, you must ensure that the label is wrapped with the `Group` component. The example below shows the equivalent implementation to the Radix example above.
+
+    ```tsx
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="outline" />}>
+        Open
+      </DropdownMenuTrigger>
+
+      <DropdownMenuPositioner>
+        <DropdownMenuContent>
+          <DropdownMenuGroup>
+            // [!code highlight]
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Billing</DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenuPositioner>
+    </DropdownMenu>
+    ```
+  </Step>
+  <Step>
+    ### Component Props
+
+    Radix UI and Base UI have different prop names for the same components. You'll need to ensure that you're using the correct prop names for each component when migrating. We have a migration guide for each component to help you with this process.
+
+  </Step>
+</Steps>
 
 ## Project Structure
 
@@ -168,13 +298,16 @@ pnpm db:pull
 pnpm db:migrate
 ```
 
-**Important:** Always update `src/db/schema.ts` first, then run `pnpm db:push` or `pnpm db:generate` to sync the database.
+**Important:** Always update `src/db/schema.ts` first, then ask the user to handle the migration.
 
 ### Code Quality
 
 ```bash
 # Run linter
 pnpm lint
+
+# Run typecheck
+pnpm typecheck
 
 # Format code
 pnpm format
@@ -185,6 +318,7 @@ pnpm check
 # Run tests
 pnpm test
 ```
+Run the linter and type check yourself and address feedback. You can inform the user when they should format the final code.
 
 ### Building for Production
 

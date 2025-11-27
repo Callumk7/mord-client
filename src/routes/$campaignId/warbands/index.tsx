@@ -1,49 +1,28 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
+import {
+	campaignWarbandsQueryOptions,
+	getCampaignWarbandsWithWarriorsOptions,
+} from "~/api/warbands";
+import { Button } from "~/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "~/components/ui/dialog";
+import { CreateWarbandForm } from "~/components/warbands/create-warband-form";
 import { WarbandCard } from "~/components/warbands/warband-card";
-import { db } from "~/db";
-import { warbands } from "~/db/schema";
-import { campaignWarbandQueryOptions } from "~/query/options";
-
-export const getCampaignWarbandsFn = createServerFn({ method: "GET" })
-	.inputValidator((data: { campaignId: number }) => data)
-	.handler(async ({ data }) => {
-		const campaignId = data.campaignId;
-		return await db.query.warbands.findMany({
-			where: eq(warbands.campaignId, campaignId),
-		});
-	});
-
-export const getWarbandByIdFn = createServerFn({ method: "GET" })
-	.inputValidator((data: { warbandId: number }) => data)
-	.handler(async ({ data }) => {
-		const warband = await db.query.warbands.findFirst({
-			where: eq(warbands.id, data.warbandId),
-		});
-		if (!warband) {
-			throw new Error(`Warband with id ${data.warbandId} not found`);
-		}
-		return warband;
-	});
-
-export const deleteWarbandFn = createServerFn({ method: "POST" })
-	.inputValidator((data: { warbandId: number }) => data)
-	.handler(async ({ data }) => {
-		const warbandId = data.warbandId;
-		try {
-			await db.delete(warbands).where(eq(warbands.id, warbandId));
-		} catch {
-			throw new Error(`Failed to delete warband with id ${warbandId}`);
-		}
-	});
 
 export const Route = createFileRoute("/$campaignId/warbands/")({
 	component: RouteComponent,
 	loader: async ({ params, context }) => {
 		await context.queryClient.ensureQueryData(
-			campaignWarbandQueryOptions(Number(params.campaignId)),
+			getCampaignWarbandsWithWarriorsOptions(params.campaignId),
 		);
 	},
 });
@@ -51,18 +30,69 @@ export const Route = createFileRoute("/$campaignId/warbands/")({
 function RouteComponent() {
 	const { campaignId } = Route.useParams();
 	const { data: warbands } = useSuspenseQuery(
-		campaignWarbandQueryOptions(Number(campaignId)),
+		getCampaignWarbandsWithWarriorsOptions(campaignId),
 	);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const queryClient = useQueryClient();
+
+	const handleWarbandCreated = () => {
+		// Close the dialog
+		setIsDialogOpen(false);
+		// Invalidate and refetch warbands
+		queryClient.invalidateQueries({
+			queryKey: campaignWarbandsQueryOptions(campaignId).queryKey,
+		});
+	};
 
 	return (
 		<div className="mb-6">
-			<h2 className="mb-4 text-2xl font-bold text-foreground">Warbands</h2>
+			<div className="mb-4 flex items-center justify-between">
+				<h2 className="text-2xl font-bold text-foreground">Warbands</h2>
+				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+					<DialogTrigger render={<Button />}>
+						<PlusIcon />
+						Create Warband
+					</DialogTrigger>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Create New Warband</DialogTitle>
+							<DialogDescription>
+								Add a new warband to your campaign. Enter the warband's name and
+								faction.
+							</DialogDescription>
+						</DialogHeader>
+						<CreateWarbandForm
+							campaignId={campaignId}
+							onSuccess={handleWarbandCreated}
+						/>
+					</DialogContent>
+				</Dialog>
+			</div>
 
 			{warbands.length === 0 ? (
 				<div className="rounded-lg border bg-muted p-8 text-center">
-					<p className="text-muted-foreground">
+					<p className="mb-4 text-muted-foreground">
 						No warbands in this campaign yet.
 					</p>
+					<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+						<DialogTrigger render={<Button />}>
+							<PlusIcon />
+							Create Your First Warband
+						</DialogTrigger>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>Create New Warband</DialogTitle>
+								<DialogDescription>
+									Add a new warband to your campaign. Enter the warband's name
+									and faction.
+								</DialogDescription>
+							</DialogHeader>
+							<CreateWarbandForm
+								campaignId={campaignId}
+								onSuccess={handleWarbandCreated}
+							/>
+						</DialogContent>
+					</Dialog>
 				</div>
 			) : (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

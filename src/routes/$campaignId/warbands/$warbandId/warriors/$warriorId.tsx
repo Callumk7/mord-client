@@ -9,6 +9,10 @@ export const Route = createFileRoute(
 			warbandId: Number(params.warbandId),
 			warriorId: Number(params.warriorId),
 		}),
+		stringify: (params) => ({
+			warbandId: String(params.warbandId),
+			warriorId: String(params.warriorId),
+		}),
 	},
 });
 

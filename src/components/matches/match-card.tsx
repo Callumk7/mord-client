@@ -1,13 +1,13 @@
 import { Link, useParams } from "@tanstack/react-router";
+import type { MatchWithParticipants } from "~/api/matches";
 import { Button } from "~/components/ui/button";
-import type { MatchWithParticipants } from "~/lib/queries/matches";
 
 interface MatchCardProps {
 	match: MatchWithParticipants;
 }
 
 export function MatchCard({ match }: MatchCardProps) {
-	const { campaignId } = useParams({ strict: false });
+	const { campaignId } = useParams({ strict: false }) as { campaignId: number };
 
 	const formatDate = (date: Date) => {
 		return new Date(date).toLocaleDateString("en-US", {
@@ -82,7 +82,7 @@ export function MatchCard({ match }: MatchCardProps) {
 				<div className="flex items-center justify-end">
 					<Link
 						to="/$campaignId/matches/$matchId"
-						params={{ campaignId: campaignId || "", matchId: String(match.id) }}
+						params={{ campaignId, matchId: match.id }}
 					>
 						<Button
 							variant="ghost"
@@ -93,6 +93,47 @@ export function MatchCard({ match }: MatchCardProps) {
 					</Link>
 				</div>
 			</div>
+
+			{match.events && match.events.length > 0 && (
+				<div className="mt-4 pt-4 border-t border-border">
+					<p className="text-xs text-muted-foreground mb-2">Match Events</p>
+					<div className="space-y-2">
+						{match.events.map((event) => (
+							<div
+								key={event.id}
+								className="flex items-start gap-2 text-xs bg-background/50 p-2 rounded"
+							>
+								<span className="text-muted-foreground">•</span>
+								<div className="flex-1">
+									{event.type === "knock_down" && (
+										<p>
+											<span className="font-medium">{event.warrior?.name}</span>
+											{event.defender && (
+												<>
+													{" "}
+													knocked down{" "}
+													<span className="font-medium">
+														{event.defender.name}
+													</span>
+												</>
+											)}
+											{event.injury && (
+												<span className="text-chart-3"> (Injury)</span>
+											)}
+											{event.death && (
+												<span className="text-chart-5"> (Death)</span>
+											)}
+										</p>
+									)}
+									{event.type === "moment" && event.description && (
+										<p className="italic">{event.description}</p>
+									)}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

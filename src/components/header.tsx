@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { getCampaignsOptions } from "~/api/campaign";
+import { getCampaignMatchesOptions } from "~/api/matches";
+import { campaignWarbandsQueryOptions } from "~/api/warbands";
 import type { Warband } from "~/db/schema";
-import {
-	campaignMatchesQueryOptions,
-	campaignsQueryOptions,
-	campaignWarbandQueryOptions,
-} from "~/query/options";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -21,13 +19,8 @@ interface HeaderProps {
 	campaignId: number;
 }
 export function Header({ campaignId }: HeaderProps) {
-	const { data: warbands } = useQuery(
-		campaignWarbandQueryOptions(Number(campaignId)),
-	);
-
-	const { data: matches } = useQuery(
-		campaignMatchesQueryOptions(Number(campaignId)),
-	);
+	const { data: warbands } = useQuery(campaignWarbandsQueryOptions(campaignId));
+	const { data: matches } = useQuery(getCampaignMatchesOptions(campaignId));
 
 	return (
 		<NavigationMenu className="p-4 w-full max-w-full">
@@ -97,6 +90,13 @@ export function Header({ campaignId }: HeaderProps) {
 							))}
 						</NavigationMenuContent>
 					</NavigationMenuItem>
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							render={<Link to="/$campaignId/events" params={{ campaignId }} />}
+						>
+							Events
+						</NavigationMenuLink>
+					</NavigationMenuItem>
 				</div>
 				<div className="flex items-center gap-1">
 					<NavigationMenuItem>
@@ -133,7 +133,7 @@ export function Header({ campaignId }: HeaderProps) {
 }
 
 export function ReferenceHeader() {
-	const { data: campaigns } = useQuery(campaignsQueryOptions);
+	const { data: campaigns } = useQuery(getCampaignsOptions);
 	return (
 		<NavigationMenu className="p-4 w-full max-w-full">
 			<NavigationMenuList className="justify-between w-full">

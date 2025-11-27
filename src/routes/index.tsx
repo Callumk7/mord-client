@@ -7,6 +7,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useId, useState } from "react";
 import { z } from "zod";
+import { getCampaignsOptions } from "~/api/campaign";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -19,7 +20,6 @@ import {
 import { Input } from "~/components/ui/input";
 import { db } from "~/db";
 import { campaigns } from "~/db/schema";
-import { campaignsQueryOptions } from "~/query/options";
 
 // Zod schema for campaign creation
 const createCampaignSchema = z.object({
@@ -57,7 +57,7 @@ export const getCampaigns = createServerFn({ method: "GET" }).handler(
 export const Route = createFileRoute("/")({
 	// Ensure campaigns data is loaded before rendering
 	loader: ({ context }) =>
-		context.queryClient.ensureQueryData(campaignsQueryOptions),
+		context.queryClient.ensureQueryData(getCampaignsOptions),
 	component: App,
 });
 
@@ -76,7 +76,7 @@ function App() {
 	});
 
 	// Fetch campaigns from cache and subscribe to updates
-	const { data: campaignsList } = useSuspenseQuery(campaignsQueryOptions);
+	const { data: campaignsList } = useSuspenseQuery(getCampaignsOptions);
 
 	const mutation = useMutation({
 		mutationFn: createCampaign,
@@ -239,7 +239,7 @@ function App() {
 									<Link
 										key={campaign.id}
 										to="/$campaignId"
-										params={{ campaignId: campaign.id.toString() }}
+										params={{ campaignId: campaign.id }}
 										className="block"
 									>
 										<Card className="p-4 transition-all hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10">
