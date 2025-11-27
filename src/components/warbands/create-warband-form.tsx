@@ -1,6 +1,9 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import z from "zod";
-import { createWarbandFn } from "~/api/warbands";
+import {
+	createWarbandFn,
+	getCampaignWarbandsWithWarriorsOptions,
+} from "~/api/warbands";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
@@ -9,7 +12,6 @@ const formSchema = z.object({
 	name: z.string().min(1, "Warband name is required"),
 	faction: z.string().min(1, "Warband faction is required"),
 });
-
 
 const { useAppForm } = createFormHook();
 
@@ -21,11 +23,15 @@ export function CreateWarbandForm({
 	campaignId,
 	onSuccess,
 }: CreateWarbandFormProps) {
+	const queryClient = useQueryClient();
 	const mutation = useMutation({
 		mutationFn: createWarbandFn,
 		onSuccess: (data) => {
 			console.log("Warband created successfully:", data);
 			// Call the onSuccess callback if provided
+			queryClient.invalidateQueries({
+				queryKey: getCampaignWarbandsWithWarriorsOptions(campaignId).queryKey,
+			});
 			onSuccess?.();
 		},
 	});

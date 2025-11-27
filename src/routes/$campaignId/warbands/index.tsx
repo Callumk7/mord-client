@@ -16,7 +16,7 @@ import {
 	DialogTrigger,
 } from "~/components/ui/dialog";
 import { CreateWarbandForm } from "~/components/warbands/create-warband-form";
-import { WarbandCard } from "~/components/warbands/warband-card";
+import { WarbandsTable } from "~/components/warbands/warbands-table";
 
 export const Route = createFileRoute("/$campaignId/warbands/")({
 	component: RouteComponent,
@@ -95,11 +95,7 @@ function RouteComponent() {
 					</Dialog>
 				</div>
 			) : (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{warbands.map((warband) => (
-						<WarbandCard warband={warband} key={warband.id} />
-					))}
-				</div>
+				<WarbandsTable warbands={warbands} />
 			)}
 		</div>
 	);

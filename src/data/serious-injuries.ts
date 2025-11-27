@@ -22,6 +22,7 @@ export type SeriousInjury = {
 	description: string;
 	statEffect?: string;
 	subRoll?: SubRoll;
+	outcome: "dead" | "injured" | "other";
 };
 
 export const seriousInjuries: SeriousInjury[] = [
@@ -30,18 +31,21 @@ export const seriousInjuries: SeriousInjury[] = [
 		name: "Dead",
 		description:
 			"The warrior is dead and his body is abandoned in the dark alleys of Mordheim, never to be found again. All the weapons and equipment he carried are lost. Remove him from the warband's roster.",
+		outcome: "dead",
 	},
 	{
 		roll: [16, 21],
 		name: "Multiple Injuries",
 		description:
 			"The warrior is not dead but has suffered a lot of wounds. Roll D6 times on this table. Re-roll any 'Dead', 'Captured' and further 'Multiple Injuries' results.",
+		outcome: "other",
 	},
 	{
 		roll: 22,
 		name: "Leg Wound",
 		description: "The warrior's leg is broken.",
 		statEffect: "-1 Movement",
+		outcome: "injured",
 	},
 	{
 		roll: 23,
@@ -62,6 +66,7 @@ export const seriousInjuries: SeriousInjury[] = [
 				},
 			],
 		},
+		outcome: "injured",
 	},
 	{
 		roll: 24,
@@ -83,6 +88,7 @@ export const seriousInjuries: SeriousInjury[] = [
 				},
 			],
 		},
+		outcome: "injured",
 	},
 	{
 		roll: 25,
@@ -101,6 +107,7 @@ export const seriousInjuries: SeriousInjury[] = [
 				},
 			],
 		},
+		outcome: "injured",
 	},
 	{
 		roll: 26,
@@ -108,6 +115,7 @@ export const seriousInjuries: SeriousInjury[] = [
 		description:
 			"The warrior has been badly wounded in the chest. He recovers but is weakened by the injury.",
 		statEffect: "-1 Toughness",
+		outcome: "injured",
 	},
 	{
 		roll: 31,
@@ -115,42 +123,49 @@ export const seriousInjuries: SeriousInjury[] = [
 		description:
 			"The warrior survives but loses the sight in one eye (randomly determine which). If the warrior is subsequently blinded in his remaining good eye he must retire from the warband.",
 		statEffect: "-1 Ballistic Skill",
+		outcome: "injured",
 	},
 	{
 		roll: 32,
 		name: "Old Battle Wound",
 		description:
 			"The warrior survives, but his wound will prevent him from fighting if you roll a 1 on a D6 at the start of any battle. Roll at the start of each battle from now on.",
+		outcome: "injured",
 	},
 	{
 		roll: 33,
 		name: "Nervous Condition",
 		description: "The warrior's nervous system has been damaged.",
 		statEffect: "-1 Initiative",
+		outcome: "injured",
 	},
 	{
 		roll: 34,
 		name: "Hand Injury",
 		description: "The warrior's hand is badly injured.",
 		statEffect: "-1 Weapon Skill",
+		outcome: "injured",
 	},
 	{
 		roll: 35,
 		name: "Deep Wound",
 		description:
 			"The warrior has suffered a serious wound and must miss the next D3 games while he is recovering. He may do nothing at all while recovering.",
+		outcome: "injured",
 	},
 	{
 		roll: 36,
 		name: "Robbed",
 		description:
 			"The warrior manages to escape, but all his weapons, armour and equipment are lost.",
+		outcome: "other",
 	},
 	{
 		roll: [41, 55],
 		name: "Full Recovery",
 		description:
 			"The warrior has been knocked unconscious, or suffers a light wound from which he makes a full recovery.",
+		outcome: "other",
 	},
 	{
 		roll: 56,
@@ -180,35 +195,41 @@ export const seriousInjuries: SeriousInjury[] = [
 				},
 			],
 		},
+		outcome: "injured",
 	},
 	{
 		roll: 61,
 		name: "Captured",
 		description:
 			"The warrior regains consciousness and finds himself held captive by the other warband. He may be ransomed at a price set by the captor or exchanged for one of their warband who is being held captive. Captives may be sold to slavers at a price of D6x5 gc. Undead may kill their captive and gain a new Zombie. The Possessed may sacrifice the prisoner. The leader of the warband will gain +1 Experience if they do so. Captives who are exchanged or ransomed retain all their weapons, armour and equipment; if captives are sold, killed or turned to Zombies, their weaponry, etc, is retained by their captors.",
+		outcome: "other",
 	},
 	{
 		roll: [62, 63],
 		name: "Hardened",
 		description:
 			"The warrior survives and becomes inured to the horrors of Mordheim. From now on he is immune to fear.",
+		outcome: "other",
 	},
 	{
 		roll: 64,
 		name: "Horrible Scars",
 		description: "The warrior causes fear from now on.",
+		outcome: "injured",
 	},
 	{
 		roll: 65,
 		name: "Sold to the Pits",
 		description:
 			"The warrior wakes up in the infamous fighting pits of Cutthroat's Haven and must fight against a Pit Fighter. See the Hired Swords section for full rules for Pit Fighters. Roll to see which side charges, and fight the battle as normal. If the warrior loses, roll to see whether he is dead or injured (ie, a D66 roll of 11-35). If he is not dead, he is thrown out of the fighting pits without his armour and weapons and may re-join his warband. If the warrior wins he gains 50 gc, +2 Experience and is free to rejoin his warband with all his weapons and equipment.",
+		outcome: "other",
 	},
 	{
 		roll: 66,
 		name: "Survives Against the Odds",
 		description:
 			"The warrior survives and rejoins his warband. He gains +1 Experience.",
+		outcome: "other",
 	},
 ];
 
