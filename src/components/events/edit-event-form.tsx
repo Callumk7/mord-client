@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { updateEventFn } from "~/api/events";
 import type { Event } from "~/db/schema";
+import type { InjuryType } from "~/types/injuries";
+import { getInjuryTypeSelectOptions } from "~/types/injuries";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import {
@@ -60,27 +62,7 @@ export function EditEventForm({ event, onSuccess }: EditEventFormProps) {
 		onSubmit: ({ value }) => {
 			const injuryType =
 				value.injuryType && value.injuryType !== ""
-					? (value.injuryType as
-							| "dead"
-							| "multiple"
-							| "leg_wound"
-							| "arm_wound"
-							| "madness"
-							| "smashed_leg"
-							| "chest_wound"
-							| "blinded_in_one_eye"
-							| "old_battle_wound"
-							| "nervous"
-							| "hand_injury"
-							| "deep_wound"
-							| "robbed"
-							| "full_recovery"
-							| "bitter_emnity"
-							| "captured"
-							| "hardened"
-							| "horrible_scars"
-							| "sold_to_pits"
-							| "survive_against_odds")
+					? (value.injuryType as InjuryType)
 					: undefined;
 
 			mutation.mutate({
@@ -96,29 +78,7 @@ export function EditEventForm({ event, onSuccess }: EditEventFormProps) {
 		},
 	});
 
-	const injuryTypes = [
-		{ value: "", label: "None" },
-		{ value: "dead", label: "Dead" },
-		{ value: "multiple", label: "Multiple Injuries" },
-		{ value: "leg_wound", label: "Leg Wound" },
-		{ value: "arm_wound", label: "Arm Wound" },
-		{ value: "madness", label: "Madness" },
-		{ value: "smashed_leg", label: "Smashed Leg" },
-		{ value: "chest_wound", label: "Chest Wound" },
-		{ value: "blinded_in_one_eye", label: "Blinded In One Eye" },
-		{ value: "old_battle_wound", label: "Old Battle Wound" },
-		{ value: "nervous", label: "Nervous" },
-		{ value: "hand_injury", label: "Hand Injury" },
-		{ value: "deep_wound", label: "Deep Wound" },
-		{ value: "robbed", label: "Robbed" },
-		{ value: "full_recovery", label: "Full Recovery" },
-		{ value: "bitter_emnity", label: "Bitter Emnity" },
-		{ value: "captured", label: "Captured" },
-		{ value: "hardened", label: "Hardened" },
-		{ value: "horrible_scars", label: "Horrible Scars" },
-		{ value: "sold_to_pits", label: "Sold To Pits" },
-		{ value: "survive_against_odds", label: "Survive Against Odds" },
-	];
+	const injuryTypes = getInjuryTypeSelectOptions(true);
 
 	return (
 		<form.AppForm>

@@ -9,6 +9,7 @@ import {
 	text,
 	timestamp,
 } from "drizzle-orm/pg-core";
+import { INJURY_TYPES } from "~/types/injuries";
 
 // Campaigns Table
 export const campaigns = pgTable("campaigns", {
@@ -186,28 +187,7 @@ export const matchWinnersRelations = relations(matchWinners, ({ one }) => ({
 	}),
 }));
 
-export const injuryEnum = pgEnum("injury_type", [
-	"dead",
-	"multiple",
-	"leg_wound",
-	"arm_wound",
-	"madness",
-	"smashed_leg",
-	"chest_wound",
-	"blinded_in_one_eye",
-	"old_battle_wound",
-	"nervous",
-	"hand_injury",
-	"deep_wound",
-	"robbed",
-	"full_recovery",
-	"bitter_emnity",
-	"captured",
-	"hardened",
-	"horrible_scars",
-	"sold_to_pits",
-	"survive_against_odds",
-]);
+export const injuryEnum = pgEnum("injury_type", INJURY_TYPES);
 
 export const events = pgTable("events", {
 	id: serial("id").primaryKey(),

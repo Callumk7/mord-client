@@ -9,6 +9,7 @@ import {
 	matchWinners,
 	events,
 } from "../src/db/schema.ts";
+import { INJURY_TYPES } from "../src/types/injuries.ts";
 import { eq } from "drizzle-orm";
 
 config({ path: ".env.local" });
@@ -341,28 +342,8 @@ async function seed() {
 				const hasInjury = isKnockDown && Math.random() > 0.6; // 40% chance of injury on knock down
 				const hasDeath = hasInjury && Math.random() > 0.9; // 10% chance of death if injured
 
-				const injuryTypes = [
-					"leg_wound",
-					"arm_wound",
-					"madness",
-					"smashed_leg",
-					"chest_wound",
-					"blinded_in_one_eye",
-					"old_battle_wound",
-					"nervous",
-					"hand_injury",
-					"deep_wound",
-					"robbed",
-					"full_recovery",
-					"bitter_emnity",
-					"captured",
-					"hardened",
-					"horrible_scars",
-					"sold_to_pits",
-					"survive_against_odds",
-					"multiple",
-					"dead",
-				] as const;
+				// Filter out "dead" from injury types for non-fatal injuries
+				const nonFatalInjuryTypes = INJURY_TYPES.filter((t) => t !== "dead");
 
 				eventData.push({
 					campaignId: campaign.id,
@@ -383,7 +364,7 @@ async function seed() {
 					injury: hasInjury,
 					death: hasDeath,
 					injuryType: hasInjury
-						? (hasDeath ? "dead" : randomElement(injuryTypes.filter((t) => t !== "dead")))
+						? (hasDeath ? "dead" : randomElement(nonFatalInjuryTypes))
 						: undefined,
 				});
 			}

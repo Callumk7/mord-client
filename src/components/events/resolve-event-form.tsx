@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventKeys, updateEventFn } from "~/api/events";
 import { matchKeys } from "~/api/matches";
-import { seriousInjuries } from "~/data/serious-injuries";
 import type { Event } from "~/db/schema";
+import type { InjuryType } from "~/types/injuries";
+import { getInjuryOptions } from "~/types/injuries";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import {
@@ -13,28 +14,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "../ui/select";
-
-type InjuryType =
-	| "dead"
-	| "multiple"
-	| "leg_wound"
-	| "arm_wound"
-	| "madness"
-	| "smashed_leg"
-	| "chest_wound"
-	| "blinded_in_one_eye"
-	| "old_battle_wound"
-	| "nervous"
-	| "hand_injury"
-	| "deep_wound"
-	| "robbed"
-	| "full_recovery"
-	| "bitter_emnity"
-	| "captured"
-	| "hardened"
-	| "horrible_scars"
-	| "sold_to_pits"
-	| "survive_against_odds";
 
 const { useAppForm } = createFormHook();
 
@@ -85,20 +64,8 @@ export function ResolveEventForm({ event, onSuccess }: ResolveEventFormProps) {
 		},
 	});
 
-	// Create a map of injury types for better display names
-	const injuryOptions = seriousInjuries.map((injury) => {
-		// Convert the name to snake_case to match the enum
-		const enumValue = injury.name
-			.toLowerCase()
-			.replace(/\s+/g, "_")
-			.replace(/'/g, "");
-
-		return {
-			value: enumValue,
-			label: injury.name,
-			description: injury.description,
-		};
-	});
+	// Get injury options from centralized helper
+	const injuryOptions = getInjuryOptions();
 
 	return (
 		<form.AppForm>

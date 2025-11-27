@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
 import { events } from "~/db/schema";
+import { injuryTypeSchema } from "~/types/injuries";
 
 // Query Key Factory
 export const eventKeys = {
@@ -38,28 +39,6 @@ export const campaignEventsQueryOptions = (campaignId: number) =>
 		queryFn: () => getCampaignEventsFn({ data: { campaignId } }),
 	});
 
-const injuryTypeSchema = z.enum([
-	"dead",
-	"multiple",
-	"leg_wound",
-	"arm_wound",
-	"madness",
-	"smashed_leg",
-	"chest_wound",
-	"blinded_in_one_eye",
-	"old_battle_wound",
-	"nervous",
-	"hand_injury",
-	"deep_wound",
-	"robbed",
-	"full_recovery",
-	"bitter_emnity",
-	"captured",
-	"hardened",
-	"horrible_scars",
-	"sold_to_pits",
-	"survive_against_odds",
-]);
 
 // Create Event
 const createEventFormSchema = z.object({
