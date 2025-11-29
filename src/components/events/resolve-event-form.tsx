@@ -1,10 +1,13 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { eventKeys, updateEventFn } from "~/api/events";
-import { matchKeys } from "~/api/matches";
 import type { Event } from "~/db/schema";
+import { useResolveEvent } from "~/hooks/mutations/events";
 import type { InjuryType } from "~/types/injuries";
-import { getInjuryOptions } from "~/types/injuries";
+import {
+	getInjuryInfo,
+	getInjuryOptions,
+	seriousInjuries,
+} from "~/types/injuries";
 import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { createFormHook } from "../ui/form-tanstack";
 import {
 	Select,
@@ -23,22 +26,11 @@ interface ResolveEventFormProps {
 }
 
 export function ResolveEventForm({ event, onSuccess }: ResolveEventFormProps) {
-	const queryClient = useQueryClient();
-
-	const mutation = useMutation({
-		mutationFn: updateEventFn,
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: matchKeys.detail(event.matchId),
-			});
-			queryClient.invalidateQueries({
-				queryKey: eventKeys.listByCampaign(event.campaignId),
-			});
-			queryClient.invalidateQueries({
-				queryKey: eventKeys.detail(event.id),
-			});
-			onSuccess?.();
-		},
+	const mutation = useResolveEvent({
+		matchId: event.matchId,
+		campaignId: event.campaignId,
+		eventId: event.id,
+		onSuccess,
 	});
 
 	const form = useAppForm({
@@ -50,15 +42,10 @@ export function ResolveEventForm({ event, onSuccess }: ResolveEventFormProps) {
 				return;
 			}
 
-			const isDeath = value.injuryType === "dead";
-
 			mutation.mutate({
 				data: {
 					eventId: event.id,
 					injuryType: value.injuryType,
-					death: isDeath,
-					injury: !isDeath,
-					resolved: true,
 				},
 			});
 		},
@@ -88,6 +75,7 @@ export function ResolveEventForm({ event, onSuccess }: ResolveEventFormProps) {
 										onValueChange={(value) => {
 											field.handleChange(value as InjuryType);
 										}}
+										items={injuryOptions}
 									>
 										<SelectTrigger>
 											<SelectValue placeholder="Select an injury type" />
@@ -112,18 +100,91 @@ export function ResolveEventForm({ event, onSuccess }: ResolveEventFormProps) {
 					}}
 				</form.AppField>
 
-				<div className="flex justify-end gap-2">
-					<form.Subscribe selector={(state) => state.values.injuryType}>
-						{(injuryType) => (
-							<Button
-								type="submit"
-								disabled={mutation.isPending || !injuryType}
-							>
-								{mutation.isPending ? "Resolving..." : "Resolve Event"}
-							</Button>
-						)}
-					</form.Subscribe>
-				</div>
+				<form.Subscribe selector={(state) => state.values.injuryType}>
+					{(injuryType) => {
+						const injuryInfo = injuryType
+							? getInjuryInfo(injuryType as InjuryType)
+							: null;
+						const fullInjury = injuryType
+							? seriousInjuries.find(
+									(i) => i.enumValue === (injuryType as InjuryType),
+								)
+							: null;
+
+						return (
+							<>
+								{injuryInfo && (
+									<Card>
+										<CardHeader>
+											<CardTitle>{injuryInfo.name}</CardTitle>
+										</CardHeader>
+										<CardContent className="space-y-3">
+											<div className="flex items-center gap-4 text-sm">
+												<div>
+													<span className="font-medium">Roll: </span>
+													{Array.isArray(injuryInfo.roll)
+														? `${injuryInfo.roll[0]}–${injuryInfo.roll[1]}`
+														: injuryInfo.roll}
+												</div>
+												{injuryInfo.statEffect && (
+													<div>
+														<span className="font-medium">Stat Effect: </span>
+														{injuryInfo.statEffect}
+													</div>
+												)}
+											</div>
+											<div className="text-sm">
+												<div className="font-medium mb-1">Description:</div>
+												<div className="whitespace-pre-wrap text-muted-foreground">
+													{injuryInfo.description}
+												</div>
+											</div>
+											{fullInjury?.subRoll && (
+												<div className="text-sm border-t pt-3">
+													<div className="font-medium mb-2">
+														Additional Roll ({fullInjury.subRoll.dice}):
+													</div>
+													{fullInjury.subRoll.description && (
+														<div className="text-muted-foreground mb-2">
+															{fullInjury.subRoll.description}
+														</div>
+													)}
+													<ul className="list-disc list-inside space-y-1 text-muted-foreground">
+														{fullInjury.subRoll.outcomes.map((outcome) => {
+															const rollKey = Array.isArray(outcome.roll)
+																? `${outcome.roll[0]}-${outcome.roll[1]}`
+																: outcome.roll.toString();
+															return (
+																<li key={rollKey}>
+																	<span className="font-medium">
+																		{Array.isArray(outcome.roll)
+																			? `${outcome.roll[0]}–${outcome.roll[1]}`
+																			: outcome.roll}
+																		:{" "}
+																	</span>
+																	{outcome.effect}
+																</li>
+															);
+														})}
+													</ul>
+												</div>
+											)}
+										</CardContent>
+									</Card>
+								)}
+
+								<div className="flex justify-end gap-2">
+									<Button
+										type="submit"
+										disabled={mutation.isPending || !injuryType}
+									>
+										{mutation.isPending ? "Resolving..." : "Resolve Event"}
+									</Button>
+								</div>
+							</>
+						);
+					}}
+				</form.Subscribe>
 
 				{mutation.isError && (
 					<div className="text-sm text-red-500">

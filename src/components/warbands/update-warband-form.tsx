@@ -15,9 +15,9 @@ const formSchema = z.object({
 	name: z.string().min(1, "Warband name is required"),
 	faction: z.string().min(1, "Warband faction is required"),
 	treasury: z.number().int().min(0, "Treasury must be 0 or greater"),
-	color: z.string().optional(),
-	icon: z.string().optional(),
-	notes: z.string().optional(),
+	color: z.string(),
+	icon: z.string(),
+	notes: z.string(),
 });
 
 export const updateWarbandFn = createServerFn({ method: "POST" })
@@ -86,9 +86,9 @@ export function UpdateWarbandForm({
 					name: value.name,
 					faction: value.faction,
 					treasury: value.treasury,
-					color: value.color || undefined,
-					icon: value.icon || undefined,
-					notes: value.notes || undefined,
+					color: value.color,
+					icon: value.icon,
+					notes: value.notes,
 					warbandId: warband.id,
 				},
 			});

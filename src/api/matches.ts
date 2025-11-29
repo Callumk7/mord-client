@@ -3,7 +3,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
-import { matches, matchParticipants, matchWinners } from "~/db/schema";
+import {
+	matches,
+	matchParticipants,
+	matchWinners,
+	warriors,
+} from "~/db/schema";
 
 // Query Key Factory
 export const matchKeys = {
@@ -36,6 +41,7 @@ async function getCampaignMatches(campaignId: number) {
 
 	return matchesData;
 }
+
 export const getCampaignMatchesFn = createServerFn({ method: "GET" })
 	.inputValidator((data: { campaignId: number }) => data)
 	.handler(async ({ data }) => {
@@ -97,7 +103,7 @@ async function getMatchWarbands(matchId: number) {
 	const result = await db.query.matchParticipants.findMany({
 		where: eq(matchParticipants.matchId, matchId),
 		with: {
-			warband: { with: { warriors: true } },
+			warband: { with: { warriors: { where: eq(warriors.isAlive, true) } } },
 		},
 	});
 
@@ -218,6 +224,10 @@ export const setMatchWinnersFn = createServerFn({ method: "POST" })
 		}));
 
 		await db.insert(matchWinners).values(winners);
+		await db
+			.update(matches)
+			.set({ status: "ended" })
+			.where(eq(matches.id, data.matchId));
 
 		return { success: true };
 	});

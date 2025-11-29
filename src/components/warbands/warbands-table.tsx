@@ -30,7 +30,6 @@ import {
 	TableRow,
 } from "~/components/ui/table";
 import type { WarbandWithWarriors } from "~/db/schema";
-import { calculateWarbandRating } from "~/lib/rating";
 import { UpdateWarbandForm } from "./update-warband-form";
 
 interface WarbandsTableProps {
@@ -104,11 +103,10 @@ export function WarbandsTable({ warbands }: WarbandsTableProps) {
 			id: "rating",
 			header: "Rating",
 			cell: ({ row }) => {
-				const rating = calculateWarbandRating(row.original.warriors);
 				return (
 					<div className="flex items-center gap-2">
 						<TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
-						<span>{rating}</span>
+						<span>{row.original.rating}</span>
 					</div>
 				);
 			},

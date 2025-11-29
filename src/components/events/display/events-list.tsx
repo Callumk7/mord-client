@@ -9,13 +9,17 @@ import {
 } from "~/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import type { EventWithParticipants } from "~/db/schema";
-import { ResolveEventForm } from "../resolve-event-form";
+import { CreateEventForm } from "../create-event-form";
+import { useRef } from "react";
 
 interface EventsListProps {
 	events: EventWithParticipants[];
+	campaignId: number;
+	matchId: number;
 }
 
-export function EventsList({ events }: EventsListProps) {
+export function EventsList({ events, campaignId, matchId }: EventsListProps) {
+	const dialogRef = useRef<HTMLDivElement>(null);
 	return (
 		<Card>
 			<CardHeader>
@@ -29,20 +33,34 @@ export function EventsList({ events }: EventsListProps) {
 				</div>
 			</CardHeader>
 			<CardContent>
-				{events.length > 0 ? (
-					<div className="space-y-2">
-						{events.map((event) => (
-							<EventListItem key={event.id} event={event} />
-						))}
-					</div>
-				) : (
-					<div className="p-8 text-center text-muted-foreground">
-						<p>No events recorded yet.</p>
-						<p className="text-sm mt-2">
-							Click "Add Event" to record knock downs or memorable moments!
-						</p>
-					</div>
-				)}
+				<div className="space-y-3">
+					<Dialog>
+						<DialogTrigger render={<Button size="sm" />}>
+							Add Event
+						</DialogTrigger>
+						<DialogContent ref={dialogRef}>
+							<CreateEventForm
+								portalContainer={dialogRef}
+								campaignId={campaignId}
+								matchId={matchId}
+							/>
+						</DialogContent>
+					</Dialog>
+					{events.length > 0 ? (
+						<div className="space-y-2">
+							{events.map((event) => (
+								<EventListItem key={event.id} event={event} />
+							))}
+						</div>
+					) : (
+						<div className="p-8 text-center text-muted-foreground">
+							<p>No events recorded yet.</p>
+							<p className="text-sm mt-2">
+								Click "Add Event" to record knock downs or memorable moments!
+							</p>
+						</div>
+					)}
+				</div>
 			</CardContent>
 		</Card>
 	);
@@ -88,16 +106,7 @@ function EventListItem({ event }: EventListItemProps) {
 					{event.resolved ? (
 						<Badge variant={"success"}>Resolved</Badge>
 					) : (
-						<Dialog>
-							<DialogTrigger
-								render={<Button size={"sm"} variant={"outline"} />}
-							>
-								Resolve
-							</DialogTrigger>
-							<DialogContent>
-								<ResolveEventForm event={event} />
-							</DialogContent>
-						</Dialog>
+						<Badge variant={"outline"}>Unresolved</Badge>
 					)}
 				</div>
 			</div>

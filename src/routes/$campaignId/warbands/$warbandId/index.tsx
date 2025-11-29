@@ -24,7 +24,6 @@ import {
 } from "~/components/ui/table";
 import { UpdateWarbandForm } from "~/components/warbands/update-warband-form";
 import { CreateWarriorForm } from "~/components/warriors/create-warrior-form";
-import { WarriorCard } from "~/components/warriors/warrior-card";
 
 export const Route = createFileRoute("/$campaignId/warbands/$warbandId/")({
 	component: RouteComponent,
@@ -160,7 +159,6 @@ function RouteComponent() {
 									<TableRow>
 										<TableHead>Name</TableHead>
 										<TableHead>Type</TableHead>
-										<TableHead className="text-right">XP</TableHead>
 										<TableHead className="text-right">Kills</TableHead>
 									</TableRow>
 								</TableHeader>
@@ -174,9 +172,6 @@ function RouteComponent() {
 												</TableCell>
 												<TableCell className="capitalize">
 													{warrior.type}
-												</TableCell>
-												<TableCell className="text-right">
-													{warrior.experience}
 												</TableCell>
 												<TableCell className="text-right">
 													{warrior.kills}
@@ -226,12 +221,6 @@ function RouteComponent() {
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className="text-muted-foreground">Total Experience:</span>
-								<span className="font-semibold">
-									{warriors.reduce((sum, w) => sum + w.experience, 0)}
-								</span>
-							</div>
-							<div className="flex justify-between">
 								<span className="text-muted-foreground">Casualties:</span>
 								<span className="font-semibold text-destructive">
 									{warriors.filter((w) => !w.isAlive).length}
@@ -267,9 +256,7 @@ function RouteComponent() {
 								<TableRow>
 									<TableHead>Name</TableHead>
 									<TableHead>Type</TableHead>
-									<TableHead className="text-right">XP</TableHead>
 									<TableHead className="text-right">Kills</TableHead>
-									<TableHead>Cause of Death</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -284,13 +271,7 @@ function RouteComponent() {
 												{warrior.type}
 											</TableCell>
 											<TableCell className="text-right text-muted-foreground">
-												{warrior.experience}
-											</TableCell>
-											<TableCell className="text-right text-muted-foreground">
 												{warrior.kills}
-											</TableCell>
-											<TableCell className="text-muted-foreground">
-												{warrior.deathDescription || "Unknown"}
 											</TableCell>
 										</TableRow>
 									))}
@@ -303,11 +284,15 @@ function RouteComponent() {
 				<Card>
 					<CardContent>
 						{warriors.map((warrior) => (
-							<WarriorCard
-								campaignId={campaignId}
-								key={warrior.id}
-								warrior={warrior}
-							/>
+							<div key={warrior.id}>
+								<table>
+									<tr>
+										<td>{warrior.name}</td>
+										<td>{warrior.type}</td>
+										<td>{warrior.kills}</td>
+									</tr>
+								</table>
+							</div>
 						))}
 					</CardContent>
 				</Card>

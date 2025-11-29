@@ -73,6 +73,47 @@ export const getWarriorsByCampaignOptions = (campaignId: number) =>
 		queryFn: () => getWarriorsByCampaignFn({ data: { campaignId } }),
 	});
 
+// Create Warrior
+export const createWarriorSchema = z.object({
+	warbandId: z.number(),
+	campaignId: z.number(),
+	name: z.string().min(1, "Warrior name is required"),
+	type: z.enum(["hero", "henchman"]),
+	class: z.string().optional(),
+	isLeader: z.boolean().optional(),
+});
+async function createWarrior(data: z.infer<typeof createWarriorSchema>) {
+	const newWarriorData = {
+		name: data.name,
+		warbandId: data.warbandId,
+		campaignId: data.campaignId,
+		type: data.type,
+		isLeader: data.isLeader,
+		kills: 0,
+		injuriesCaused: 0,
+		injuriesReceived: 0,
+		gamesPlayed: 0,
+		isAlive: true,
+	};
+	const [newWarrior] = await db
+		.insert(warriors)
+		.values(newWarriorData)
+		.returning();
+
+	return newWarrior;
+}
+
+export const createWarriorFn = createServerFn({ method: "POST" })
+	.inputValidator(createWarriorSchema)
+	.handler(async ({ data }) => {
+		return await createWarrior(data);
+	});
+
+export const createWarriorMutation = mutationOptions({
+	mutationFn: (data: z.infer<typeof createWarriorSchema>) =>
+		createWarriorFn({ data }),
+});
+
 // Update Warrior
 export const updateWarriorFormSchema = z.object({
 	experience: z.number().optional(),
@@ -115,41 +156,4 @@ export const updateWarriorMutation = mutationOptions({
 	mutationFn: (
 		data: z.infer<typeof updateWarriorFormSchema> & { warriorId: number },
 	) => updateWarriorFn({ data }),
-});
-
-// Add Experience to Warrior
-export const addExperienceFormSchema = z.object({
-	warriorId: z.number(),
-	additionalExperience: z.number().min(0, "Experience must be positive"),
-});
-
-async function addExperienceToWarrior(warriorId: number, amount: number) {
-	const warrior = await getWarriorById(warriorId);
-	const newExperience = warrior.experience + amount;
-
-	const [updatedWarrior] = await db
-		.update(warriors)
-		.set({ experience: newExperience })
-		.where(eq(warriors.id, warriorId))
-		.returning();
-
-	if (!updatedWarrior) {
-		throw new Error(`Failed to add experience to warrior with id ${warriorId}`);
-	}
-
-	return updatedWarrior;
-}
-
-export const addExperienceToWarriorFn = createServerFn({ method: "POST" })
-	.inputValidator(addExperienceFormSchema)
-	.handler(async ({ data }) => {
-		return await addExperienceToWarrior(
-			data.warriorId,
-			data.additionalExperience,
-		);
-	});
-
-export const addExperienceToWarriorMutation = mutationOptions({
-	mutationFn: (data: z.infer<typeof addExperienceFormSchema>) =>
-		addExperienceToWarriorFn({ data }),
 });

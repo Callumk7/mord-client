@@ -1,9 +1,9 @@
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
-import { warbands, warriors } from "~/db/schema";
+import { events, warbands, warriors } from "~/db/schema";
 
 // Query Key Factory
 export const warbandKeys = {
@@ -112,6 +112,7 @@ export const createWarbandFn = createServerFn({ method: "POST" })
 				faction: data.faction,
 				rating: 0,
 				treasury: 0,
+				experience: 0,
 				campaignId: data.campaignId,
 			})
 			.returning();
@@ -122,12 +123,23 @@ export const createWarbandFn = createServerFn({ method: "POST" })
 // Get Warriors for Warband
 async function getWarriorsByWarband(warbandId: number) {
 	const result = await db
-		.select()
+		.select({
+			warrior: warriors,
+			kills: count(events.id),
+		})
 		.from(warriors)
+		.leftJoin(
+			events,
+			and(eq(events.warriorId, warriors.id), eq(events.death, true)),
+		)
 		.where(eq(warriors.warbandId, warbandId))
+		.groupBy(warriors.id)
 		.orderBy(warriors.createdAt);
 
-	return result;
+	return result.map((row) => ({
+		...row.warrior,
+		kills: Number(row.kills),
+	}));
 }
 
 export const getWarriorsByWarbandFn = createServerFn({ method: "GET" })

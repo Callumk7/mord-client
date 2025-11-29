@@ -103,37 +103,6 @@ export const getMostGamesWonOptions = (campaignId: number) =>
 		queryFn: () => getMostGamesWon({ data: { campaignId } }),
 	});
 
-// Most Experience
-async function getWarbandsRankedByExperience(campaignId: number) {
-	const results = await db
-		.select({
-			warbandId: warbands.id,
-			warband: warbands,
-			totalExperience: sql<number>`COALESCE(SUM(${warriors.experience}), 0)`,
-		})
-		.from(warbands)
-		.leftJoin(warriors, eq(warriors.warbandId, warbands.id))
-		.where(eq(warbands.campaignId, campaignId))
-		.groupBy(warbands.id)
-		.orderBy(desc(sql`COALESCE(SUM(${warriors.experience}), 0)`));
-
-	return results;
-}
-
-export const getMostExperience = createServerFn({ method: "GET" })
-	.inputValidator((d: { campaignId: number }) => d)
-	.handler(async ({ data }) => {
-		const campaignId = data.campaignId;
-
-		return await getWarbandsRankedByExperience(campaignId);
-	});
-
-export const getMostExperienceOptions = (campaignId: number) =>
-	queryOptions({
-		queryKey: campaignKeys.experience(campaignId),
-		queryFn: () => getMostExperience({ data: { campaignId } }),
-	});
-
 // Richest Warband
 async function getWarbandsRankedByTreasury(campaignId: number) {
 	const results = await db
@@ -164,39 +133,6 @@ export const getMostTreasuryOptions = (campaignId: number) =>
 	});
 
 // Warrior Leaderboards
-
-// Most Kills
-async function getWarriorsRankedByKills(campaignId: number) {
-	const results = await db
-		.select({
-			warriorId: warriors.id,
-			warrior: warriors,
-			warbandName: warbands.name,
-			warbandIcon: warbands.icon,
-			warbandColor: warbands.color,
-			kills: warriors.kills,
-		})
-		.from(warriors)
-		.innerJoin(warbands, eq(warriors.warbandId, warbands.id))
-		.where(eq(warriors.campaignId, campaignId))
-		.orderBy(desc(warriors.kills));
-
-	return results;
-}
-
-export const getMostKills = createServerFn({ method: "GET" })
-	.inputValidator((d: { campaignId: number }) => d)
-	.handler(async ({ data }) => {
-		const campaignId = data.campaignId;
-
-		return await getWarriorsRankedByKills(campaignId);
-	});
-
-export const getMostKillsOptions = (campaignId: number) =>
-	queryOptions({
-		queryKey: campaignKeys.kills(campaignId),
-		queryFn: () => getMostKills({ data: { campaignId } }),
-	});
 
 async function getWarriorsRankedByKillsFromEvents(campaignId: number) {
 	const results = await db
@@ -230,39 +166,6 @@ export const getMostKillsFromEventsOptions = (campaignId: number) =>
 	queryOptions({
 		queryKey: campaignKeys.killsFromEvents(campaignId),
 		queryFn: () => getMostKillsFromEvents({ data: { campaignId } }),
-	});
-
-// Most Injuries Taken
-async function getWarriorsRankedByInjuries(campaignId: number) {
-	const results = await db
-		.select({
-			warriorId: warriors.id,
-			warrior: warriors,
-			warbandName: warbands.name,
-			warbandIcon: warbands.icon,
-			warbandColor: warbands.color,
-			injuriesReceived: warriors.injuriesReceived,
-		})
-		.from(warriors)
-		.innerJoin(warbands, eq(warriors.warbandId, warbands.id))
-		.where(eq(warriors.campaignId, campaignId))
-		.orderBy(desc(warriors.injuriesReceived));
-
-	return results;
-}
-
-export const getMostInjuries = createServerFn({ method: "GET" })
-	.inputValidator((d: { campaignId: number }) => d)
-	.handler(async ({ data }) => {
-		const campaignId = data.campaignId;
-
-		return await getWarriorsRankedByInjuries(campaignId);
-	});
-
-export const getMostInjuriesOptions = (campaignId: number) =>
-	queryOptions({
-		queryKey: campaignKeys.injuries(campaignId),
-		queryFn: () => getMostInjuries({ data: { campaignId } }),
 	});
 
 async function getWarriorsRankedByInjuriesFromEvents(campaignId: number) {

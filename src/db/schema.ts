@@ -37,6 +37,7 @@ export const warbands = pgTable("warbands", {
 	name: text("name").notNull(),
 	faction: text("faction").notNull(),
 	rating: integer("rating").notNull(),
+	experience: integer("experience").notNull(),
 	treasury: integer("treasury").notNull(),
 	campaignId: integer("campaign_id")
 		.notNull()
@@ -74,15 +75,10 @@ export const warriors = pgTable("warriors", {
 		.notNull()
 		.references(() => warbands.id),
 	type: text("type").notNull().$type<"hero" | "henchman">(),
-	experience: integer("experience").notNull(),
-	kills: integer("kills").notNull(),
-	injuriesCaused: integer("injuries_caused").notNull(),
-	injuriesReceived: integer("injuries_received").notNull(),
 	gamesPlayed: integer("games_played").notNull(),
 	isLeader: boolean("is_leader").notNull().default(false),
 	isAlive: boolean("is_alive").notNull(),
 	deathDate: timestamp("death_date"),
-	deathDescription: text("death_description"),
 	equipment: jsonb("equipment").$type<string[]>(),
 	skills: jsonb("skills").$type<string[]>(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -126,6 +122,10 @@ export const matches = pgTable("matches", {
 });
 
 export type Match = typeof matches.$inferSelect;
+export type CampaignMatch = Match & {
+	participants: (MatchParticipant & { warband: Warband })[];
+	events: (Event & { warrior: Warrior; defender: Warrior | null })[];
+};
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
 	winners: many(matchWinners),

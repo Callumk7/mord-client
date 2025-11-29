@@ -3,8 +3,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
-import { events } from "~/db/schema";
-import { injuryTypeSchema } from "~/types/injuries";
+import { events, warriors } from "~/db/schema";
+import { getInjuryOutcome, injuryTypeSchema } from "~/types/injuries";
 
 // Query Key Factory
 export const eventKeys = {
@@ -38,7 +38,6 @@ export const campaignEventsQueryOptions = (campaignId: number) =>
 		queryKey: eventKeys.listByCampaign(campaignId),
 		queryFn: () => getCampaignEventsFn({ data: { campaignId } }),
 	});
-
 
 // Create Event
 const createEventFormSchema = z.object({
@@ -118,6 +117,68 @@ async function getMatchEvents(matchId: number) {
 
 	return result;
 }
+
+export const resolveEventFn = createServerFn({ method: "POST" })
+	.inputValidator(
+		z.object({
+			eventId: z.number(),
+			injuryType: injuryTypeSchema,
+		}),
+	)
+	.handler(async ({ data }) => {
+		const { eventId, injuryType } = data;
+
+		// Get injury outcome to determine if it's a death, injury, or other
+		const outcome = getInjuryOutcome(injuryType);
+		if (!outcome) {
+			throw new Error(`Invalid injury type: ${injuryType}`);
+		}
+
+		// Fetch the event to get warrior and defender IDs
+		const event = await db.query.events.findFirst({
+			where: eq(events.id, eventId),
+		});
+
+		if (!event) {
+			throw new Error(`Event with id ${eventId} not found`);
+		}
+
+		// Use transaction to ensure atomicity
+		return await db.transaction(async (tx) => {
+			// Determine if this is a death or injury based on outcome
+			const isDeath = outcome === "dead";
+			const isInjury = outcome === "injured";
+
+			// Update the event with injury type and mark as resolved
+			const [updatedEvent] = await tx
+				.update(events)
+				.set({
+					injuryType,
+					resolved: true,
+					death: isDeath,
+					injury: isInjury,
+				})
+				.where(eq(events.id, eventId))
+				.returning();
+
+			if (!updatedEvent) {
+				throw new Error(`Failed to update event with id ${eventId}`);
+			}
+
+			// If death outcome and defender exists, mark defender as dead
+			if (isDeath && event.defenderId) {
+				await tx
+					.update(warriors)
+					.set({
+						isAlive: false,
+						deathDate: new Date(),
+					})
+					.where(eq(warriors.id, event.defenderId));
+			}
+
+			return updatedEvent;
+		});
+	});
 
 export const getMatchEventsFn = createServerFn({ method: "GET" })
 	.inputValidator((data: { matchId: number }) => data)

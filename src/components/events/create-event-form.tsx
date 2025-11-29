@@ -138,42 +138,53 @@ export function CreateEventForm({
 				</form.AppField>
 
 				<form.AppField name="attackerWarbandId">
-					{(field) => (
-						<form.Item>
-							<field.Label>
-								{eventType === "knock_down" ? "Attacker's Warband" : "Warband"}
-							</field.Label>
-							<field.Control>
-								<Select
-									value={field.state.value}
-									onValueChange={(value) => {
-										field.handleChange(value);
-										form.setFieldValue("warriorId", "");
-									}}
-									disabled={loadingWarbands}
-								>
-									<SelectTrigger>
-										<SelectValue placeholder="Select a warband" />
-									</SelectTrigger>
-									<SelectPortal container={portalContainer?.current}>
-										<SelectPositioner>
-											<SelectContent>
-												{warbands?.map((warband) => (
-													<SelectItem
-														key={warband.id}
-														value={String(warband.id)}
-													>
-														{warband.name}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</SelectPositioner>
-									</SelectPortal>
-								</Select>
-							</field.Control>
-							<field.Description>Select the warband</field.Description>
-						</form.Item>
-					)}
+					{(field) => {
+						const warbandItems =
+							warbands?.map((warband) => ({
+								label: warband.name,
+								value: String(warband.id),
+							})) || [];
+
+						return (
+							<form.Item>
+								<field.Label>
+									{eventType === "knock_down"
+										? "Attacker's Warband"
+										: "Warband"}
+								</field.Label>
+								<field.Control>
+									<Select
+										value={field.state.value}
+										onValueChange={(value) => {
+											field.handleChange(value);
+											form.setFieldValue("warriorId", "");
+										}}
+										disabled={loadingWarbands}
+										items={warbandItems}
+									>
+										<SelectTrigger className="w-full">
+											<SelectValue placeholder="Select a warband" />
+										</SelectTrigger>
+										<SelectPortal container={portalContainer?.current}>
+											<SelectPositioner>
+												<SelectContent>
+													{warbands?.map((warband) => (
+														<SelectItem
+															key={warband.id}
+															value={String(warband.id)}
+														>
+															{warband.name}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</SelectPositioner>
+										</SelectPortal>
+									</Select>
+								</field.Control>
+								<field.Description>Select the warband</field.Description>
+							</form.Item>
+						);
+					}}
 				</form.AppField>
 
 				<form.AppField name="warriorId">
@@ -183,6 +194,10 @@ export function CreateEventForm({
 							(wb) => String(wb.id) === selectedWarbandId,
 						);
 						const availableWarriors = selectedWarband?.warriors || [];
+						const warriorItems = availableWarriors.map((warrior) => ({
+							label: warrior.name,
+							value: String(warrior.id),
+						}));
 
 						return (
 							<form.Item>
@@ -193,8 +208,12 @@ export function CreateEventForm({
 									<Select
 										value={field.state.value}
 										onValueChange={field.handleChange}
+										items={warriorItems}
 									>
-										<SelectTrigger disabled={!selectedWarbandId}>
+										<SelectTrigger
+											className="w-full"
+											disabled={!selectedWarbandId}
+										>
 											<SelectValue
 												placeholder={
 													selectedWarbandId
@@ -232,43 +251,54 @@ export function CreateEventForm({
 				{eventType === "knock_down" && (
 					<>
 						<form.AppField name="defenderWarbandId">
-							{(field) => (
-								<form.Item>
-									<field.Label>Defender's Warband (Optional)</field.Label>
-									<field.Control>
-										<Select
-											value={field.state.value}
-											onValueChange={(value) => {
-												field.handleChange(value);
-												form.setFieldValue("defenderId", "");
-											}}
-											disabled={loadingWarbands}
-										>
-											<SelectTrigger>
-												<SelectValue placeholder="Select a warband" />
-											</SelectTrigger>
-											<SelectPortal container={portalContainer?.current}>
-												<SelectPositioner>
-													<SelectContent>
-														<SelectItem value="">None</SelectItem>
-														{warbands?.map((warband) => (
-															<SelectItem
-																key={warband.id}
-																value={String(warband.id)}
-															>
-																{warband.name}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</SelectPositioner>
-											</SelectPortal>
-										</Select>
-									</field.Control>
-									<field.Description>
-										Select the defender's warband (optional)
-									</field.Description>
-								</form.Item>
-							)}
+							{(field) => {
+								const defenderWarbandItems = [
+									{ label: "None", value: "" },
+									...(warbands?.map((warband) => ({
+										label: warband.name,
+										value: String(warband.id),
+									})) || []),
+								];
+
+								return (
+									<form.Item>
+										<field.Label>Defender's Warband (Optional)</field.Label>
+										<field.Control>
+											<Select
+												value={field.state.value}
+												onValueChange={(value) => {
+													field.handleChange(value);
+													form.setFieldValue("defenderId", "");
+												}}
+												disabled={loadingWarbands}
+												items={defenderWarbandItems}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select a warband" />
+												</SelectTrigger>
+												<SelectPortal container={portalContainer?.current}>
+													<SelectPositioner>
+														<SelectContent>
+															<SelectItem value="">None</SelectItem>
+															{warbands?.map((warband) => (
+																<SelectItem
+																	key={warband.id}
+																	value={String(warband.id)}
+																>
+																	{warband.name}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</SelectPositioner>
+												</SelectPortal>
+											</Select>
+										</field.Control>
+										<field.Description>
+											Select the defender's warband (optional)
+										</field.Description>
+									</form.Item>
+								);
+							}}
 						</form.AppField>
 
 						<form.AppField name="defenderId">
@@ -280,6 +310,13 @@ export function CreateEventForm({
 								);
 								const availableDefenders =
 									selectedDefenderWarband?.warriors || [];
+								const defenderItems = [
+									{ label: "None", value: "" },
+									...availableDefenders.map((warrior) => ({
+										label: warrior.name,
+										value: String(warrior.id),
+									})),
+								];
 
 								return (
 									<form.Item>
@@ -289,8 +326,9 @@ export function CreateEventForm({
 												value={field.state.value}
 												onValueChange={field.handleChange}
 												disabled={!selectedDefenderWarbandId}
+												items={defenderItems}
 											>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue
 														placeholder={
 															selectedDefenderWarbandId

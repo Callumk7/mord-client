@@ -1,9 +1,9 @@
 import { Link, useParams } from "@tanstack/react-router";
-import type { MatchWithParticipants } from "~/api/matches";
 import { Button } from "~/components/ui/button";
+import type { CampaignMatch } from "~/db/schema";
 
 interface MatchCardProps {
-	match: MatchWithParticipants;
+	match: CampaignMatch;
 }
 
 export function MatchCard({ match }: MatchCardProps) {

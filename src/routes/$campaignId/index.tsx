@@ -2,7 +2,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	getCampaignOptions,
-	getMostExperienceOptions,
 	getMostGamesWonOptions,
 	getMostInjuriesFromEventsOptions,
 	getMostInjuriesInflictedFromEventsOptions,
@@ -16,7 +15,6 @@ export const Route = createFileRoute("/$campaignId/")({
 
 		context.queryClient.ensureQueryData(getCampaignOptions(campaignId));
 		context.queryClient.ensureQueryData(getMostGamesWonOptions(campaignId));
-		context.queryClient.ensureQueryData(getMostExperienceOptions(campaignId));
 		context.queryClient.ensureQueryData(getMostTreasuryOptions(campaignId));
 		context.queryClient.ensureQueryData(
 			getMostKillsFromEventsOptions(campaignId),
@@ -38,9 +36,6 @@ function RouteComponent() {
 	const { data: campaign } = useSuspenseQuery(getCampaignOptions(campaignId));
 	const { data: gamesWon } = useSuspenseQuery(
 		getMostGamesWonOptions(campaignId),
-	);
-	const { data: experience } = useSuspenseQuery(
-		getMostExperienceOptions(campaignId),
 	);
 	const { data: treasury } = useSuspenseQuery(
 		getMostTreasuryOptions(campaignId),
@@ -71,15 +66,6 @@ function RouteComponent() {
 		icon: entry.warband.icon,
 		color: entry.warband.color,
 		wins: entry.wins,
-	}));
-
-	const survivorLeaderboard = experience.slice(0, 5).map((entry) => ({
-		warbandId: entry.warbandId,
-		name: entry.warband.name,
-		faction: entry.warband.faction,
-		icon: entry.warband.icon,
-		color: entry.warband.color,
-		totalExperience: entry.totalExperience,
 	}));
 
 	const opportunistLeaderboard = treasury.slice(0, 5).map((entry) => ({
@@ -165,22 +151,6 @@ function RouteComponent() {
 								subtitle: entry.faction,
 								value: entry.wins,
 								suffix: entry.wins === 1 ? "win" : "wins",
-								icon: entry.icon,
-								color: entry.color,
-							}))}
-						/>
-
-						{/* The Survivor */}
-						<LeaderboardCard
-							title="The Survivor"
-							subtitle="Most Experience"
-							icon="⚔"
-							entries={survivorLeaderboard.map((entry) => ({
-								rank: 0,
-								name: entry.name,
-								subtitle: entry.faction,
-								value: Number(entry.totalExperience),
-								suffix: "XP",
 								icon: entry.icon,
 								color: entry.color,
 							}))}

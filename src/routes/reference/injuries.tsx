@@ -7,7 +7,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "~/components/ui/table";
-import { seriousInjuries } from "~/data/serious-injuries";
+import { seriousInjuries } from "~/types/injuries";
 
 export const Route = createFileRoute("/reference/injuries")({
 	component: RouteComponent,

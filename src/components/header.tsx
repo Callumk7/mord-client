@@ -14,6 +14,8 @@ import {
 	NavigationMenuPositioner,
 	NavigationMenuTrigger,
 } from "./ui/navigation-menu";
+import { Fish, PlusCircle } from "lucide-react";
+import { Separator } from "./ui/separator";
 
 interface HeaderProps {
 	campaignId: number;
@@ -33,6 +35,8 @@ export function Header({ campaignId }: HeaderProps) {
 							Leaderboard
 						</NavigationMenuLink>
 					</NavigationMenuItem>
+
+					{/* Warbands */}
 					<NavigationMenuItem>
 						<NavigationMenuTrigger>Warbands</NavigationMenuTrigger>
 						<NavigationMenuContent>
@@ -62,16 +66,30 @@ export function Header({ campaignId }: HeaderProps) {
 							))}
 						</NavigationMenuContent>
 					</NavigationMenuItem>
+
+					{/* Matches */}
 					<NavigationMenuItem>
 						<NavigationMenuTrigger>Matches</NavigationMenuTrigger>
 						<NavigationMenuContent>
 							<NavigationMenuLink
+								className="flex items-center flex-row gap-2"
+								render={
+									<Link to="/$campaignId/matches/new" params={{ campaignId }} />
+								}
+							>
+								<PlusCircle />
+								<span>New Match</span>
+							</NavigationMenuLink>
+							<NavigationMenuLink
+								className="flex items-center flex-row gap-2"
 								render={
 									<Link to="/$campaignId/matches" params={{ campaignId }} />
 								}
 							>
-								All Matches
+								<Fish />
+								<span>All Matches</span>
 							</NavigationMenuLink>
+							<Separator />
 							{matches?.map((match) => (
 								<NavigationMenuLink
 									key={match.id}

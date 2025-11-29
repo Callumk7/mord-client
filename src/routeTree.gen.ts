@@ -10,11 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReferenceRouteRouteImport } from './routes/reference/route'
+import { Route as DisplayRouteRouteImport } from './routes/display/route'
 import { Route as CampaignIdRouteRouteImport } from './routes/$campaignId/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReferenceIndexRouteImport } from './routes/reference/index'
+import { Route as DisplayIndexRouteImport } from './routes/display/index'
 import { Route as CampaignIdIndexRouteImport } from './routes/$campaignId/index'
 import { Route as ReferenceInjuriesRouteImport } from './routes/reference/injuries'
+import { Route as DisplayCampaignIdRouteImport } from './routes/display/$campaignId'
 import { Route as CampaignIdAdminRouteImport } from './routes/$campaignId/admin'
 import { Route as ReferenceScenariosIndexRouteImport } from './routes/reference/scenarios.index'
 import { Route as CampaignIdWarbandsIndexRouteImport } from './routes/$campaignId/warbands/index'
@@ -32,6 +35,11 @@ const ReferenceRouteRoute = ReferenceRouteRouteImport.update({
   path: '/reference',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DisplayRouteRoute = DisplayRouteRouteImport.update({
+  id: '/display',
+  path: '/display',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CampaignIdRouteRoute = CampaignIdRouteRouteImport.update({
   id: '/$campaignId',
   path: '/$campaignId',
@@ -47,6 +55,11 @@ const ReferenceIndexRoute = ReferenceIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ReferenceRouteRoute,
 } as any)
+const DisplayIndexRoute = DisplayIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DisplayRouteRoute,
+} as any)
 const CampaignIdIndexRoute = CampaignIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -56,6 +69,11 @@ const ReferenceInjuriesRoute = ReferenceInjuriesRouteImport.update({
   id: '/injuries',
   path: '/injuries',
   getParentRoute: () => ReferenceRouteRoute,
+} as any)
+const DisplayCampaignIdRoute = DisplayCampaignIdRouteImport.update({
+  id: '/$campaignId',
+  path: '/$campaignId',
+  getParentRoute: () => DisplayRouteRoute,
 } as any)
 const CampaignIdAdminRoute = CampaignIdAdminRouteImport.update({
   id: '/admin',
@@ -121,10 +139,13 @@ const CampaignIdWarbandsWarbandIdWarriorsWarriorIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$campaignId': typeof CampaignIdRouteRouteWithChildren
+  '/display': typeof DisplayRouteRouteWithChildren
   '/reference': typeof ReferenceRouteRouteWithChildren
   '/$campaignId/admin': typeof CampaignIdAdminRoute
+  '/display/$campaignId': typeof DisplayCampaignIdRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaignId/': typeof CampaignIdIndexRoute
+  '/display/': typeof DisplayIndexRoute
   '/reference/': typeof ReferenceIndexRoute
   '/$campaignId/matches/new': typeof CampaignIdMatchesNewRoute
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
@@ -140,8 +161,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$campaignId/admin': typeof CampaignIdAdminRoute
+  '/display/$campaignId': typeof DisplayCampaignIdRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaignId': typeof CampaignIdIndexRoute
+  '/display': typeof DisplayIndexRoute
   '/reference': typeof ReferenceIndexRoute
   '/$campaignId/matches/new': typeof CampaignIdMatchesNewRoute
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
@@ -158,10 +181,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$campaignId': typeof CampaignIdRouteRouteWithChildren
+  '/display': typeof DisplayRouteRouteWithChildren
   '/reference': typeof ReferenceRouteRouteWithChildren
   '/$campaignId/admin': typeof CampaignIdAdminRoute
+  '/display/$campaignId': typeof DisplayCampaignIdRoute
   '/reference/injuries': typeof ReferenceInjuriesRoute
   '/$campaignId/': typeof CampaignIdIndexRoute
+  '/display/': typeof DisplayIndexRoute
   '/reference/': typeof ReferenceIndexRoute
   '/$campaignId/matches/new': typeof CampaignIdMatchesNewRoute
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
@@ -179,10 +205,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$campaignId'
+    | '/display'
     | '/reference'
     | '/$campaignId/admin'
+    | '/display/$campaignId'
     | '/reference/injuries'
     | '/$campaignId/'
+    | '/display/'
     | '/reference/'
     | '/$campaignId/matches/new'
     | '/reference/scenarios/$scenarioId'
@@ -198,8 +227,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$campaignId/admin'
+    | '/display/$campaignId'
     | '/reference/injuries'
     | '/$campaignId'
+    | '/display'
     | '/reference'
     | '/$campaignId/matches/new'
     | '/reference/scenarios/$scenarioId'
@@ -215,10 +246,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$campaignId'
+    | '/display'
     | '/reference'
     | '/$campaignId/admin'
+    | '/display/$campaignId'
     | '/reference/injuries'
     | '/$campaignId/'
+    | '/display/'
     | '/reference/'
     | '/$campaignId/matches/new'
     | '/reference/scenarios/$scenarioId'
@@ -235,6 +269,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CampaignIdRouteRoute: typeof CampaignIdRouteRouteWithChildren
+  DisplayRouteRoute: typeof DisplayRouteRouteWithChildren
   ReferenceRouteRoute: typeof ReferenceRouteRouteWithChildren
 }
 
@@ -245,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/reference'
       fullPath: '/reference'
       preLoaderRoute: typeof ReferenceRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/display': {
+      id: '/display'
+      path: '/display'
+      fullPath: '/display'
+      preLoaderRoute: typeof DisplayRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$campaignId': {
@@ -268,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReferenceIndexRouteImport
       parentRoute: typeof ReferenceRouteRoute
     }
+    '/display/': {
+      id: '/display/'
+      path: '/'
+      fullPath: '/display/'
+      preLoaderRoute: typeof DisplayIndexRouteImport
+      parentRoute: typeof DisplayRouteRoute
+    }
     '/$campaignId/': {
       id: '/$campaignId/'
       path: '/'
@@ -281,6 +330,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reference/injuries'
       preLoaderRoute: typeof ReferenceInjuriesRouteImport
       parentRoute: typeof ReferenceRouteRoute
+    }
+    '/display/$campaignId': {
+      id: '/display/$campaignId'
+      path: '/$campaignId'
+      fullPath: '/display/$campaignId'
+      preLoaderRoute: typeof DisplayCampaignIdRouteImport
+      parentRoute: typeof DisplayRouteRoute
     }
     '/$campaignId/admin': {
       id: '/$campaignId/admin'
@@ -393,6 +449,20 @@ const CampaignIdRouteRouteWithChildren = CampaignIdRouteRoute._addFileChildren(
   CampaignIdRouteRouteChildren,
 )
 
+interface DisplayRouteRouteChildren {
+  DisplayCampaignIdRoute: typeof DisplayCampaignIdRoute
+  DisplayIndexRoute: typeof DisplayIndexRoute
+}
+
+const DisplayRouteRouteChildren: DisplayRouteRouteChildren = {
+  DisplayCampaignIdRoute: DisplayCampaignIdRoute,
+  DisplayIndexRoute: DisplayIndexRoute,
+}
+
+const DisplayRouteRouteWithChildren = DisplayRouteRoute._addFileChildren(
+  DisplayRouteRouteChildren,
+)
+
 interface ReferenceRouteRouteChildren {
   ReferenceInjuriesRoute: typeof ReferenceInjuriesRoute
   ReferenceIndexRoute: typeof ReferenceIndexRoute
@@ -414,6 +484,7 @@ const ReferenceRouteRouteWithChildren = ReferenceRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CampaignIdRouteRoute: CampaignIdRouteRouteWithChildren,
+  DisplayRouteRoute: DisplayRouteRouteWithChildren,
   ReferenceRouteRoute: ReferenceRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport

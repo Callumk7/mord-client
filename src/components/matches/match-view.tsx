@@ -1,24 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import { useRef } from "react";
-import { getMatchDetailsOptions, updateMatchFn } from "~/api/matches";
 import { EventsList } from "~/components/events/display/events-list";
 import { MatchEndedCard } from "~/components/matches/match-ended-card";
 import { Link } from "~/components/ui/link";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectPositioner,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/select";
 import type { EventWithParticipants, Warband } from "~/db/schema";
-import { formatDate } from "~/lib/utils";
-import { CreateEventForm } from "../events/create-event-form";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import { useUpdateMatchMutation } from "~/hooks/mutations/matches";
+import { formatDate } from "~/lib/utils";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 
 // Helper Functions
 const getMatchTypeLabel = (matchType: string) => {
@@ -70,10 +58,8 @@ export function MatchView({
 		}
 	};
 
-	const dialogRef = useRef<HTMLDivElement>(null);
-
 	return (
-		<>
+		<div className="space-y-5">
 			{/* Match Header */}
 			<div className="flex items-center gap-4">
 				<Link to="/$campaignId/matches" params={{ campaignId }}>
@@ -89,35 +75,29 @@ export function MatchView({
 					<span className="text-sm px-3 py-1 bg-primary/20 text-primary rounded">
 						{getMatchTypeLabel(matchType)}
 					</span>
-					<Dialog>
-						<DialogTrigger render={<Button size="sm" />}>
-							Add Event
-						</DialogTrigger>
-						<DialogContent ref={dialogRef}>
-							<CreateEventForm
-								portalContainer={dialogRef}
-								campaignId={campaignId}
-								matchId={matchId}
-							/>
-						</DialogContent>
-					</Dialog>
-					<Select value={matchStatus} onValueChange={handleStatusChange}>
-						<SelectTrigger size="sm">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectPositioner>
-							<SelectContent>
-								<SelectItem value="scheduled">Scheduled</SelectItem>
-								<SelectItem value="active">Active</SelectItem>
-								<SelectItem value="ended">Ended</SelectItem>
-							</SelectContent>
-						</SelectPositioner>
-					</Select>
+					{matchStatus === "scheduled" ? (
+						<Button size="sm" onClick={() => handleStatusChange("active")}>
+							Start Match
+						</Button>
+					) : matchStatus === "active" ? (
+						<Badge variant="outline">Active</Badge>
+					) : (
+						<Badge variant="outline">Ended</Badge>
+					)}
 				</div>
 			</div>
 
 			{/* Events List */}
-			<EventsList events={events} />
+			<EventsList events={events} campaignId={campaignId} matchId={matchId} />
+
+			{matchStatus === "active" && (
+				<Button
+					variant={"destructive"}
+					onClick={() => handleStatusChange("ended")}
+				>
+					End Match
+				</Button>
+			)}
 
 			{/* Match Results - Only show when match is ended */}
 			{matchStatus === "ended" && (
@@ -129,6 +109,6 @@ export function MatchView({
 					winners={winners}
 				/>
 			)}
-		</>
+		</div>
 	);
 }

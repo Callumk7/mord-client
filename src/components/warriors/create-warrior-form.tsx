@@ -1,55 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { z } from "zod";
-import { db } from "~/db";
-import { warriors } from "~/db/schema";
+import { useId, useState } from "react";
+import z from "zod";
+import { warbandKeys } from "~/api/warbands";
+import { createWarriorFn } from "~/api/warriors";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+
+const { useAppForm } = createFormHook();
 
 const formSchema = z.object({
 	name: z.string().min(1, "Warrior name is required"),
 	type: z.enum(["hero", "henchman"]),
-	equipment: z.string(),
-	skills: z.string(),
+	class: z.string(),
+	isLeader: z.boolean(),
 });
-
-export const createWarriorFn = createServerFn({ method: "POST" })
-	.inputValidator(
-		formSchema.extend({ warbandId: z.number(), campaignId: z.number() }),
-	)
-	.handler(async ({ data }) => {
-		// Parse comma-separated equipment and skills strings into arrays
-		const equipment = data.equipment
-			? data.equipment.split(",").map((item) => item.trim())
-			: [];
-		const skills = data.skills
-			? data.skills.split(",").map((skill) => skill.trim())
-			: [];
-
-		const [newWarrior] = await db
-			.insert(warriors)
-			.values({
-				name: data.name,
-				warbandId: data.warbandId,
-				campaignId: data.campaignId,
-				type: data.type,
-				experience: 0,
-				kills: 0,
-				injuriesCaused: 0,
-				injuriesReceived: 0,
-				gamesPlayed: 0,
-				isAlive: true,
-				equipment: equipment.length > 0 ? equipment : null,
-				skills: skills.length > 0 ? skills : null,
-			})
-			.returning();
-
-		return newWarrior;
-	});
-
-const { useAppForm } = createFormHook();
 
 interface CreateWarriorFormProps {
 	campaignId: number;
@@ -70,7 +37,7 @@ export function CreateWarriorForm({
 		onSuccess: () => {
 			// Invalidate warriors query to refetch the list
 			queryClient.invalidateQueries({
-				queryKey: ["warriors", warbandId],
+				queryKey: warbandKeys.warriors(warbandId),
 			});
 			onSuccess?.();
 		},
@@ -80,8 +47,8 @@ export function CreateWarriorForm({
 		defaultValues: {
 			name: "",
 			type: "hero" as "hero" | "henchman",
-			equipment: "",
-			skills: "",
+			class: "",
+			isLeader: false,
 		},
 		validators: {
 			onChange: formSchema,
@@ -91,14 +58,16 @@ export function CreateWarriorForm({
 				data: {
 					name: value.name,
 					type: value.type,
-					equipment: value.equipment,
-					skills: value.skills,
+					class: value.class,
+					isLeader: value.isLeader,
 					warbandId: warbandId,
 					campaignId: campaignId,
 				},
 			});
 		},
 	});
+
+	const isLeaderId = useId();
 
 	return (
 		<form.AppForm>
@@ -166,42 +135,39 @@ export function CreateWarriorForm({
 					)}
 				</form.AppField>
 
-				<form.AppField name="equipment">
+				<form.AppField name="class">
 					{(field) => (
 						<form.Item>
-							<field.Label>Equipment (Optional)</field.Label>
+							<field.Label>Class (Optional)</field.Label>
 							<field.Control>
 								<Input
-									placeholder="Sword, Shield, Light Armor"
+									placeholder="Orc, Human, etc."
 									name={field.name}
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
 							</field.Control>
-							<field.Description>
-								Comma-separated list of equipment
-							</field.Description>
+							<field.Description>Warrior class</field.Description>
 						</form.Item>
 					)}
 				</form.AppField>
 
-				<form.AppField name="skills">
+				<form.AppField name="isLeader">
 					{(field) => (
 						<form.Item>
-							<field.Label>Skills (Optional)</field.Label>
 							<field.Control>
-								<Input
-									placeholder="Combat Master, Resilient"
-									name={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-								/>
+								<div className="flex items-center gap-2">
+									<Checkbox
+										id={isLeaderId}
+										name={field.name}
+										checked={field.state.value}
+										onCheckedChange={field.handleChange}
+									/>
+									<Label htmlFor={isLeaderId}>Is Leader?</Label>
+								</div>
 							</field.Control>
-							<field.Description>
-								Comma-separated list of skills
-							</field.Description>
+							<field.Description>Is this warrior the leader?</field.Description>
 						</form.Item>
 					)}
 				</form.AppField>
