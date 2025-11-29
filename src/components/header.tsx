@@ -115,6 +115,15 @@ export function Header({ campaignId }: HeaderProps) {
 							Events
 						</NavigationMenuLink>
 					</NavigationMenuItem>
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							render={
+								<Link to="/$campaignId/timeline" params={{ campaignId }} />
+							}
+						>
+							Timeline
+						</NavigationMenuLink>
+					</NavigationMenuItem>
 				</div>
 				<div className="flex items-center gap-1">
 					<NavigationMenuItem>
