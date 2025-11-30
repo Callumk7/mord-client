@@ -39,7 +39,7 @@ function RouteComponent() {
 	return (
 		<div className="min-h-screen bg-background">
 			<Header campaignId={campaignId} />
-			<div className="container mx-auto mt-18">
+			<div className="container max-w-6xl mx-auto mt-18 mb-10">
 				<Outlet />
 			</div>
 		</div>

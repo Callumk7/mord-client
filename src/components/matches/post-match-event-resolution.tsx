@@ -7,6 +7,7 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
+	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
@@ -18,12 +19,14 @@ interface PostMatchEventResolutionProps {
 	events: EventWithParticipants[];
 	matchId: number;
 	campaignId: number;
+	handleNext: () => void;
 }
 
 export function PostMatchEventResolution({
 	events,
 	matchId,
 	campaignId,
+	handleNext,
 }: PostMatchEventResolutionProps) {
 	const unresolvedCount = events.filter((e) => !e.resolved).length;
 
@@ -60,6 +63,9 @@ export function PostMatchEventResolution({
 					</div>
 				)}
 			</CardContent>
+			<CardFooter>
+				<Button onClick={handleNext}>Next</Button>
+			</CardFooter>
 		</Card>
 	);
 }

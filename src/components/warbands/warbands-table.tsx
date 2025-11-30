@@ -31,6 +31,8 @@ import {
 } from "~/components/ui/table";
 import type { WarbandWithWarriors } from "~/db/schema";
 import { UpdateWarbandForm } from "./update-warband-form";
+import { calculateRating } from "~/lib/ratings";
+import { getActiveWarriors } from "~/lib/warbands";
 
 interface WarbandsTableProps {
 	warbands: WarbandWithWarriors[];
@@ -106,7 +108,12 @@ export function WarbandsTable({ warbands }: WarbandsTableProps) {
 				return (
 					<div className="flex items-center gap-2">
 						<TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
-						<span>{row.original.rating}</span>
+						<span>
+							{calculateRating(
+								getActiveWarriors(row.original.warriors).length,
+								row.original.experience,
+							)}
+						</span>
 					</div>
 				);
 			},

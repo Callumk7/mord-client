@@ -14,7 +14,7 @@ import {
 	NavigationMenuPositioner,
 	NavigationMenuTrigger,
 } from "./ui/navigation-menu";
-import { Fish, PlusCircle } from "lucide-react";
+import { Fish, PlusCircle, Shield } from "lucide-react";
 import { Separator } from "./ui/separator";
 
 interface HeaderProps {
@@ -65,6 +65,19 @@ export function Header({ campaignId }: HeaderProps) {
 								</NavigationMenuLink>
 							))}
 						</NavigationMenuContent>
+					</NavigationMenuItem>
+
+					{/* Warriors */}
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							className="flex items-center flex-row gap-2"
+							render={
+								<Link to="/$campaignId/warriors" params={{ campaignId }} />
+							}
+						>
+							<Shield className="w-4 h-4" />
+							Warriors
+						</NavigationMenuLink>
 					</NavigationMenuItem>
 
 					{/* Matches */}

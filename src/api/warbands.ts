@@ -1,6 +1,6 @@
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
 import { events, warbands, warriors } from "~/db/schema";
@@ -76,7 +76,7 @@ export const getWarbandByIdFn = createServerFn({ method: "GET" })
 
 export const getWarbandOptions = (warbandId: number) =>
 	queryOptions({
-		queryKey: ["warband", warbandId, "details"],
+		queryKey: warbandKeys.detail(warbandId),
 		queryFn: () => getWarbandByIdFn({ data: { warbandId } }),
 	});
 
@@ -119,6 +119,63 @@ export const createWarbandFn = createServerFn({ method: "POST" })
 
 		return newWarband;
 	});
+
+const updateWarbandSchema = z.object({
+	name: z.string().min(1, "Warband name is required").optional(),
+	faction: z.string().min(1, "Warband faction is required").optional(),
+	rating: z.number().min(0, "Warband rating is required").optional(),
+	treasury: z.number().min(0, "Warband treasury is required").optional(),
+	experience: z.number().min(0, "Warband experience is required").optional(),
+});
+async function updateWarband(
+	warbandId: number,
+	updateData: z.infer<typeof updateWarbandSchema>,
+) {
+	const [updatedWarband] = await db
+		.update(warbands)
+		.set(updateData)
+		.where(eq(warbands.id, warbandId))
+		.returning();
+
+	if (!updatedWarband) {
+		throw new Error(`Failed to update warband with id ${warbandId}`);
+	}
+
+	return updatedWarband;
+}
+
+export const updateWarbandFn = createServerFn({ method: "POST" })
+	.inputValidator(updateWarbandSchema.extend({ warbandId: z.number() }))
+	.handler(async ({ data }) => {
+		const { warbandId, ...updateData } = data;
+		return await updateWarband(warbandId, updateData);
+	});
+
+export const addExperienceToWarbandFn = createServerFn({ method: "POST" })
+	.inputValidator(
+		z.object({
+			warbandId: z.number(),
+			experience: z.number().min(0, "Experience amount is required"),
+		}),
+	)
+	.handler(async ({ data }) => {
+		const { warbandId, experience } = data;
+		const [updatedWarband] = await db
+			.update(warbands)
+			.set({
+				experience: sql`${warbands.experience} + ${experience}`,
+				updatedAt: new Date(),
+			})
+			.where(eq(warbands.id, warbandId))
+			.returning();
+
+		return updatedWarband;
+	});
+
+export const increaseExpereienceMutation = mutationOptions({
+	mutationFn: (data: { warbandId: number; experience: number }) =>
+		addExperienceToWarbandFn({ data }),
+});
 
 // Get Warriors for Warband
 async function getWarriorsByWarband(warbandId: number) {
