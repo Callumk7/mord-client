@@ -177,6 +177,24 @@ export const increaseExpereienceMutation = mutationOptions({
 		addExperienceToWarbandFn({ data }),
 });
 
+export const addGoldToWarbandFn = createServerFn({ method: "POST" })
+	.inputValidator((data: { warbandId: number; gold: number }) => data)
+	.handler(async ({ data }) => {
+		const { warbandId, gold } = data;
+		const [updatedWarband] = await db
+			.update(warbands)
+			.set({ treasury: sql`${warbands.treasury} + ${gold}` })
+			.where(eq(warbands.id, warbandId))
+			.returning();
+
+		return updatedWarband;
+	});
+
+export const addGoldToWarbandMutation = mutationOptions({
+	mutationFn: (data: { warbandId: number; gold: number }) =>
+		addGoldToWarbandFn({ data }),
+});
+
 // Get Warriors for Warband
 async function getWarriorsByWarband(warbandId: number) {
 	const result = await db

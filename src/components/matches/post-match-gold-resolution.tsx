@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { getMatchDetailsOptions } from "~/api/matches";
-import { increaseExpereienceMutation } from "~/api/warbands";
+import { addGoldToWarbandMutation } from "~/api/warbands";
 import type { Warband } from "~/db/schema";
 import { parseNumber } from "~/lib/utils";
 import { Badge } from "../ui/badge";
@@ -16,13 +16,13 @@ import {
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-interface PostMatchExperienceResolutionProps {
+interface PostMatchGoldResolutionProps {
 	matchId: number;
 }
 
-export function PostMatchExperienceResolution({
+export function PostMatchGoldResolution({
 	matchId,
-}: PostMatchExperienceResolutionProps) {
+}: PostMatchGoldResolutionProps) {
 	const {
 		data: match,
 		isPending,
@@ -37,22 +37,18 @@ export function PostMatchExperienceResolution({
 		return <div>Error</div>;
 	}
 
-	const participants = match.participants.map((p) => p.warband);
-
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Post-Match Experience Resolution</CardTitle>
-				<CardDescription>
-					Handle updating experience from the match
-				</CardDescription>
+				<CardTitle>Post-Match Gold Resolution</CardTitle>
+				<CardDescription>Handle updating gold from the match</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-4">
-					{participants.map((warband) => (
-						<ExperienceCard
-							key={warband.id}
-							warband={warband}
+					{match.participants.map((p) => (
+						<GoldCard
+							key={p.warband.id}
+							warband={p.warband}
 							matchId={matchId}
 						/>
 					))}
@@ -62,31 +58,31 @@ export function PostMatchExperienceResolution({
 	);
 }
 
-interface ExperienceCardProps {
+interface GoldCardProps {
 	warband: Warband;
 	matchId: number;
 }
-function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
+function GoldCard({ warband, matchId }: GoldCardProps) {
 	const queryClient = useQueryClient();
-	const experienceMutation = useMutation(increaseExpereienceMutation);
+	const goldMutation = useMutation(addGoldToWarbandMutation);
 
-	const [experienceValue, setExperienceValue] = useState("");
+	const [goldValue, setGoldValue] = useState("");
 	const [error, setError] = useState<string | null>(null);
 
 	const id = useId();
 
-	const handleUpdateExperience = (warbandId: number, experience: number) => {
-		experienceMutation.mutate(
+	const handleUpdateGold = (warbandId: number, gold: number) => {
+		goldMutation.mutate(
 			{
 				warbandId,
-				experience,
+				gold,
 			},
 			{
 				onSuccess: () => {
 					queryClient.invalidateQueries({
 						queryKey: getMatchDetailsOptions(matchId).queryKey,
 					});
-					setExperienceValue("");
+					setGoldValue("");
 					setError(null);
 				},
 			},
@@ -94,12 +90,12 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 	};
 
 	const handleAddClick = () => {
-		const parsed = parseNumber(experienceValue);
+		const parsed = parseNumber(goldValue);
 		if (parsed === null) {
-			setError("Invalid experience value");
+			setError("Invalid gold value");
 		} else {
 			setError(null);
-			handleUpdateExperience(warband.id, parsed);
+			handleUpdateGold(warband.id, parsed);
 		}
 	};
 
@@ -109,15 +105,15 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 				<div className="flex items-center justify-between">
 					<p className="text-lg font-bold">{warband.name}</p>
 					<p>
-						<strong>Current Exp:</strong> {warband.experience}
+						<strong>Current Gold:</strong> {warband.treasury}
 					</p>
 					<div className="flex flex-col gap-2">
 						<div className="space-y-1">
-							<Label htmlFor={id}>Experience Gain</Label>
+							<Label htmlFor={id}>Gold Gain</Label>
 							<Input
 								id={id}
-								value={experienceValue}
-								onChange={(e) => setExperienceValue(e.currentTarget.value)}
+								value={goldValue}
+								onChange={(e) => setGoldValue(e.currentTarget.value)}
 							/>
 							{error && <Badge variant="destructive">{error}</Badge>}
 						</div>
