@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, count, eq, sql } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
-import { events, warbands, warbandStateChanges, warriors } from "~/db/schema";
+import { events, warbandStateChanges, warbands, warriors } from "~/db/schema";
 import { calculateRating } from "~/lib/ratings";
 
 // Query Key Factory
@@ -190,7 +190,9 @@ export const addExperienceToWarbandFn = createServerFn({ method: "POST" })
 		const warriorCountResult = await db
 			.select({ count: count() })
 			.from(warriors)
-			.where(and(eq(warriors.warbandId, warbandId), eq(warriors.isAlive, true)));
+			.where(
+				and(eq(warriors.warbandId, warbandId), eq(warriors.isAlive, true)),
+			);
 
 		const warriorCount = Number(warriorCountResult[0]?.count || 0);
 		const newRating = calculateRating(warriorCount, updatedWarband.experience);
@@ -225,8 +227,12 @@ export const addExperienceToWarbandFn = createServerFn({ method: "POST" })
 	});
 
 export const increaseExpereienceMutation = mutationOptions({
-	mutationFn: (data: { warbandId: number; matchId: number; experience: number; description?: string }) =>
-		addExperienceToWarbandFn({ data }),
+	mutationFn: (data: {
+		warbandId: number;
+		matchId: number;
+		experience: number;
+		description?: string;
+	}) => addExperienceToWarbandFn({ data }),
 });
 
 export const addGoldToWarbandFn = createServerFn({ method: "POST" })
@@ -268,8 +274,12 @@ export const addGoldToWarbandFn = createServerFn({ method: "POST" })
 	});
 
 export const addGoldToWarbandMutation = mutationOptions({
-	mutationFn: (data: { warbandId: number; matchId: number; gold: number; description?: string }) =>
-		addGoldToWarbandFn({ data }),
+	mutationFn: (data: {
+		warbandId: number;
+		matchId: number;
+		gold: number;
+		description?: string;
+	}) => addGoldToWarbandFn({ data }),
 });
 
 // Get Warriors for Warband
