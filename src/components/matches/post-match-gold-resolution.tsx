@@ -64,6 +64,7 @@ interface GoldCardProps {
 }
 function GoldCard({ warband, matchId }: GoldCardProps) {
 	const queryClient = useQueryClient();
+	const { data: match } = useQuery(getMatchDetailsOptions(matchId));
 	const goldMutation = useMutation(addGoldToWarbandMutation);
 
 	const [goldValue, setGoldValue] = useState("");
@@ -77,6 +78,7 @@ function GoldCard({ warband, matchId }: GoldCardProps) {
 				warbandId,
 				matchId,
 				gold,
+				description: `Gold gained from ${match?.name || matchId}`,
 			},
 			{
 				onSuccess: () => {
