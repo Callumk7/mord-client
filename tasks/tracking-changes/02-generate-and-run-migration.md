@@ -1,7 +1,7 @@
 # Task 02: Generate and Run Database Migration
 
 ## Status
-⏳ Not Started
+✅ Complete
 
 ## Description
 Generate and apply the database migration to create the `warband_state_changes` table.
