@@ -16,7 +16,7 @@ export const warbandKeys = {
 	details: () => [...warbandKeys.all, "detail"] as const,
 	detail: (warbandId: number) => [...warbandKeys.details(), warbandId] as const,
 	warriors: (warbandId: number) =>
-		[...warbandKeys.details(), warbandId] as const,
+		[...warbandKeys.all, "warriors", warbandId] as const,
 };
 
 // Get Campaign Warbands
