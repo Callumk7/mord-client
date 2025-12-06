@@ -1,28 +1,4 @@
-export type Availability = "Common" | `Rare ${number}`;
-
-export type ArmorSave =
-	| "4+"
-	| "5+"
-	| "6+"
-	| "+1 to existing save"
-	| "+2 on foot, +1 mounted with armour"
-	| "5+ on foot, 6+ mounted";
-
-export interface SpecialRule {
-	name: string;
-	description: string;
-}
-
-export interface Armor {
-	name: string;
-	source: string;
-	cost: number; // in gold crowns
-	availability: Availability;
-	save: ArmorSave;
-	description?: string;
-	specialRules?: SpecialRule[];
-	restrictions?: string[];
-}
+import type { Armor, Availability } from "./types";
 
 export const armorItems: Armor[] = [
 	{

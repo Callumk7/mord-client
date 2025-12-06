@@ -1,31 +1,4 @@
-// Miscellaneous Equipment Types
-interface MiscellaneousItem {
-	name: string;
-	cost: string;
-	availability: string;
-	restrictions?: string;
-	description: string;
-	specialRules: string;
-}
-
-interface PoisonOrDrug extends MiscellaneousItem {
-	effect?: string;
-	sideEffects?: string;
-}
-
-interface Vehicle extends MiscellaneousItem {
-	profile?: {
-		M?: number | string;
-		WS?: number | string;
-		BS?: number | string;
-		S?: number | string;
-		T?: number | string;
-		W?: number | string;
-		I?: number | string;
-		A?: number | string;
-		Ld?: number | string;
-	};
-}
+import type { MiscellaneousItem, PoisonOrDrug, Vehicle } from "./types";
 
 // Main Equipment Object
 const miscellaneousEquipment = {
@@ -776,5 +749,4 @@ const miscellaneousEquipment = {
 	] as Vehicle[],
 };
 
-export type { MiscellaneousItem, PoisonOrDrug, Vehicle };
 export default miscellaneousEquipment;

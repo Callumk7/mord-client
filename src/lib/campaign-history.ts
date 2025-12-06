@@ -38,6 +38,9 @@ export interface WarbandTimeSeries {
 	dataPoints: TimeSeriesDataPoint[];
 }
 
+// Type alias for clarity when used in grouped contexts
+export type WarbandGroup = WarbandTimeSeries;
+
 /**
  * Transform state change records into time series data points
  */

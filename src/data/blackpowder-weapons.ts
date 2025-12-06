@@ -1,26 +1,7 @@
-type Rarity = `Rare ${number}`;
-type Grade = "core" | "1a" | "1b" | "1c";
-
-interface SpecialRule {
-	name: string;
-	description: string;
-}
-
-interface Weapon {
-	name: string;
-	source: string;
-	grade: Grade;
-	cost: string;
-	availability: Rarity;
-	restrictions?: string;
-	description: string;
-	range: string;
-	strength: number | string;
-	specialRules: SpecialRule[];
-}
+import type { BlackpowderWeapon } from "./types";
 
 // Blackpowder Weapons Data
-export const blackpowderWeapons: Weapon[] = [
+export const blackpowderWeapons: BlackpowderWeapon[] = [
 	{
 		name: "Blunderbuss",
 		source: "Mordheim Rulebook",
@@ -565,6 +546,3 @@ export const blackpowderWeapons: Weapon[] = [
 		],
 	},
 ];
-
-// Export types
-export type { Weapon, SpecialRule, Rarity, Grade };

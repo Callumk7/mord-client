@@ -1,66 +1,4 @@
-type Availability = `Common` | `Rare ${number}`;
-
-type WarbandRestriction =
-	| "No warband restriction"
-	| "Cult of the Possessed"
-	| "Marienburgers"
-	| "Middenheimers"
-	| "Reiklanders"
-	| "Sisters of Sigmar"
-	| "Skaven"
-	| "Undead"
-	| "Witch Hunters"
-	| "Averlanders"
-	| "Beastmen Raiders"
-	| "Carnival of Chaos"
-	| "Dwarf Treasure Hunters"
-	| "Kislevites"
-	| "Orc Mob"
-	| "Ostlanders"
-	| "Amazons (Lustria)"
-	| "Amazons (Mordheim)"
-	| "Arabian Tomb Raiders"
-	| "Black Orcs"
-	| "Bretonnian Knights"
-	| "Dark Elves"
-	| "Dwarf Rangers"
-	| "Forest Goblins"
-	| "Gunnery School of Nuln"
-	| "Hochland Bandits"
-	| "Horned Hunters"
-	| "Imperial Outriders"
-	| "Lizardmen"
-	| "Miragleans"
-	| "Mootlanders"
-	| "Norse Explorers"
-	| "Ostermarkers"
-	| "Outlaws of Stirwood Forest, The"
-	| "Pirates"
-	| "Pit Fighters"
-	| "Remasens"
-	| "Shadow Warriors"
-	| "Skaven of Clan Pestilens"
-	| "Tomb Guardians"
-	| "Trantios"
-	| "Battle Monks of Cathay"
-	| "Maneaters";
-
-interface SpecialRule {
-	name: string;
-	description: string;
-}
-
-interface MissileWeapon {
-	name: string;
-	source: string;
-	cost: string;
-	availability: Availability;
-	warbandRestrictions?: WarbandRestriction[];
-	description: string;
-	range: string;
-	strength: string;
-	specialRules?: SpecialRule[];
-}
+import type { MissileWeapon } from "./types";
 
 const missileWeapons: Record<string, MissileWeapon> = {
 	belayingPins: {
@@ -496,5 +434,4 @@ const missileWeapons: Record<string, MissileWeapon> = {
 	},
 };
 
-export type { Availability, WarbandRestriction, SpecialRule, MissileWeapon };
 export { missileWeapons };

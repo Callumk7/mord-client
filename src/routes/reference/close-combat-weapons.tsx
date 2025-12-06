@@ -46,7 +46,7 @@ function RouteComponent() {
 							<TableCell>{weapon.strength}</TableCell>
 							<TableCell>
 								<div className="flex flex-col gap-2 max-w-md">
-									{weapon.specialRules.map((rule) => (
+									{weapon.specialRules?.map((rule) => (
 										<div key={rule.name} className="space-y-1">
 											<Badge variant="outline" className="font-semibold">
 												{rule.name}

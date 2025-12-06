@@ -1,21 +1,6 @@
-export interface Weapon {
-	name: string;
-	source: string;
-	cost: number;
-	availability: string;
-	restrictions?: string;
-	description: string;
-	range: string;
-	strength: string;
-	specialRules: SpecialRule[];
-}
+import type { CloseCombatWeapon } from "./types";
 
-export interface SpecialRule {
-	name: string;
-	description: string;
-}
-
-export const closeCombatWeapons: Weapon[] = [
+export const closeCombatWeapons: CloseCombatWeapon[] = [
 	{
 		name: "Axe",
 		source: "Mordheim Rulebook (core)",
