@@ -4,6 +4,7 @@ import { and, count, eq, sql } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
 import { events, warbands, warbandStateChanges, warriors } from "~/db/schema";
+import { calculateRating } from "~/lib/ratings";
 
 // Query Key Factory
 export const warbandKeys = {
@@ -155,11 +156,27 @@ export const addExperienceToWarbandFn = createServerFn({ method: "POST" })
 	.inputValidator(
 		z.object({
 			warbandId: z.number(),
+			matchId: z.number(),
 			experience: z.number().min(0, "Experience amount is required"),
+			description: z.string().optional(),
 		}),
 	)
 	.handler(async ({ data }) => {
-		const { warbandId, experience } = data;
+		const { warbandId, matchId, experience, description } = data;
+
+		// Get current warband state
+		const [currentWarband] = await db
+			.select()
+			.from(warbands)
+			.where(eq(warbands.id, warbandId));
+
+		if (!currentWarband) {
+			throw new Error("Warband not found");
+		}
+
+		const oldRating = currentWarband.rating;
+
+		// Update warband experience
 		const [updatedWarband] = await db
 			.update(warbands)
 			.set({
@@ -169,11 +186,46 @@ export const addExperienceToWarbandFn = createServerFn({ method: "POST" })
 			.where(eq(warbands.id, warbandId))
 			.returning();
 
-		return updatedWarband;
+		// Calculate new rating
+		const warriorCountResult = await db
+			.select({ count: count() })
+			.from(warriors)
+			.where(and(eq(warriors.warbandId, warbandId), eq(warriors.isAlive, true)));
+
+		const warriorCount = Number(warriorCountResult[0]?.count || 0);
+		const newRating = calculateRating(warriorCount, updatedWarband.experience);
+		const ratingDelta = newRating - oldRating;
+
+		// Update rating if it changed
+		let finalWarband = updatedWarband;
+		if (ratingDelta !== 0) {
+			[finalWarband] = await db
+				.update(warbands)
+				.set({ rating: newRating })
+				.where(eq(warbands.id, warbandId))
+				.returning();
+		}
+
+		// Record state change
+		await db.insert(warbandStateChanges).values({
+			warbandId,
+			matchId,
+			treasuryDelta: 0,
+			experienceDelta: experience,
+			ratingDelta: ratingDelta,
+			treasuryAfter: finalWarband.treasury,
+			experienceAfter: finalWarband.experience,
+			ratingAfter: newRating,
+			changeType: "post_match_experience",
+			description: description || "Experience gained from match",
+			timestamp: new Date(),
+		});
+
+		return { ...finalWarband, rating: newRating };
 	});
 
 export const increaseExpereienceMutation = mutationOptions({
-	mutationFn: (data: { warbandId: number; experience: number }) =>
+	mutationFn: (data: { warbandId: number; matchId: number; experience: number; description?: string }) =>
 		addExperienceToWarbandFn({ data }),
 });
 

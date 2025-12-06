@@ -79,6 +79,7 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 		experienceMutation.mutate(
 			{
 				warbandId,
+				matchId,
 				experience,
 			},
 			{

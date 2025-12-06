@@ -1,7 +1,7 @@
 # Task 04: Update Experience Resolution API to Record State Changes
 
 ## Status
-⏳ Not Started
+✅ Complete
 
 ## Description
 Modify the `addExperienceToWarbandFn` to accept `matchId`, calculate rating changes, and create state change records.
