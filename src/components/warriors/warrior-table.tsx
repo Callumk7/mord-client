@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
 	type ColumnDef,
 	flexRender,
@@ -54,12 +55,19 @@ export function WarriorTable({ warriors }: WarriorTableProps) {
 				cell: ({ row }) => {
 					const warrior = row.original;
 					return (
-						<div className="flex items-center gap-2 min-w-0">
+						<Link
+							to="/$campaignId/warriors/$warriorId"
+							params={{
+								campaignId: warrior.campaignId,
+								warriorId: warrior.id,
+							}}
+							className="flex items-center gap-2 min-w-0"
+						>
 							{warrior.isLeader && (
 								<User className="w-4 h-4 text-muted-foreground shrink-0" />
 							)}
 							<span className="font-medium truncate">{warrior.name}</span>
-						</div>
+						</Link>
 					);
 				},
 			},

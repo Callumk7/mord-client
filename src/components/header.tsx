@@ -161,6 +161,11 @@ export function Header({ campaignId }: HeaderProps) {
 							<NavigationMenuLink render={<Link to="/reference/injuries" />}>
 								Injuries
 							</NavigationMenuLink>
+							<NavigationMenuLink
+								render={<Link to="/reference/close-combat-weapons" />}
+							>
+								Close Combat Weapons
+							</NavigationMenuLink>
 						</NavigationMenuContent>
 					</NavigationMenuItem>
 				</div>
@@ -211,6 +216,11 @@ export function ReferenceHeader() {
 						</NavigationMenuLink>
 						<NavigationMenuLink render={<Link to="/reference/injuries" />}>
 							Injuries
+						</NavigationMenuLink>
+						<NavigationMenuLink
+							render={<Link to="/reference/close-combat-weapons" />}
+						>
+							Close Combat Weapons
 						</NavigationMenuLink>
 					</NavigationMenuContent>
 				</NavigationMenuItem>

@@ -3,12 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getWarriorsByCampaignOptions } from "~/api/warriors";
 import { WarriorTable } from "~/components/warriors/warrior-table";
 
-export const Route = createFileRoute("/$campaignId/warriors")({
+export const Route = createFileRoute("/$campaignId/warriors/")({
 	component: RouteComponent,
 	loader: async ({ params, context }) => {
 		await context.queryClient.ensureQueryData(
 			getWarriorsByCampaignOptions(params.campaignId),
-		);
+		)
 	},
 });
 
