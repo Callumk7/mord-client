@@ -1,7 +1,7 @@
 # Task 03: Update Gold Resolution API to Record State Changes
 
 ## Status
-⏳ Not Started
+✅ Complete
 
 ## Description
 Modify the `addGoldToWarbandFn` to accept `matchId` and create state change records when gold is added.

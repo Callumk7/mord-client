@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, count, eq, sql } from "drizzle-orm";
 import z from "zod";
 import { db } from "~/db";
-import { events, warbands, warriors } from "~/db/schema";
+import { events, warbands, warbandStateChanges, warriors } from "~/db/schema";
 
 // Query Key Factory
 export const warbandKeys = {
@@ -178,20 +178,45 @@ export const increaseExpereienceMutation = mutationOptions({
 });
 
 export const addGoldToWarbandFn = createServerFn({ method: "POST" })
-	.inputValidator((data: { warbandId: number; gold: number }) => data)
+	.inputValidator(
+		z.object({
+			warbandId: z.number(),
+			matchId: z.number(),
+			gold: z.number(),
+			description: z.string().optional(),
+		}),
+	)
 	.handler(async ({ data }) => {
-		const { warbandId, gold } = data;
+		const { warbandId, matchId, gold, description } = data;
 		const [updatedWarband] = await db
 			.update(warbands)
-			.set({ treasury: sql`${warbands.treasury} + ${gold}` })
+			.set({
+				treasury: sql`${warbands.treasury} + ${gold}`,
+				updatedAt: new Date(),
+			})
 			.where(eq(warbands.id, warbandId))
 			.returning();
+
+		// Record the state change event
+		await db.insert(warbandStateChanges).values({
+			warbandId,
+			matchId,
+			treasuryDelta: gold,
+			experienceDelta: 0,
+			ratingDelta: 0,
+			treasuryAfter: updatedWarband.treasury,
+			experienceAfter: updatedWarband.experience,
+			ratingAfter: updatedWarband.rating,
+			changeType: "post_match_gold",
+			description: description || "Gold gained from match",
+			timestamp: new Date(),
+		});
 
 		return updatedWarband;
 	});
 
 export const addGoldToWarbandMutation = mutationOptions({
-	mutationFn: (data: { warbandId: number; gold: number }) =>
+	mutationFn: (data: { warbandId: number; matchId: number; gold: number; description?: string }) =>
 		addGoldToWarbandFn({ data }),
 });
 

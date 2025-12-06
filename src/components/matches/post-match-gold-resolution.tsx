@@ -75,6 +75,7 @@ function GoldCard({ warband, matchId }: GoldCardProps) {
 		goldMutation.mutate(
 			{
 				warbandId,
+				matchId,
 				gold,
 			},
 			{
