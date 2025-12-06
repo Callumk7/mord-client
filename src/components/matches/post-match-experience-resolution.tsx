@@ -68,6 +68,7 @@ interface ExperienceCardProps {
 }
 function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 	const queryClient = useQueryClient();
+	const { data: match } = useQuery(getMatchDetailsOptions(matchId));
 	const experienceMutation = useMutation(increaseExpereienceMutation);
 
 	const [experienceValue, setExperienceValue] = useState("");
@@ -81,6 +82,7 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 				warbandId,
 				matchId,
 				experience,
+				description: `Experience gained from ${match?.name || matchId}`,
 			},
 			{
 				onSuccess: () => {

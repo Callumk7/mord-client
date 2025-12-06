@@ -1,7 +1,7 @@
 # Task 06: Update Experience Resolution Component to Pass matchId
 
 ## Status
-⏳ Not Started
+Completed
 
 ## Description
 Update the `PostMatchExperienceResolution` component to pass `matchId` to the API mutation.
