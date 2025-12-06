@@ -6,6 +6,7 @@ import {
 	getMostInjuriesFromEventsOptions,
 	getMostInjuriesInflictedFromEventsOptions,
 	getMostKillsFromEventsOptions,
+	getMostRatingOptions,
 	getMostTreasuryOptions,
 } from "~/api/campaign";
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/$campaignId/")({
 		context.queryClient.ensureQueryData(getCampaignOptions(campaignId));
 		context.queryClient.ensureQueryData(getMostGamesWonOptions(campaignId));
 		context.queryClient.ensureQueryData(getMostTreasuryOptions(campaignId));
+		context.queryClient.ensureQueryData(getMostRatingOptions(campaignId));
 		context.queryClient.ensureQueryData(
 			getMostKillsFromEventsOptions(campaignId),
 		);
@@ -40,6 +42,7 @@ function RouteComponent() {
 	const { data: treasury } = useSuspenseQuery(
 		getMostTreasuryOptions(campaignId),
 	);
+	const { data: rating } = useSuspenseQuery(getMostRatingOptions(campaignId));
 	const { data: killsFromEvents } = useSuspenseQuery(
 		getMostKillsFromEventsOptions(campaignId),
 	);
@@ -75,6 +78,15 @@ function RouteComponent() {
 		icon: entry.warband.icon,
 		color: entry.warband.color,
 		treasury: entry.treasury,
+	}));
+
+	const survivorLeaderboard = rating.slice(0, 5).map((entry) => ({
+		warbandId: entry.warbandId,
+		name: entry.warband.name,
+		faction: entry.warband.faction,
+		icon: entry.warband.icon,
+		color: entry.warband.color,
+		rating: entry.rating,
 	}));
 
 	const killsFromEventsLeaderboard = killsFromEvents
@@ -167,6 +179,22 @@ function RouteComponent() {
 								subtitle: entry.faction,
 								value: entry.treasury,
 								suffix: "gc",
+								icon: entry.icon,
+								color: entry.color,
+							}))}
+						/>
+
+						{/* The Survivor */}
+						<LeaderboardCard
+							title="The Survivor"
+							subtitle="Most Rating"
+							icon="👑"
+							entries={survivorLeaderboard.map((entry) => ({
+								rank: 0,
+								name: entry.name,
+								subtitle: entry.faction,
+								value: entry.rating,
+								suffix: "rating",
 								icon: entry.icon,
 								color: entry.color,
 							}))}
