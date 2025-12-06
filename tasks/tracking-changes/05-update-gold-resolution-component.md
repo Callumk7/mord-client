@@ -1,7 +1,7 @@
 # Task 05: Update Gold Resolution Component to Pass matchId
 
 ## Status
-⏳ Not Started
+Completed
 
 ## Description
 Update the `PostMatchGoldResolution` component to pass `matchId` to the API mutation.
