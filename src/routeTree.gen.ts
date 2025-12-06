@@ -24,6 +24,7 @@ import { Route as ReferenceScenariosIndexRouteImport } from './routes/reference/
 import { Route as CampaignIdWarriorsIndexRouteImport } from './routes/$campaignId/warriors/index'
 import { Route as CampaignIdWarbandsIndexRouteImport } from './routes/$campaignId/warbands/index'
 import { Route as CampaignIdTimelineIndexRouteImport } from './routes/$campaignId/timeline/index'
+import { Route as CampaignIdProgressIndexRouteImport } from './routes/$campaignId/progress/index'
 import { Route as CampaignIdMatchesIndexRouteImport } from './routes/$campaignId/matches/index'
 import { Route as CampaignIdEventsIndexRouteImport } from './routes/$campaignId/events/index'
 import { Route as ReferenceScenariosScenarioIdRouteImport } from './routes/reference/scenarios.$scenarioId'
@@ -111,6 +112,11 @@ const CampaignIdTimelineIndexRoute = CampaignIdTimelineIndexRouteImport.update({
   path: '/timeline/',
   getParentRoute: () => CampaignIdRouteRoute,
 } as any)
+const CampaignIdProgressIndexRoute = CampaignIdProgressIndexRouteImport.update({
+  id: '/progress/',
+  path: '/progress/',
+  getParentRoute: () => CampaignIdRouteRoute,
+} as any)
 const CampaignIdMatchesIndexRoute = CampaignIdMatchesIndexRouteImport.update({
   id: '/matches/',
   path: '/matches/',
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
   '/$campaignId/events': typeof CampaignIdEventsIndexRoute
   '/$campaignId/matches': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/progress': typeof CampaignIdProgressIndexRoute
   '/$campaignId/timeline': typeof CampaignIdTimelineIndexRoute
   '/$campaignId/warbands': typeof CampaignIdWarbandsIndexRoute
   '/$campaignId/warriors': typeof CampaignIdWarriorsIndexRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
   '/$campaignId/events': typeof CampaignIdEventsIndexRoute
   '/$campaignId/matches': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/progress': typeof CampaignIdProgressIndexRoute
   '/$campaignId/timeline': typeof CampaignIdTimelineIndexRoute
   '/$campaignId/warbands': typeof CampaignIdWarbandsIndexRoute
   '/$campaignId/warriors': typeof CampaignIdWarriorsIndexRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
   '/$campaignId/events/': typeof CampaignIdEventsIndexRoute
   '/$campaignId/matches/': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/progress/': typeof CampaignIdProgressIndexRoute
   '/$campaignId/timeline/': typeof CampaignIdTimelineIndexRoute
   '/$campaignId/warbands/': typeof CampaignIdWarbandsIndexRoute
   '/$campaignId/warriors/': typeof CampaignIdWarriorsIndexRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/reference/scenarios/$scenarioId'
     | '/$campaignId/events'
     | '/$campaignId/matches'
+    | '/$campaignId/progress'
     | '/$campaignId/timeline'
     | '/$campaignId/warbands'
     | '/$campaignId/warriors'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/reference/scenarios/$scenarioId'
     | '/$campaignId/events'
     | '/$campaignId/matches'
+    | '/$campaignId/progress'
     | '/$campaignId/timeline'
     | '/$campaignId/warbands'
     | '/$campaignId/warriors'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/reference/scenarios/$scenarioId'
     | '/$campaignId/events/'
     | '/$campaignId/matches/'
+    | '/$campaignId/progress/'
     | '/$campaignId/timeline/'
     | '/$campaignId/warbands/'
     | '/$campaignId/warriors/'
@@ -442,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignIdTimelineIndexRouteImport
       parentRoute: typeof CampaignIdRouteRoute
     }
+    '/$campaignId/progress/': {
+      id: '/$campaignId/progress/'
+      path: '/progress'
+      fullPath: '/$campaignId/progress'
+      preLoaderRoute: typeof CampaignIdProgressIndexRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
+    }
     '/$campaignId/matches/': {
       id: '/$campaignId/matches/'
       path: '/matches'
@@ -523,6 +542,7 @@ interface CampaignIdRouteRouteChildren {
   CampaignIdWarriorsWarriorIdRoute: typeof CampaignIdWarriorsWarriorIdRoute
   CampaignIdEventsIndexRoute: typeof CampaignIdEventsIndexRoute
   CampaignIdMatchesIndexRoute: typeof CampaignIdMatchesIndexRoute
+  CampaignIdProgressIndexRoute: typeof CampaignIdProgressIndexRoute
   CampaignIdTimelineIndexRoute: typeof CampaignIdTimelineIndexRoute
   CampaignIdWarbandsIndexRoute: typeof CampaignIdWarbandsIndexRoute
   CampaignIdWarriorsIndexRoute: typeof CampaignIdWarriorsIndexRoute
@@ -540,6 +560,7 @@ const CampaignIdRouteRouteChildren: CampaignIdRouteRouteChildren = {
   CampaignIdWarriorsWarriorIdRoute: CampaignIdWarriorsWarriorIdRoute,
   CampaignIdEventsIndexRoute: CampaignIdEventsIndexRoute,
   CampaignIdMatchesIndexRoute: CampaignIdMatchesIndexRoute,
+  CampaignIdProgressIndexRoute: CampaignIdProgressIndexRoute,
   CampaignIdTimelineIndexRoute: CampaignIdTimelineIndexRoute,
   CampaignIdWarbandsIndexRoute: CampaignIdWarbandsIndexRoute,
   CampaignIdWarriorsIndexRoute: CampaignIdWarriorsIndexRoute,
