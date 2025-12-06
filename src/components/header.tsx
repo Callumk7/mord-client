@@ -14,7 +14,7 @@ import {
 	NavigationMenuPositioner,
 	NavigationMenuTrigger,
 } from "./ui/navigation-menu";
-import { Fish, PlusCircle, Shield } from "lucide-react";
+import { Fish, PlusCircle, Shield, TrendingUp } from "lucide-react";
 import { Separator } from "./ui/separator";
 
 interface HeaderProps {
@@ -135,6 +135,17 @@ export function Header({ campaignId }: HeaderProps) {
 							}
 						>
 							Timeline
+						</NavigationMenuLink>
+					</NavigationMenuItem>
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							className="flex items-center flex-row gap-2"
+							render={
+								<Link to="/$campaignId/progress" params={{ campaignId }} />
+							}
+						>
+							<TrendingUp className="w-4 h-4" />
+							Progress
 						</NavigationMenuLink>
 					</NavigationMenuItem>
 				</div>
