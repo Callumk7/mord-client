@@ -1,7 +1,7 @@
 # Task 01: Add State Changes Table to Schema
 
 ## Status
-⏳ Not Started
+✅ Complete
 
 ## Description
 Add the `warbandStateChanges` table to the database schema to track all warband state changes over time.
