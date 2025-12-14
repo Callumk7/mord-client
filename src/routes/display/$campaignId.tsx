@@ -859,9 +859,13 @@ function RouteComponent() {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row">
 				<div className="flex min-h-0 flex-1 flex-col gap-4">
-					<StatCarousel items={carouselItems} headline={breakingHeadline} />
-
-					<MatchCenter matches={matchCenterMatches} />
+					{/* Give the carousel more room than Match Center */}
+					<div className="flex min-h-0 flex-[1.7] flex-col">
+						<StatCarousel items={carouselItems} headline={breakingHeadline} />
+					</div>
+					<div className="flex min-h-0 flex-1 flex-col">
+						<MatchCenter matches={matchCenterMatches} />
+					</div>
 				</div>
 				<aside className="flex w-full flex-col gap-4 lg:w-80">
 					<WarbandSpotlight data={warbandSpotlight} />
@@ -1484,36 +1488,29 @@ function MatchCenter({ matches }: MatchCenterProps) {
 	}, [matches]);
 
 	return (
-		<div className="flex min-h-0 flex-1 flex-col gap-4">
-			<div className="rounded-lg border bg-card shadow-lg">
-				<div className="border-b bg-muted/20 px-4 py-3">
-					<div className="flex items-baseline justify-between gap-4">
-						<div>
-							<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
+		<div className="h-full min-h-0">
+			<div className="h-full min-h-0 overflow-hidden rounded-lg border bg-card shadow-lg">
+				<div className="border-b bg-muted/20 px-4 py-2">
+					<div className="flex items-center justify-between gap-4">
+						<div className="min-w-0">
+							<div className="text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
 								Match Center
 							</div>
-							<div className="text-xl font-black uppercase tracking-wider text-foreground">
-								Live Now &amp; Upcoming
+							<div className="truncate text-base font-black uppercase tracking-wider text-foreground">
+								Live &amp; Upcoming
 							</div>
 						</div>
-						<div className="text-xs font-semibold text-muted-foreground">
-							<span className="mr-3">
-								{live.length}{" "}
-								{pluralize(live.length, "live game", "live games")}
-							</span>
-							<span>
-								{scheduled.length}{" "}
-								{pluralize(scheduled.length, "fixture", "fixtures")}
-							</span>
+						<div className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+							{live.length} live • {scheduled.length} next
 						</div>
 					</div>
 				</div>
 
-				<div className="grid gap-4 p-4 lg:grid-cols-3">
-					<div className="lg:col-span-2">
+				<div className="grid h-[calc(100%-3rem)] min-h-0 gap-3 p-3 lg:grid-cols-3">
+					<div className="min-h-0 overflow-hidden lg:col-span-2">
 						<LiveNowGrid matches={live} />
 					</div>
-					<div className="lg:col-span-1">
+					<div className="min-h-0 overflow-hidden lg:col-span-1">
 						<UpcomingFixtures matches={scheduled} />
 					</div>
 				</div>
@@ -1558,110 +1555,83 @@ function RecentResultsSlide({ highlights }: MatchSpotlightProps) {
 				<div className="h-1 w-full bg-linear-to-r from-red-600 via-blue-700 to-amber-500" />
 			</div>
 
-			{/* Scoreboard rows */}
-			<div className="grid min-h-0 flex-1 gap-3 overflow-hidden">
+			{/* Scoreboard rows (fill available height so content isn't clipped) */}
+			<div className="flex w-full min-h-0 flex-1 flex-col gap-3">
 				{rows.map((match) => {
-					const isHeadToHead = match.participants.length === 2;
-					const left = match.participants[0];
-					const right = match.participants[1];
+					const participantNames = match.participants
+						.slice(0, 4)
+						.map((p) => withIcon(p.icon, p.name));
+					const participantsLine =
+						participantNames.length === 0
+							? "Participants TBD"
+							: `${participantNames.join(" • ")}${match.participants.length > 4 ? ` • +${match.participants.length - 4}` : ""}`;
 
-					const fixtureLine =
-						isHeadToHead && left && right
-							? `${left.name} vs ${right.name}`
-							: match.participants.length
-								? `${match.participants.length} warbands`
-								: "Participants TBD";
+					const winnersNames = match.winners
+						.slice(0, 2)
+						.map((w) => withIcon(w.icon, w.name));
+					const winnersLine =
+						winnersNames.length === 0
+							? "TBD"
+							: `${winnersNames.join(" & ")}${match.winners.length > 2 ? " & +" + String(match.winners.length - 2) : ""}`;
 
-					const winnersLine = match.winners.length
-						? match.winners
-								.slice(0, 2)
-								.map((w) => withIcon(w.icon, w.name))
-								.join(" • ")
-						: "TBD";
+					const incidents = match.kills + match.injuries;
 
 					return (
 						<div
 							key={match.id}
-							className="overflow-hidden rounded-lg border bg-linear-to-br from-slate-950 via-slate-950 to-slate-900 text-slate-50 shadow"
+							className="flex w-full min-h-0 flex-1 overflow-hidden rounded-lg border bg-linear-to-r from-slate-950 via-slate-950 to-slate-900 text-slate-50 shadow"
 						>
-							<div className="flex items-center justify-between bg-linear-to-r from-blue-700/35 via-slate-950 to-red-700/30 px-4 py-2">
-								<div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.35em] text-slate-200">
-									<span className="rounded bg-slate-50/10 px-2 py-1">
+							<div className="flex h-full w-full items-stretch">
+								<div className="flex w-[92px] flex-col items-center justify-center gap-2 border-r border-slate-50/10 bg-linear-to-b from-blue-700/35 via-slate-950 to-red-700/30 px-3">
+									<div className="rounded bg-slate-50/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-slate-200">
 										{match.matchType.toUpperCase()}
-									</span>
-									<span className="rounded bg-red-600 px-2 py-1 text-white">
+									</div>
+									<div className="rounded bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-white">
 										FT
-									</span>
-								</div>
-								<div className="text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-300">
-									{formatShortDate(match.date)} • {formatTime(match.date)}
-								</div>
-							</div>
-
-							<div className="grid gap-3 px-4 py-4 md:grid-cols-[1fr_auto]">
-								<div className="min-w-0">
-									<div className="truncate text-lg font-black uppercase tracking-wide">
-										{match.name}
 									</div>
-									<div className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.35em] text-slate-300">
-										{fixtureLine}
+								</div>
+
+								<div className="flex min-w-0 flex-1 flex-col justify-between px-4 py-3">
+									<div className="flex items-baseline justify-between gap-4">
+										<div className="min-w-0 truncate text-base font-black uppercase tracking-wide">
+											{match.name}
+										</div>
+										<div className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-300">
+											{formatShortDate(match.date)} • {formatTime(match.date)}
+										</div>
 									</div>
 
-									<div className="mt-3 flex flex-wrap items-center gap-2">
-										<span className="rounded bg-amber-500/20 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-amber-200">
-											Winners
+									<div className="mt-1 flex min-w-0 items-center gap-2">
+										<span className="shrink-0 rounded bg-amber-500/20 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-amber-200">
+											WIN
 										</span>
-										<span className="truncate text-sm font-semibold text-slate-100">
+										<span className="min-w-0 truncate text-xs font-semibold text-slate-100">
 											{winnersLine}
 										</span>
 									</div>
 
-									<div className="mt-3 flex flex-wrap gap-2">
-										{match.participants.slice(0, 4).map((participant) => (
-											<span
-												key={participant.id}
-												className="inline-flex items-center gap-2 rounded-full border border-slate-50/10 bg-slate-50/5 px-3 py-1 text-xs font-semibold text-slate-100"
-											>
-												<span
-													className="h-2 w-2 rounded-full"
-													style={{
-														backgroundColor: participant.color ?? "#f4b400",
-													}}
-												/>
-												<span className="truncate">
-													{participant.icon ? `${participant.icon} ` : ""}
-													{participant.name}
-												</span>
-											</span>
-										))}
-										{match.participants.length > 4 ? (
-											<span className="rounded-full border border-slate-50/10 bg-slate-50/5 px-3 py-1 text-xs font-semibold text-slate-200">
-												+{match.participants.length - 4}
-											</span>
-										) : null}
+									<div className="mt-2 min-w-0 truncate text-[11px] font-semibold text-slate-200">
+										<span className="text-slate-400">Players:</span>{" "}
+										{participantsLine}
 									</div>
 								</div>
 
-								<div className="shrink-0 rounded-lg border border-slate-50/10 bg-slate-50/5 px-4 py-3">
+								<div className="flex w-[170px] flex-col items-center justify-center gap-1 border-l border-slate-50/10 bg-slate-50/5 px-3 py-3 text-center">
 									<div className="text-[10px] font-black uppercase tracking-[0.45em] text-slate-300">
 										Incidents
 									</div>
-									<div className="mt-1 text-3xl font-black tabular-nums text-slate-50">
-										{match.kills + match.injuries}
+									<div className="text-2xl font-black tabular-nums text-slate-50">
+										{incidents}
 									</div>
-									<div className="mt-3 grid gap-2 text-xs font-semibold">
-										<div className="flex items-center justify-between gap-4 text-slate-200">
-											<span className="uppercase tracking-[0.25em] text-slate-300">
-												☠️ Kills
-											</span>
+									<div className="flex items-center gap-3 text-[11px] font-semibold text-slate-200">
+										<span>
+											<span className="text-slate-400">☠️</span>{" "}
 											<span className="font-mono">{match.kills}</span>
-										</div>
-										<div className="flex items-center justify-between gap-4 text-slate-200">
-											<span className="uppercase tracking-[0.25em] text-slate-300">
-												🩸 Injuries
-											</span>
+										</span>
+										<span>
+											<span className="text-slate-400">🩸</span>{" "}
 											<span className="font-mono">{match.injuries}</span>
-										</div>
+										</span>
 									</div>
 								</div>
 							</div>
