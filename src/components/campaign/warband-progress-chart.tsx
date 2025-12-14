@@ -55,10 +55,10 @@ function WarbandProgressTooltip({
 
 	return (
 		<div
-			className="rounded-lg border p-3 text-sm shadow"
+			className="rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
 			style={{
-				backgroundColor: "hsl(var(--card))",
-				borderColor: "hsl(var(--border))",
+				// Ensure the tooltip is fully opaque (no alpha blending).
+				opacity: 1,
 			}}
 		>
 			<div className="mb-2 font-medium">
