@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type {
@@ -227,7 +227,37 @@ function RouteComponent() {
 		return sum + alive;
 	}, 0);
 
+	const breakingHeadline = useMemo(() => {
+		const latest = [...events].sort(
+			(a, b) =>
+				new Date(b.timestamp ?? b.createdAt).getTime() -
+				new Date(a.timestamp ?? a.createdAt).getTime(),
+		)[0];
+
+		if (latest) {
+			const icon = latest.death ? "☠️" : latest.injury ? "🩸" : "⚔️";
+			const attacker = latest.warrior?.name ?? "Unknown warrior";
+			const defender = latest.defender?.name;
+			const detail =
+				latest.description ??
+				(defender
+					? `${attacker} overwhelmed ${defender}`
+					: `${attacker} seized the spotlight`);
+			const label = latest.match?.name ?? campaign?.name ?? "Campaign feed";
+			return `${icon} BREAKING: ${label} — ${detail}`;
+		}
+
+		const leaderName = gamesWon[0]?.warband.name;
+		return leaderName
+			? `📣 BREAKING: ${leaderName} set the pace in the ruins`
+			: "📣 BREAKING: The broadcast desk is ready — waiting for the first clash.";
+	}, [events, campaign, gamesWon]);
+
 	const stats = useMemo<BroadcastStat[]>(() => {
+		const warpstoneIndex = totalMatches
+			? Math.round(((casualtyCount + injuryCount) / totalMatches) * 10) / 10
+			: 0;
+
 		const result: BroadcastStat[] = [
 			{
 				type: "stat",
@@ -282,6 +312,16 @@ function RouteComponent() {
 				statLine: `${activeWarriors} warriors ready`,
 				description: `${totalMatches} matches logged`,
 				gradient: gradients[4],
+			},
+			{
+				type: "stat",
+				id: "warpstone-index",
+				title: "Warpstone Index",
+				value: `${warpstoneIndex}`,
+				statLine: `${pluralize(casualtyCount + injuryCount, "incident")} / ${pluralize(totalMatches, "match")}`,
+				description: "Higher is worse. Probably. (The desk cannot confirm.)",
+				gradient: "from-slate-900 to-green-600",
+				footnote: "Mord Markets",
 			},
 		];
 
@@ -391,7 +431,7 @@ function RouteComponent() {
 			];
 		}
 
-		return [...events]
+		const items = [...events]
 			.sort(
 				(a, b) =>
 					new Date(b.timestamp ?? b.createdAt).getTime() -
@@ -410,7 +450,8 @@ function RouteComponent() {
 				const label = event.match?.name ?? campaign?.name ?? "Campaign feed";
 				return `${icon} ${label}: ${detail}`;
 			});
-	}, [events, campaign]);
+		return [breakingHeadline, ...items];
+	}, [events, campaign, breakingHeadline]);
 
 	// Progress chart data
 	const progressData = useMemo(() => {
@@ -502,6 +543,20 @@ function RouteComponent() {
 	// Combine stats and charts into carousel items
 	const carouselItems = useMemo<(BroadcastStat | BroadcastChart)[]>(() => {
 		const items: (BroadcastStat | BroadcastChart)[] = [...stats];
+
+		// Add recent results as a broadcast slide (prevents vertical cut-off).
+		if (recentMatchHighlights.length > 0) {
+			items.push({
+				type: "chart",
+				id: "recent-results-slide",
+				gradient: "from-slate-950 to-slate-800",
+				content: (
+					<div className="h-full w-full p-6">
+						<RecentResultsSlide highlights={recentMatchHighlights} />
+					</div>
+				),
+			});
+		}
 
 		// Add grouped bar chart if data exists
 		if (warbandWealthAndRatingData.length > 0) {
@@ -645,28 +700,55 @@ function RouteComponent() {
 		return items;
 	}, [
 		stats,
+		recentMatchHighlights,
 		warbandWealthAndRatingData,
 		progressData,
 		warbandWealthAndRatingConfig,
 	]);
 
 	return (
-		<div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+		<div className="relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+			<style>{`
+				@keyframes mordScan {
+					from { background-position: 0 0; }
+					to { background-position: 0 32px; }
+				}
+				@keyframes mordGlow {
+					0%, 100% { opacity: .10; }
+					50% { opacity: .18; }
+				}
+			`}</style>
+			<div className="pointer-events-none absolute inset-0">
+				<div
+					className="absolute inset-0 bg-linear-to-br from-red-500 via-blue-500 to-amber-400"
+					style={{
+						opacity: 0.08,
+						animation: "mordGlow 6s ease-in-out infinite",
+					}}
+				/>
+				<div
+					className="absolute inset-0 mix-blend-overlay"
+					style={{
+						opacity: 0.06,
+						backgroundImage:
+							"repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0, rgba(255,255,255,0.12) 1px, rgba(255,255,255,0) 2px, rgba(255,255,255,0) 4px)",
+						animation: "mordScan 2.2s linear infinite",
+					}}
+				/>
+			</div>
 			<BroadcastHeader
 				campaign={campaign}
 				topWarbandName={leader?.warband.name}
 				totalMatches={totalMatches}
 				casualtyCount={casualtyCount}
 				activeWarbands={activeWarbands}
+				breaking={breakingHeadline}
 			/>
 			<div className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row">
 				<div className="flex min-h-0 flex-1 flex-col gap-4">
-					<StatCarousel items={carouselItems} />
+					<StatCarousel items={carouselItems} headline={breakingHeadline} />
 
-					<MatchCenter
-						matches={matchCenterMatches}
-						recent={recentMatchHighlights}
-					/>
+					<MatchCenter matches={matchCenterMatches} />
 				</div>
 				<aside className="flex w-full flex-col gap-4 lg:w-80">
 					<WarbandSpotlight data={warbandSpotlight} />
@@ -677,7 +759,7 @@ function RouteComponent() {
 					/>
 				</aside>
 			</div>
-			<NewsTicker items={newsItems} />
+			<NewsTicker items={newsItems} label="Breaking" />
 		</div>
 	);
 }
@@ -688,6 +770,7 @@ interface BroadcastHeaderProps {
 	totalMatches: number;
 	casualtyCount: number;
 	activeWarbands: number;
+	breaking?: string;
 }
 
 function BroadcastHeader({
@@ -696,68 +779,222 @@ function BroadcastHeader({
 	totalMatches,
 	casualtyCount,
 	activeWarbands,
+	breaking,
 }: BroadcastHeaderProps) {
+	const [now, setNow] = useState(() => new Date());
+
+	useEffect(() => {
+		const interval = setInterval(() => setNow(new Date()), 1_000);
+		return () => clearInterval(interval);
+	}, []);
+
 	const timeframe = campaign
 		? `${formatDate(campaign.startDate)} – ${formatDate(campaign.endDate)}`
 		: "Schedule pending";
 
 	return (
-		<div className="border-b-4 border-accent bg-linear-to-r from-red-300 via-red-500 to-blue-400 px-6 py-4 text-background">
-			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-				<div>
-					<div className="text-sm font-bold uppercase tracking-[0.3em] text-accent-foreground/90">
-						Live Broadcast
+		<header className="relative border-b border-border/60 bg-background/70 text-foreground backdrop-blur">
+			<div className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
+				<div className="flex items-center gap-4">
+					<div className="flex items-stretch overflow-hidden rounded-md border bg-card shadow-sm">
+						<div className="bg-red-600 px-3 py-2 text-xs font-black uppercase tracking-[0.25em] text-white">
+							SKY
+						</div>
+						<div className="bg-blue-700 px-3 py-2 text-xs font-black uppercase tracking-[0.25em] text-white">
+							MORD
+						</div>
+						<div className="px-3 py-2 text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">
+							SPORTS NEWS
+						</div>
 					</div>
-					<h1 className="text-3xl font-black uppercase tracking-wider md:text-4xl">
-						{campaign?.name ?? "Mordheim Campaign Report"}
-					</h1>
-					<p className="text-sm text-background/80">{timeframe}</p>
+					<div className="hidden h-10 w-px bg-border md:block" />
+					<div className="min-w-0">
+						<h1 className="truncate text-xl font-black uppercase tracking-wider md:text-2xl">
+							{campaign?.name ?? "Mordheim Campaign Report"}
+						</h1>
+						<div className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+							{timeframe}
+						</div>
+					</div>
 				</div>
-				<div className="flex flex-col gap-2 text-right text-background">
-					<div className="text-2xl font-black">LIVE</div>
-					<div className="text-sm uppercase tracking-[0.3em] text-background/80">
-						Top warband: {topWarbandName ?? "TBD"}
+
+				<div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
+					<div className="flex items-center gap-2">
+						<span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+						<span className="rounded bg-red-600 px-2 py-1 text-xs font-black uppercase tracking-[0.25em] text-white">
+							LIVE
+						</span>
+						<span className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+							{now.toLocaleTimeString("en-US", {
+								hour: "2-digit",
+								minute: "2-digit",
+								second: "2-digit",
+							})}
+						</span>
 					</div>
-					<div className="flex gap-4 text-xs font-semibold">
-						<span>{pluralize(totalMatches, "match")} reported</span>
-						<span>{pluralize(casualtyCount, "casualty")} logged</span>
-						<span>{activeWarbands} warbands active</span>
+
+					<div className="flex flex-wrap gap-2 text-[11px] font-semibold">
+						<span className="rounded-full border bg-card/70 px-3 py-1 text-muted-foreground">
+							Top warband:{" "}
+							<span className="font-black text-foreground">
+								{topWarbandName ?? "TBD"}
+							</span>
+						</span>
+						<span className="rounded-full border bg-card/70 px-3 py-1 text-muted-foreground">
+							<span className="font-black text-foreground">
+								{pluralize(totalMatches, "match")}
+							</span>{" "}
+							reported
+						</span>
+						<span className="rounded-full border bg-card/70 px-3 py-1 text-muted-foreground">
+							<span className="font-black text-foreground">
+								{pluralize(casualtyCount, "casualty")}
+							</span>{" "}
+							logged
+						</span>
+						<span className="rounded-full border bg-card/70 px-3 py-1 text-muted-foreground">
+							<span className="font-black text-foreground">
+								{activeWarbands}
+							</span>{" "}
+							warbands
+						</span>
 					</div>
 				</div>
 			</div>
-		</div>
+
+			<div className="border-t bg-linear-to-r from-red-600/20 via-blue-600/10 to-amber-500/20 px-4 py-2 md:px-6">
+				<div className="flex items-center gap-3">
+					<span className="rounded bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-white">
+						Breaking
+					</span>
+					<div className="min-w-0 truncate text-sm font-semibold">
+						{breaking ?? "The desk is live — feed the ruins with events."}
+					</div>
+					<div className="hidden shrink-0 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground md:block">
+						SMSN • Live feed
+					</div>
+				</div>
+			</div>
+		</header>
 	);
 }
 
 interface StatCarouselProps {
 	items: (BroadcastStat | BroadcastChart)[];
+	headline: string;
 }
 
-function StatCarousel({ items }: StatCarouselProps) {
+function StatCarousel({ items, headline }: StatCarouselProps) {
 	const [current, setCurrent] = useState(0);
+	const [isPaused, setIsPaused] = useState(false);
+	const [progress, setProgress] = useState(0);
+	const durationMs = 7_000;
+	const slideStartRef = useRef(0);
 
 	useEffect(() => {
-		if (items.length <= 1) {
-			return;
-		}
+		if (items.length <= 1 || isPaused) return;
+
 		const interval = setInterval(() => {
 			setCurrent((prev) => (prev + 1) % items.length);
-		}, 7000);
+		}, durationMs);
+
 		return () => clearInterval(interval);
+	}, [items.length, isPaused]);
+
+	useEffect(() => {
+		// Reset progress when slide changes; also clamp for dynamic item arrays.
+		if (items.length > 0 && current >= items.length) {
+			setCurrent(0);
+			return;
+		}
+		slideStartRef.current = performance.now();
+		setProgress(0);
+	}, [current, items.length]);
+
+	useEffect(() => {
+		let animationId = 0;
+
+		const step = (now: number) => {
+			if (!isPaused && items.length > 1) {
+				const pct = Math.min(1, (now - slideStartRef.current) / durationMs);
+				setProgress(pct);
+				if (pct >= 1) {
+					setProgress(0);
+				} else {
+					animationId = requestAnimationFrame(step);
+				}
+			}
+		};
+
+		setProgress(0);
+		if (!isPaused && items.length > 1) {
+			animationId = requestAnimationFrame(step);
+		}
+
+		return () => cancelAnimationFrame(animationId);
+	}, [items.length, isPaused]);
+
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === " " || event.key.toLowerCase() === "p") {
+				event.preventDefault();
+				setIsPaused((prev) => !prev);
+				return;
+			}
+			if (event.key === "ArrowLeft") {
+				event.preventDefault();
+				setCurrent((prev) => (prev - 1 + items.length) % items.length);
+				return;
+			}
+			if (event.key === "ArrowRight") {
+				event.preventDefault();
+				setCurrent((prev) => (prev + 1) % items.length);
+			}
+		};
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [items.length]);
 
 	const currentItem = items[current];
 
 	return (
-		<div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg">
+		<div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg">
+			<div className="absolute left-0 top-0 z-30 w-full">
+				<div className="flex items-center justify-between gap-4 bg-background/70 px-4 py-2 backdrop-blur">
+					<div className="min-w-0 truncate text-xs font-black uppercase tracking-[0.35em] text-muted-foreground">
+						On now • {headline}
+					</div>
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							aria-label={isPaused ? "Resume autoplay" : "Pause autoplay"}
+							onClick={() => setIsPaused((prev) => !prev)}
+							className="rounded-full bg-accent p-2 text-accent-foreground transition hover:bg-accent/80"
+						>
+							{isPaused ? (
+								<Play className="h-4 w-4" />
+							) : (
+								<Pause className="h-4 w-4" />
+							)}
+						</button>
+					</div>
+				</div>
+				<div className="h-1 w-full bg-muted/40">
+					<div
+						className="h-full bg-accent transition-[width]"
+						style={{ width: `${Math.round(progress * 100)}%` }}
+					/>
+				</div>
+			</div>
 			<div
 				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-linear-to-br ${currentItem?.gradient}`}
 			>
-				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card">
+				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card pt-14">
 					{currentItem?.type === "stat" ? (
 						<>
 							<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
-							<div className="relative z-10 space-y-2 p-8">
+							<div className="relative z-10 space-y-2 px-8 pb-8 pt-4">
 								<div className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground">
 									{currentItem.title}
 								</div>
@@ -839,78 +1076,6 @@ interface MatchSpotlightProps {
 	highlights: MatchHighlight[];
 }
 
-function MatchSpotlight({ highlights }: MatchSpotlightProps) {
-	if (highlights.length === 0) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-				No completed matches to recap yet.
-			</div>
-		);
-	}
-
-	return (
-		<div className="rounded-lg border bg-card p-4 shadow-lg">
-			<div className="mb-4 flex items-center justify-between">
-				<div>
-					<h2 className="text-2xl font-bold text-foreground">Recent Results</h2>
-					<p className="text-sm text-muted-foreground">
-						Last three finished clashes
-					</p>
-				</div>
-				<div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-					Full time
-				</div>
-			</div>
-			<div className="grid gap-4 md:grid-cols-3">
-				{highlights.map((match) => (
-					<div
-						key={match.id}
-						className="flex flex-col rounded-lg border bg-muted/30 p-4"
-					>
-						<div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-							{match.matchType} • {match.status.toUpperCase()}
-						</div>
-						<div className="truncate text-lg font-bold text-foreground">
-							{match.name}
-						</div>
-						<div className="text-xs text-muted-foreground">
-							{formatDate(match.date)}
-						</div>
-						<div className="mt-3 space-y-1">
-							{match.participants.map((participant) => (
-								<div
-									key={participant.id}
-									className="flex items-center gap-2 text-sm text-foreground"
-								>
-									<span
-										className="h-2 w-2 rounded-full"
-										style={{
-											backgroundColor: participant.color ?? "#f4b400",
-										}}
-									/>
-									<span className="truncate">
-										{participant.icon ? `${participant.icon} ` : ""}
-										{participant.name}
-									</span>
-								</div>
-							))}
-						</div>
-						<div className="mt-4 flex gap-4 text-xs font-semibold text-muted-foreground">
-							<span>
-								{match.kills} {pluralize(match.kills, "kill")}
-							</span>
-							<span>
-								{match.injuries} {pluralize(match.injuries, "injury")}
-							</span>
-							<span>{match.totalMoments} events</span>
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
 interface WarbandSpotlightProps {
 	data: WarbandSpotlightData | null;
 }
@@ -984,7 +1149,7 @@ function CasualtyReport({
 			entries: kills.map((entry) => ({
 				name: entry.warrior.name,
 				warband: entry.warbandName,
-				value: `${entry.kills} ${pluralize(entry.kills, "kill")}`,
+				value: pluralize(entry.kills, "kill"),
 			})),
 		},
 		{
@@ -993,7 +1158,7 @@ function CasualtyReport({
 			entries: injuriesTaken.map((entry) => ({
 				name: entry.warrior.name,
 				warband: entry.warbandName,
-				value: `${entry.injuriesReceived} ${pluralize(entry.injuriesReceived, "hit")}`,
+				value: pluralize(entry.injuriesReceived, "hit"),
 			})),
 		},
 		{
@@ -1002,7 +1167,7 @@ function CasualtyReport({
 			entries: injuriesInflicted.map((entry) => ({
 				name: entry.warrior.name,
 				warband: entry.warbandName,
-				value: `${entry.injuriesInflicted} ${pluralize(entry.injuriesInflicted, "injury")}`,
+				value: pluralize(entry.injuriesInflicted, "injury"),
 			})),
 		},
 	];
@@ -1049,40 +1214,75 @@ function CasualtyReport({
 
 interface NewsTickerProps {
 	items: string[];
+	label?: string;
 }
 
-function NewsTicker({ items }: NewsTickerProps) {
-	const tickerRef = useRef<HTMLDivElement>(null);
+function NewsTicker({ items, label = "Breaking" }: NewsTickerProps) {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const contentRef = useRef<HTMLDivElement>(null);
+	const lastFrameRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		if (!items.length) {
 			return;
 		}
 
-		const container = tickerRef.current;
-		if (!container) {
+		const reduceMotion =
+			typeof window !== "undefined" &&
+			(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
+				false);
+		if (reduceMotion) {
 			return;
 		}
 
-		let animationId: number;
-		let scrollPosition = 0;
-		const scrollSpeed = 0.5;
+		const container = containerRef.current;
+		const content = contentRef.current;
+		if (!container || !content) {
+			return;
+		}
 
-		const step = () => {
-			scrollPosition += scrollSpeed;
+		let animationId = 0;
+		let offsetPx = 0;
+		const pxPerSecond = 36;
 
-			if (scrollPosition >= container.scrollWidth / 2) {
-				scrollPosition = 0;
+		// Reset on item changes
+		offsetPx = 0;
+		lastFrameRef.current = null;
+		content.style.transform = "translateX(0px)";
+
+		const step = (now: number) => {
+			const shouldAnimate =
+				content.scrollWidth > container.clientWidth &&
+				content.scrollWidth / 2 > 0;
+			if (!shouldAnimate) {
+				content.style.transform = "translateX(0px)";
+				animationId = requestAnimationFrame(step);
+				return;
 			}
 
-			container.scrollLeft = scrollPosition;
+			const last = lastFrameRef.current ?? now;
+			lastFrameRef.current = now;
+			const dt = Math.min(50, now - last);
+			const deltaPx = (pxPerSecond * dt) / 1000;
+
+			const halfWidth = content.scrollWidth / 2;
+			if (halfWidth <= 0) {
+				animationId = requestAnimationFrame(step);
+				return;
+			}
+
+			offsetPx += deltaPx;
+			if (offsetPx >= halfWidth) {
+				offsetPx = 0;
+			}
+
+			content.style.transform = `translateX(-${offsetPx}px)`;
 			animationId = requestAnimationFrame(step);
 		};
 
 		animationId = requestAnimationFrame(step);
-
 		return () => cancelAnimationFrame(animationId);
-	}, [items.length]);
+	}, [items]);
 
 	const loopItems = useMemo(() => {
 		const primary = items.map((item, index) => ({
@@ -1097,36 +1297,61 @@ function NewsTicker({ items }: NewsTickerProps) {
 	}, [items]);
 
 	return (
-		<div className="border-t border-accent/30 bg-primary px-4 py-3 text-primary-foreground">
-			<div className="flex items-center gap-4">
+		<footer className="relative border-t border-border/60 bg-background/80 px-4 py-3 text-foreground backdrop-blur md:px-6">
+			<div className="pointer-events-none absolute inset-0">
+				<div className="absolute inset-0 bg-linear-to-r from-red-600/15 via-blue-600/10 to-amber-500/15" />
+				<div className="absolute inset-y-0 left-0 w-16 bg-linear-to-r from-background via-background/80 to-transparent" />
+				<div className="absolute inset-y-0 right-0 w-16 bg-linear-to-l from-background via-background/80 to-transparent" />
+			</div>
+
+			<div className="relative flex items-center gap-4">
 				<div className="shrink-0">
-					<div className="text-xs font-bold uppercase tracking-[0.4em] text-accent">
-						Breaking
+					<div className="flex items-center gap-3">
+						<div className="flex items-stretch overflow-hidden rounded border bg-card shadow-sm">
+							<div className="bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-white">
+								SKY
+							</div>
+							<div className="bg-blue-700 px-2 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-white">
+								MORD
+							</div>
+						</div>
+						<div className="flex items-center gap-2">
+							<span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+							<span className="rounded bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-white">
+								{label}
+							</span>
+						</div>
 					</div>
 				</div>
 				<div
-					ref={tickerRef}
+					ref={containerRef}
 					className="flex-1 overflow-hidden whitespace-nowrap"
 				>
-					<div className="flex gap-12">
+					<div ref={contentRef} className="flex gap-12 will-change-transform">
 						{loopItems.map((entry) => (
-							<span key={entry.id} className="text-sm font-medium">
-								{entry.text}
+							<span
+								key={entry.id}
+								className="text-sm font-semibold text-foreground/90"
+							>
+								<span className="text-foreground/40">◆</span>{" "}
+								<span>{entry.text}</span>
 							</span>
 						))}
 					</div>
 				</div>
+				<div className="hidden shrink-0 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground md:block">
+					SMSN • LIVE FEED
+				</div>
 			</div>
-		</div>
+		</footer>
 	);
 }
 
 interface MatchCenterProps {
 	matches: MatchCenterMatch[];
-	recent: MatchHighlight[];
 }
 
-function MatchCenter({ matches, recent }: MatchCenterProps) {
+function MatchCenter({ matches }: MatchCenterProps) {
 	const { live, scheduled } = useMemo(() => {
 		const liveMatches = matches
 			.filter((match) => match.status === "active")
@@ -1174,8 +1399,93 @@ function MatchCenter({ matches, recent }: MatchCenterProps) {
 					</div>
 				</div>
 			</div>
+		</div>
+	);
+}
 
-			<MatchSpotlight highlights={recent} />
+function RecentResultsSlide({ highlights }: MatchSpotlightProps) {
+	if (highlights.length === 0) {
+		return (
+			<div className="flex h-full flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+				No completed matches to recap yet.
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex h-full flex-col">
+			<div className="mb-4 flex items-center justify-between">
+				<div>
+					<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
+						Full time
+					</div>
+					<h3 className="text-2xl font-black uppercase tracking-wider text-foreground">
+						Recent Results
+					</h3>
+					<p className="text-sm text-muted-foreground">
+						Last three finished clashes
+					</p>
+				</div>
+				<div className="rounded bg-muted/30 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
+					Highlights
+				</div>
+			</div>
+
+			<div className="grid flex-1 gap-3">
+				{highlights.map((match) => (
+					<div
+						key={match.id}
+						className="rounded-lg border bg-muted/20 px-4 py-3"
+					>
+						<div className="flex items-start justify-between gap-3">
+							<div className="min-w-0">
+								<div className="text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
+									{match.matchType} • {match.status.toUpperCase()} •{" "}
+									{formatShortDate(match.date)}
+								</div>
+								<div className="truncate text-lg font-black text-foreground">
+									{match.name}
+								</div>
+								<div className="mt-2 flex flex-wrap gap-2">
+									{match.participants.map((participant) => (
+										<span
+											key={participant.id}
+											className="inline-flex items-center gap-2 rounded-full border bg-card/50 px-3 py-1 text-xs font-semibold"
+										>
+											<span
+												className="h-2 w-2 rounded-full"
+												style={{
+													backgroundColor: participant.color ?? "#f4b400",
+												}}
+											/>
+											<span className="truncate">
+												{participant.icon ? `${participant.icon} ` : ""}
+												{participant.name}
+											</span>
+										</span>
+									))}
+								</div>
+							</div>
+							<div className="shrink-0 text-right">
+								<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
+									Moments
+								</div>
+								<div className="mt-1 text-sm font-black tabular-nums text-foreground">
+									{match.totalMoments}
+								</div>
+								<div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-muted-foreground">
+									<span>
+										{match.kills} {pluralize(match.kills, "kill")}
+									</span>
+									<span>
+										{match.injuries} {pluralize(match.injuries, "injury")}
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }

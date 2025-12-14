@@ -22,6 +22,8 @@ interface WarbandProgressChartProps {
 	metric: ProgressMetric;
 	yAxisLabel: string;
 	defaultColor?: string;
+	height?: number;
+	showLegend?: boolean;
 }
 
 function WarbandProgressTooltip({
@@ -90,12 +92,14 @@ export function WarbandProgressChart({
 	metric,
 	yAxisLabel,
 	defaultColor = "#8884d8",
+	height = 400,
+	showLegend = true,
 }: WarbandProgressChartProps) {
 	const maxStep = Math.max(1, chartData.length);
 	return (
 		<div className="rounded-lg border bg-card p-6 shadow-lg">
-			<h2 className="mb-4 text-xl font-bold">{title}</h2>
-			<ResponsiveContainer width="100%" height={400}>
+			{title ? <h2 className="mb-4 text-xl font-bold">{title}</h2> : null}
+			<ResponsiveContainer width="100%" height={height}>
 				<LineChart data={chartData}>
 					<CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 					<XAxis
@@ -119,7 +123,7 @@ export function WarbandProgressChart({
 						content={<WarbandProgressTooltip />}
 						labelFormatter={(value) => `Match ${String(value)}`}
 					/>
-					<Legend />
+					{showLegend ? <Legend /> : null}
 					{warbands.map((warband) => (
 						<Line
 							key={warband.warbandId}
