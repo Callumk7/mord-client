@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type {
 	getMostInjuriesFromEvents,
 	getMostInjuriesInflictedFromEvents,
@@ -13,12 +14,28 @@ import {
 	getMostInjuriesFromEventsOptions,
 	getMostInjuriesInflictedFromEventsOptions,
 	getMostKillsFromEventsOptions,
+	getMostRatingOptions,
 	getMostTreasuryOptions,
 } from "~/api/campaign";
+import { getCampaignHistoryOptions } from "~/api/campaign-history";
 import { campaignEventsQueryOptions } from "~/api/events";
 import { getCampaignMatchesOptions } from "~/api/matches";
 import { getCampaignWarbandsWithWarriorsOptions } from "~/api/warbands";
+import { WarbandProgressChart } from "~/components/campaign/warband-progress-chart";
+import type { ChartConfig } from "~/components/ui/chart";
+import {
+	ChartContainer,
+	ChartLegend,
+	ChartLegendContent,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "~/components/ui/chart";
 import type { Campaign } from "~/db/schema";
+import {
+	buildPerMatchWarbandPoints,
+	buildProgressChartData,
+	getWarbandsFromPoints,
+} from "~/lib/campaign-history";
 
 type WarriorKillsRow = Awaited<
 	ReturnType<typeof getMostKillsFromEvents>
@@ -126,6 +143,9 @@ export const Route = createFileRoute("/display/$campaignId")({
 				getMostTreasuryOptions(params.campaignId),
 			),
 			context.queryClient.ensureQueryData(
+				getMostRatingOptions(params.campaignId),
+			),
+			context.queryClient.ensureQueryData(
 				getMostKillsFromEventsOptions(params.campaignId),
 			),
 			context.queryClient.ensureQueryData(
@@ -142,6 +162,9 @@ export const Route = createFileRoute("/display/$campaignId")({
 			),
 			context.queryClient.ensureQueryData(
 				getCampaignWarbandsWithWarriorsOptions(params.campaignId),
+			),
+			context.queryClient.ensureQueryData(
+				getCampaignHistoryOptions(params.campaignId),
 			),
 		]);
 	},
