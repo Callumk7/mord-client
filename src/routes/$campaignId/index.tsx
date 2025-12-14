@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
 	getCampaignOptions,
 	getMostGamesWonOptions,
@@ -9,6 +10,14 @@ import {
 	getMostRatingOptions,
 	getMostTreasuryOptions,
 } from "~/api/campaign";
+import type { ChartConfig } from "~/components/ui/chart";
+import {
+	ChartContainer,
+	ChartLegend,
+	ChartLegendContent,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "~/components/ui/chart";
 
 export const Route = createFileRoute("/$campaignId/")({
 	loader: async ({ params, context }) => {
@@ -128,6 +137,59 @@ function RouteComponent() {
 			linkTo: `/${campaignId}/warriors/${entry.warriorId}`,
 		}));
 
+	const warbandWealthAndRatingConfig = {
+		treasury: {
+			label: "Treasury (gc)",
+			color: "var(--chart-1)",
+		},
+		rating: {
+			label: "Rating",
+			color: "var(--chart-2)",
+		},
+	} satisfies ChartConfig;
+
+	const warbandWealthAndRatingData = (() => {
+		const byId = new Map<
+			number,
+			{
+				warbandId: number;
+				name: string;
+				icon: string | null;
+				color: string | null;
+				treasury: number;
+				rating: number;
+			}
+		>();
+
+		for (const entry of treasury) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: entry.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+			});
+		}
+
+		for (const entry of rating) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: entry.rating ?? 0,
+			});
+		}
+
+		return Array.from(byId.values()).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	})();
+
 	return (
 		<div className="mx-auto max-w-7xl">
 			{/* Campaign Header */}
@@ -157,6 +219,82 @@ function RouteComponent() {
 					<h2 className="mb-4 text-3xl font-bold text-foreground">
 						Warband Leaderboards
 					</h2>
+
+					{/* Warband Treasury + Rating chart */}
+					<div className="mb-6 rounded-lg border bg-card p-6 shadow-lg">
+						<div className="mb-4">
+							<h3 className="text-xl font-bold text-foreground">
+								Treasury & Rating
+							</h3>
+							<p className="text-sm text-muted-foreground">
+								Side-by-side bars for each warband.
+							</p>
+						</div>
+
+						{warbandWealthAndRatingData.length === 0 ? (
+							<p className="py-10 text-center text-sm text-muted-foreground">
+								No warband data yet
+							</p>
+						) : (
+							<ChartContainer
+								config={warbandWealthAndRatingConfig}
+								className="aspect-auto h-[360px] w-full"
+							>
+								<BarChart
+									data={warbandWealthAndRatingData}
+									margin={{ left: 12, right: 12, bottom: 36 }}
+								>
+									<CartesianGrid
+										vertical={false}
+										className="stroke-border/50"
+									/>
+									<XAxis
+										dataKey="name"
+										tickLine={false}
+										axisLine={false}
+										interval={0}
+										height={60}
+										angle={-30}
+										textAnchor="end"
+									/>
+									<YAxis
+										yAxisId="treasury"
+										tickLine={false}
+										axisLine={false}
+										width={48}
+									/>
+									<YAxis
+										yAxisId="rating"
+										orientation="right"
+										tickLine={false}
+										axisLine={false}
+										width={48}
+									/>
+									<ChartTooltip
+										content={
+											<ChartTooltipContent
+												indicator="dot"
+												labelClassName="font-semibold"
+											/>
+										}
+									/>
+									<ChartLegend content={<ChartLegendContent />} />
+									<Bar
+										yAxisId="treasury"
+										dataKey="treasury"
+										fill="var(--color-treasury)"
+										radius={[4, 4, 0, 0]}
+									/>
+									<Bar
+										yAxisId="rating"
+										dataKey="rating"
+										fill="var(--color-rating)"
+										radius={[4, 4, 0, 0]}
+									/>
+								</BarChart>
+							</ChartContainer>
+						)}
+					</div>
 					<div className="grid gap-6 md:grid-cols-3">
 						{/* The Tyrant */}
 						<LeaderboardCard
