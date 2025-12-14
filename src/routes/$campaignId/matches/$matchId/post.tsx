@@ -5,6 +5,7 @@ import { useState } from "react";
 import { getMatchDetailsOptions, getMatchWarbandsOptions } from "~/api/matches";
 import { PostMatchEventResolution } from "~/components/matches/post-match-event-resolution";
 import { PostMatchExperienceResolution } from "~/components/matches/post-match-experience-resolution";
+import { PostMatchGamesPlayed } from "~/components/matches/post-match-games-played";
 import { PostMatchGoldResolution } from "~/components/matches/post-match-gold-resolution";
 import { Button } from "~/components/ui/button";
 import { Link } from "~/components/ui/link";
@@ -63,10 +64,12 @@ function RouteComponent() {
 				/>
 			) : step === 1 ? (
 				<PostMatchExperienceResolution matchId={match.id} />
-			) : (
+			) : step === 2 ? (
 				<PostMatchGoldResolution matchId={match.id} />
+			) : (
+				<PostMatchGamesPlayed matchId={match.id} />
 			)}
-			<Button disabled={step > 1} onClick={() => setStep(step + 1)}>
+			<Button disabled={step > 2} onClick={() => setStep(step + 1)}>
 				Next
 			</Button>
 		</div>
