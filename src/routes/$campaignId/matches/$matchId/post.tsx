@@ -4,6 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { getMatchDetailsOptions, getMatchWarbandsOptions } from "~/api/matches";
 import { PostMatchEventResolution } from "~/components/matches/post-match-event-resolution";
+import { PostMatchExperienceResolution } from "~/components/matches/post-match-experience-resolution";
+import { PostMatchGoldResolution } from "~/components/matches/post-match-gold-resolution";
 import { Button } from "~/components/ui/button";
 import { Link } from "~/components/ui/link";
 import { Spinner } from "~/components/ui/spinner";
@@ -32,12 +34,12 @@ function RouteComponent() {
 	const campaignId = params.campaignId;
 	const matchId = params.matchId;
 
-	const [step, _setStep] = useState(0);
+	const [step, setStep] = useState(0);
 
-	const { data: match, isLoading: isLoadingMatch } = useQuery(
+	const { data: match, isPending: isLoadingMatch } = useQuery(
 		getMatchDetailsOptions(matchId),
 	);
-	const { data: warbands, isLoading: isLoadingWarbands } = useQuery(
+	const { data: warbands, isPending: isLoadingWarbands } = useQuery(
 		getMatchWarbandsOptions(matchId),
 	);
 
@@ -59,9 +61,14 @@ function RouteComponent() {
 					matchId={match.id}
 					campaignId={campaignId}
 				/>
+			) : step === 1 ? (
+				<PostMatchExperienceResolution matchId={match.id} />
 			) : (
-				<div>Done</div>
+				<PostMatchGoldResolution matchId={match.id} />
 			)}
+			<Button disabled={step > 1} onClick={() => setStep(step + 1)}>
+				Next
+			</Button>
 		</div>
 	);
 }

@@ -1,12 +1,37 @@
+import { useMutation } from "@tanstack/react-query";
+import { createServerFn } from "@tanstack/react-start";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 import { EventsList } from "~/components/events/display/events-list";
 import { MatchEndedCard } from "~/components/matches/match-ended-card";
 import { Link } from "~/components/ui/link";
+import { db } from "~/db";
 import type { EventWithParticipants, Warband } from "~/db/schema";
+import { warriors } from "~/db/schema";
 import { useUpdateMatchMutation } from "~/hooks/mutations/matches";
 import { formatDate } from "~/lib/utils";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+
+const updateMatchCountFn = createServerFn({ method: "POST" })
+	.inputValidator((data: { participants: number[] }) => data)
+	.handler(async ({ data }) => {
+		const { participants } = data;
+
+		// Update games played for all alive warriors in the participating warbands
+		await db
+			.update(warriors)
+			.set({
+				gamesPlayed: sql`${warriors.gamesPlayed} + 1`,
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					inArray(warriors.warbandId, participants),
+					eq(warriors.isAlive, true),
+				),
+			);
+	});
 
 // Helper Functions
 const getMatchTypeLabel = (matchType: string) => {
@@ -46,6 +71,9 @@ export function MatchView({
 	winners,
 }: MatchViewProps) {
 	const updateMatchMutation = useUpdateMatchMutation(matchId);
+	const updateMatchCountMutation = useMutation({
+		mutationFn: updateMatchCountFn,
+	});
 
 	const handleStatusChange = (newStatus: string | null) => {
 		if (newStatus && newStatus !== matchStatus) {
@@ -56,6 +84,22 @@ export function MatchView({
 				},
 			});
 		}
+	};
+
+	const handleMatchEnded = () => {
+		handleStatusChange("ended");
+		updateMatchCountMutation.mutateAsync(
+			{
+				data: {
+					participants: participants.map((p) => p.warband.id),
+				},
+			},
+			{
+				onSuccess: () => {
+					console.log("Updated matches played count");
+				},
+			},
+		);
 	};
 
 	return (
@@ -91,10 +135,7 @@ export function MatchView({
 			<EventsList events={events} campaignId={campaignId} matchId={matchId} />
 
 			{matchStatus === "active" && (
-				<Button
-					variant={"destructive"}
-					onClick={() => handleStatusChange("ended")}
-				>
+				<Button variant={"destructive"} onClick={handleMatchEnded}>
 					End Match
 				</Button>
 			)}

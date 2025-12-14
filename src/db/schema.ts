@@ -62,6 +62,7 @@ export const warbandsRelations = relations(warbands, ({ one, many }) => ({
 	warriors: many(warriors),
 	matchParticipants: many(matchParticipants),
 	wins: many(matchWinners),
+	stateChanges: many(warbandStateChanges),
 }));
 
 // Warriors Table
@@ -186,6 +187,58 @@ export const matchWinnersRelations = relations(matchWinners, ({ one }) => ({
 		references: [warbands.id],
 	}),
 }));
+
+// Warband State Changes Table
+export const warbandStateChanges = pgTable("warband_state_changes", {
+	id: serial("id").primaryKey(),
+	warbandId: integer("warband_id")
+		.notNull()
+		.references(() => warbands.id),
+	matchId: integer("match_id")
+		.notNull()
+		.references(() => matches.id),
+
+	// Deltas (changes), not absolute values
+	treasuryDelta: integer("treasury_delta").default(0).notNull(),
+	experienceDelta: integer("experience_delta").default(0).notNull(),
+	ratingDelta: integer("rating_delta").default(0).notNull(),
+
+	// Snapshot of state AFTER this change (for verification)
+	treasuryAfter: integer("treasury_after").notNull(),
+	experienceAfter: integer("experience_after").notNull(),
+	ratingAfter: integer("rating_after").notNull(),
+
+	// Context
+	changeType: text("change_type")
+		.notNull()
+		.$type<
+			| "post_match_gold"
+			| "post_match_experience"
+			| "rating_update"
+			| "manual_adjustment"
+		>(),
+	description: text("description"),
+
+	timestamp: timestamp("timestamp").notNull().defaultNow(),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type WarbandStateChange = typeof warbandStateChanges.$inferSelect;
+export type NewWarbandStateChange = typeof warbandStateChanges.$inferInsert;
+
+export const warbandStateChangesRelations = relations(
+	warbandStateChanges,
+	({ one }) => ({
+		warband: one(warbands, {
+			fields: [warbandStateChanges.warbandId],
+			references: [warbands.id],
+		}),
+		match: one(matches, {
+			fields: [warbandStateChanges.matchId],
+			references: [matches.id],
+		}),
+	}),
+);
 
 export const injuryEnum = pgEnum("injury_type", INJURY_TYPES);
 

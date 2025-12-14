@@ -48,3 +48,15 @@ export function formatEventTime(timestamp: Date | string): string {
 		minute: "2-digit",
 	});
 }
+
+export function parseNumber(value: string) {
+	const trimmedValue = value.trim();
+	if (!trimmedValue) {
+		return null;
+	}
+	const number = Number(trimmedValue);
+	if (Number.isNaN(number)) {
+		return null;
+	}
+	return number;
+}

@@ -17,6 +17,7 @@ export const warriorKeys = {
 	detail: (warriorId: number) => [...warriorKeys.details(), warriorId] as const,
 };
 
+// WARN: Not currently used
 // Get Warrior By Id
 async function getWarriorById(warriorId: number) {
 	const warrior = await db.query.warriors.findFirst({

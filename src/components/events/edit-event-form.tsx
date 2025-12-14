@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { updateEventFn } from "~/api/events";
+import { eventKeys, updateEventFn } from "~/api/events";
 import type { Event } from "~/db/schema";
 import type { InjuryType } from "~/types/injuries";
 import { getInjuryTypeSelectOptions } from "~/types/injuries";
@@ -42,7 +42,7 @@ export function EditEventForm({ event, onSuccess }: EditEventFormProps) {
 		mutationFn: updateEventFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["events"],
+				queryKey: eventKeys.all,
 			});
 			onSuccess?.();
 		},

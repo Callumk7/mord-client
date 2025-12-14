@@ -7,7 +7,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useId, useState } from "react";
 import { z } from "zod";
-import { getCampaignsOptions } from "~/api/campaign";
+import { campaignKeys, getCampaignsOptions } from "~/api/campaign";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -90,7 +90,7 @@ function App() {
 				endDate: "",
 			});
 			// Invalidate campaigns query to refetch
-			queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+			queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
 		},
 		onError: (error) => {
 			console.error("Error creating campaign:", error);

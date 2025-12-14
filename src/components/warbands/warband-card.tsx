@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Coins, Edit, Shield, Trash2, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
-import { deleteWarbandMutation } from "~/api/warbands";
+import { deleteWarbandMutation, warbandKeys } from "~/api/warbands";
 import type { WarbandWithWarriors } from "~/db/schema";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -30,7 +30,7 @@ export function WarbandCard({ warband }: WarbandCardProps) {
 		deleteMutation.mutate(warband.id, {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: ["campaign", warband.campaignId, "warbands"],
+					queryKey: warbandKeys.list(warband.campaignId),
 				});
 				setShowDeleteDialog(false);
 			},
