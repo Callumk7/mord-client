@@ -73,6 +73,12 @@ interface MatchHighlight {
 	date: Date | string;
 	matchType: string;
 	status: string;
+	winners: {
+		id: number;
+		name: string;
+		icon: string | null;
+		color: string | null;
+	}[];
 	participants: {
 		id: number;
 		name: string;
@@ -118,12 +124,13 @@ interface WarbandSpotlightData {
 	eventsSuffered: number;
 }
 
+// Carousel gradients: keep everything in the same "Sky Mord" dark broadcast palette.
 const gradients = [
-	"from-rose-600 to-orange-500",
-	"from-purple-600 to-fuchsia-500",
-	"from-amber-500 to-yellow-400",
-	"from-cyan-500 to-blue-600",
-	"from-emerald-500 to-lime-500",
+	"from-slate-950 via-red-700/35 to-blue-700/35",
+	"from-slate-950 via-blue-700/35 to-indigo-700/35",
+	"from-slate-950 via-amber-600/30 to-red-700/30",
+	"from-slate-950 via-cyan-600/25 to-blue-700/35",
+	"from-slate-950 via-emerald-600/25 to-lime-600/25",
 ];
 
 export const Route = createFileRoute("/display/$campaignId")({
@@ -320,7 +327,7 @@ function RouteComponent() {
 				value: `${warpstoneIndex}`,
 				statLine: `${pluralize(casualtyCount + injuryCount, "incident")} / ${pluralize(totalMatches, "match")}`,
 				description: "Higher is worse. Probably. (The desk cannot confirm.)",
-				gradient: "from-slate-900 to-green-600",
+				gradient: "from-slate-950 via-emerald-700/25 to-lime-600/25",
 				footnote: "Mord Markets",
 			},
 		];
@@ -376,6 +383,12 @@ function RouteComponent() {
 				date: match.date,
 				status: match.status,
 				matchType: match.matchType,
+				winners: (match.winners ?? []).map((winner) => ({
+					id: winner.warbandId,
+					name: winner.warband.name,
+					icon: winner.warband.icon,
+					color: winner.warband.color,
+				})),
 				participants: match.participants.map((participant) => ({
 					id: participant.warbandId,
 					name: participant.warband.name,
@@ -425,33 +438,94 @@ function RouteComponent() {
 	}, [leader, warbands, events, treasury]);
 
 	const newsItems = useMemo(() => {
-		if (!events.length) {
-			return [
-				"🕰️ Broadcast desk is ready — waiting for the first recorded clash.",
-			];
-		}
+		const lore = [
+			"🕯️ WHISPERS: Witch Hunters report ‘unlicensed miracles’ in the Merchant Quarter.",
+			"🧟 RUMOUR MILL: A necromancer was seen ‘shopping’ for fresh recruits. Allegedly.",
+			"🪙 MARKET WATCH: Warpstone prices volatile. Traders advised to ‘stop licking it’.",
+			"🏴 TAVERN TALK: The Pit Fighter’s Guild offers ‘reasonable’ rates for brawls.",
+			"🛡️ CITY WATCH: Curfew extended. Torches recommended. (Pitchforks optional.)",
+			"🐀 UNDERFOOT: Skaven sightings denied by officials. Confirmed by everyone else.",
+			"📜 NOTICE: Anyone returning a missing sword may keep the sword.",
+		];
 
-		const items = [...events]
+		const liveCount = matches.filter((m) => m.status === "active").length;
+		const scheduledCount = matches.filter(
+			(m) => m.status === "scheduled",
+		).length;
+		const resolvedCount = matches.filter(
+			(m) => m.status === "ended" || m.status === "resolved",
+		).length;
+
+		const lastFinished = [...matches]
+			.filter((m) => m.status === "ended" || m.status === "resolved")
+			.sort(
+				(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+			)[0];
+
+		const warpstoneIndex = totalMatches
+			? Math.round(((casualtyCount + injuryCount) / totalMatches) * 10) / 10
+			: 0;
+
+		const deskStats: string[] = [
+			breakingHeadline,
+			`📺 DESK: ${pluralize(liveCount, "live game", "live games")} • ${pluralize(scheduledCount, "fixture", "fixtures")} • ${pluralize(resolvedCount, "final", "finals")}`,
+			`🏆 TABLE: ${leader?.warband.name ?? "No leader yet"} • ${leader ? pluralize(leader.wins, "win") : "play a match to crown a champion"}`,
+			`💰 TREASURY: ${richest?.warband.name ?? "No ledger"} • ${richest ? `${richest.treasury} gc` : "0 gc"}`,
+			`⚔️ TOP KILLS: ${fiercestWarrior?.warrior.name ?? "No standout yet"} • ${fiercestWarrior ? pluralize(fiercestWarrior.kills, "kill") : "waiting for carnage"}`,
+			`☠️ BLOODWATCH: ${pluralize(casualtyCount, "fatality")} • ${pluralize(injuryCount, "injury")} • Warpstone Index ${warpstoneIndex}`,
+			lastFinished
+				? `⏱️ FULL TIME: ${lastFinished.name} • ${lastFinished.matchType.toUpperCase()} • ${formatShortDate(lastFinished.date)}`
+				: "⏱️ FULL TIME: No finished matches yet.",
+		];
+
+		const eventLines = [...events]
 			.sort(
 				(a, b) =>
 					new Date(b.timestamp ?? b.createdAt).getTime() -
 					new Date(a.timestamp ?? a.createdAt).getTime(),
 			)
-			.slice(0, 12)
+			.slice(0, 10)
 			.map((event) => {
 				const icon = event.death ? "☠️" : event.injury ? "🩸" : "⚔️";
 				const attacker = event.warrior?.name ?? "Unknown warrior";
 				const defender = event.defender?.name;
+				const label = event.match?.name ?? "Match";
+
 				const detail =
 					event.description ??
 					(defender
 						? `${attacker} overwhelmed ${defender}`
 						: `${attacker} seized the spotlight`);
-				const label = event.match?.name ?? campaign?.name ?? "Campaign feed";
-				return `${icon} ${label}: ${detail}`;
+
+				return truncate(`${icon} ${label}: ${detail}`, 110);
 			});
-		return [breakingHeadline, ...items];
-	}, [events, campaign, breakingHeadline]);
+
+		// Curate, de-dupe, and keep it punchy.
+		const all = [...deskStats, ...eventLines, ...lore]
+			.map((line) => line.trim())
+			.filter(Boolean)
+			.map((line) => truncate(line, 120));
+
+		const seen = new Set<string>();
+		const unique: string[] = [];
+		for (const line of all) {
+			if (seen.has(line)) continue;
+			seen.add(line);
+			unique.push(line);
+		}
+
+		return unique.slice(0, 22);
+	}, [
+		events,
+		matches,
+		leader,
+		richest,
+		fiercestWarrior,
+		casualtyCount,
+		injuryCount,
+		totalMatches,
+		breakingHeadline,
+	]);
 
 	// Progress chart data
 	const progressData = useMemo(() => {
@@ -551,7 +625,7 @@ function RouteComponent() {
 				id: "recent-results-slide",
 				gradient: "from-slate-950 to-slate-800",
 				content: (
-					<div className="h-full w-full p-6">
+					<div className="h-full w-full p-4">
 						<RecentResultsSlide highlights={recentMatchHighlights} />
 					</div>
 				),
@@ -563,24 +637,24 @@ function RouteComponent() {
 			items.push({
 				type: "chart",
 				id: "warband-stats-chart",
-				gradient: "from-purple-600 to-pink-500",
+				gradient: "from-slate-950 via-blue-700/30 to-red-700/30",
 				content: (
-					<div className="h-full w-full p-6">
-						<div className="mb-4">
-							<h3 className="text-xl font-bold text-foreground">
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black uppercase tracking-wider text-foreground">
 								Warband Standings
 							</h3>
-							<p className="text-sm text-muted-foreground">
-								Treasury, Rating & Wins
+							<p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+								Treasury • Rating • Wins
 							</p>
 						</div>
 						<ChartContainer
 							config={warbandWealthAndRatingConfig}
-							className="h-[calc(100%-5rem)] w-full"
+							className="min-h-0 flex-1 w-full"
 						>
 							<BarChart
 								data={warbandWealthAndRatingData}
-								margin={{ left: 12, right: 12, bottom: 36 }}
+								margin={{ left: 10, right: 10, bottom: 28, top: 10 }}
 							>
 								<CartesianGrid vertical={false} className="stroke-border/50" />
 								<XAxis
@@ -588,8 +662,8 @@ function RouteComponent() {
 									tickLine={false}
 									axisLine={false}
 									interval={0}
-									height={60}
-									angle={-30}
+									height={44}
+									angle={-20}
 									textAnchor="end"
 								/>
 								<YAxis
@@ -645,17 +719,30 @@ function RouteComponent() {
 			items.push({
 				type: "chart",
 				id: "rating-progression",
-				gradient: "from-blue-600 to-cyan-500",
+				gradient: "from-slate-950 via-blue-700/30 to-cyan-600/25",
 				content: (
-					<div className="h-full w-full p-6">
-						<WarbandProgressChart
-							title="Rating Progression"
-							chartData={progressData.ratingData}
-							warbands={progressData.warbands}
-							metric="rating"
-							yAxisLabel="Rating"
-							defaultColor="#8884d8"
-						/>
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black uppercase tracking-wider text-foreground">
+								Rating Progression
+							</h3>
+							<p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+								Match-by-match
+							</p>
+						</div>
+						<div className="min-h-0 flex-1">
+							<WarbandProgressChart
+								title=""
+								chartData={progressData.ratingData}
+								warbands={progressData.warbands}
+								metric="rating"
+								yAxisLabel="Rating"
+								defaultColor="#8884d8"
+								height={320}
+								showLegend={false}
+								variant="embedded"
+							/>
+						</div>
 					</div>
 				),
 			});
@@ -663,17 +750,30 @@ function RouteComponent() {
 			items.push({
 				type: "chart",
 				id: "treasury-progression",
-				gradient: "from-emerald-600 to-teal-500",
+				gradient: "from-slate-950 via-emerald-700/25 to-teal-600/25",
 				content: (
-					<div className="h-full w-full p-6">
-						<WarbandProgressChart
-							title="Treasury Progression"
-							chartData={progressData.treasuryData}
-							warbands={progressData.warbands}
-							metric="treasury"
-							yAxisLabel="Gold Crowns"
-							defaultColor="#82ca9d"
-						/>
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black uppercase tracking-wider text-foreground">
+								Treasury Progression
+							</h3>
+							<p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+								Gold Crowns
+							</p>
+						</div>
+						<div className="min-h-0 flex-1">
+							<WarbandProgressChart
+								title=""
+								chartData={progressData.treasuryData}
+								warbands={progressData.warbands}
+								metric="treasury"
+								yAxisLabel="Gold Crowns"
+								defaultColor="#82ca9d"
+								height={320}
+								showLegend={false}
+								variant="embedded"
+							/>
+						</div>
 					</div>
 				),
 			});
@@ -681,17 +781,30 @@ function RouteComponent() {
 			items.push({
 				type: "chart",
 				id: "experience-progression",
-				gradient: "from-orange-600 to-amber-500",
+				gradient: "from-slate-950 via-amber-600/25 to-red-700/20",
 				content: (
-					<div className="h-full w-full p-6">
-						<WarbandProgressChart
-							title="Experience Progression"
-							chartData={progressData.experienceData}
-							warbands={progressData.warbands}
-							metric="experience"
-							yAxisLabel="Experience"
-							defaultColor="#ffc658"
-						/>
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black uppercase tracking-wider text-foreground">
+								Experience Progression
+							</h3>
+							<p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+								Experience Points
+							</p>
+						</div>
+						<div className="min-h-0 flex-1">
+							<WarbandProgressChart
+								title=""
+								chartData={progressData.experienceData}
+								warbands={progressData.warbands}
+								metric="experience"
+								yAxisLabel="Experience"
+								defaultColor="#ffc658"
+								height={320}
+								showLegend={false}
+								variant="embedded"
+							/>
+						</div>
 					</div>
 				),
 			});
@@ -960,75 +1073,81 @@ function StatCarousel({ items, headline }: StatCarouselProps) {
 
 	return (
 		<div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg">
-			<div className="absolute left-0 top-0 z-30 w-full">
-				<div className="flex items-center justify-between gap-4 bg-background/70 px-4 py-2 backdrop-blur">
-					<div className="min-w-0 truncate text-xs font-black uppercase tracking-[0.35em] text-muted-foreground">
-						On now • {headline}
-					</div>
-					<div className="flex items-center gap-2">
-						<button
-							type="button"
-							aria-label={isPaused ? "Resume autoplay" : "Pause autoplay"}
-							onClick={() => setIsPaused((prev) => !prev)}
-							className="rounded-full bg-accent p-2 text-accent-foreground transition hover:bg-accent/80"
-						>
-							{isPaused ? (
-								<Play className="h-4 w-4" />
-							) : (
-								<Pause className="h-4 w-4" />
-							)}
-						</button>
-					</div>
-				</div>
-				<div className="h-1 w-full bg-muted/40">
-					<div
-						className="h-full bg-accent transition-[width]"
-						style={{ width: `${Math.round(progress * 100)}%` }}
-					/>
-				</div>
-			</div>
 			<div
 				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-linear-to-br ${currentItem?.gradient}`}
 			>
-				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card pt-14">
-					{currentItem?.type === "stat" ? (
-						<>
-							<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
-							<div className="relative z-10 space-y-2 px-8 pb-8 pt-4">
-								<div className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground">
-									{currentItem.title}
+				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card">
+					{/* ON NOW strip sits inside the card frame (avoids clipping the top border) */}
+					<div className="absolute left-0 top-0 z-30 w-full">
+						<div className="mx-1 mt-1 overflow-hidden rounded-md border bg-background/70 backdrop-blur">
+							<div className="flex items-center justify-between gap-4 px-4 py-2">
+								<div className="min-w-0 truncate text-xs font-black uppercase tracking-[0.35em] text-muted-foreground">
+									On now • {headline}
 								</div>
-								<div className="text-5xl font-black text-foreground">
-									{currentItem.value}
-								</div>
-								<div className="text-lg text-foreground/80">
-									{currentItem.statLine}
-								</div>
-								<div className="border-t border-border/50 pt-4 text-sm text-foreground/60">
-									{currentItem.description}
+								<div className="flex items-center gap-2">
+									<button
+										type="button"
+										aria-label={isPaused ? "Resume autoplay" : "Pause autoplay"}
+										onClick={() => setIsPaused((prev) => !prev)}
+										className="rounded-full bg-accent p-2 text-accent-foreground transition hover:bg-accent/80"
+									>
+										{isPaused ? (
+											<Play className="h-4 w-4" />
+										) : (
+											<Pause className="h-4 w-4" />
+										)}
+									</button>
 								</div>
 							</div>
-							<div className="relative z-10 flex items-center justify-between p-8 pt-0 text-xs text-foreground/60">
-								<span>{currentItem.footnote}</span>
-								<span>
-									{String(current + 1).padStart(2, "0")} /{" "}
-									{String(items.length).padStart(2, "0")}
-								</span>
+							<div className="h-1 w-full bg-muted/40">
+								<div
+									className="h-full bg-accent transition-[width]"
+									style={{ width: `${Math.round(progress * 100)}%` }}
+								/>
 							</div>
-						</>
-					) : currentItem?.type === "chart" ? (
-						<>
-							<div className="relative z-10 flex-1 overflow-hidden">
-								{currentItem.content}
-							</div>
-							<div className="relative z-10 flex items-center justify-end p-4 text-xs text-foreground/60">
-								<span>
-									{String(current + 1).padStart(2, "0")} /{" "}
-									{String(items.length).padStart(2, "0")}
-								</span>
-							</div>
-						</>
-					) : null}
+						</div>
+					</div>
+
+					<div className="flex min-h-0 flex-1 flex-col pt-16">
+						{currentItem?.type === "stat" ? (
+							<>
+								<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
+								<div className="relative z-10 space-y-2 px-8 pb-8 pt-4">
+									<div className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground">
+										{currentItem.title}
+									</div>
+									<div className="text-5xl font-black text-foreground">
+										{currentItem.value}
+									</div>
+									<div className="text-lg text-foreground/80">
+										{currentItem.statLine}
+									</div>
+									<div className="border-t border-border/50 pt-4 text-sm text-foreground/60">
+										{currentItem.description}
+									</div>
+								</div>
+								<div className="relative z-10 flex items-center justify-between p-8 pt-0 text-xs text-foreground/60">
+									<span>{currentItem.footnote}</span>
+									<span>
+										{String(current + 1).padStart(2, "0")} /{" "}
+										{String(items.length).padStart(2, "0")}
+									</span>
+								</div>
+							</>
+						) : currentItem?.type === "chart" ? (
+							<>
+								<div className="relative z-10 flex-1 overflow-hidden">
+									{currentItem.content}
+								</div>
+								<div className="relative z-10 flex items-center justify-end p-4 text-xs text-foreground/60">
+									<span>
+										{String(current + 1).padStart(2, "0")} /{" "}
+										{String(items.length).padStart(2, "0")}
+									</span>
+								</div>
+							</>
+						) : null}
+					</div>
 				</div>
 			</div>
 			{items.length > 1 && (
@@ -1412,79 +1531,143 @@ function RecentResultsSlide({ highlights }: MatchSpotlightProps) {
 		);
 	}
 
+	const rows = highlights.slice(0, 3);
+
 	return (
-		<div className="flex h-full flex-col">
-			<div className="mb-4 flex items-center justify-between">
-				<div>
-					<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
-						Full time
+		<div className="flex h-full min-h-0 flex-col">
+			{/* Broadcast header strip */}
+			<div className="mb-3 overflow-hidden rounded-lg border bg-linear-to-r from-slate-950 via-slate-900 to-slate-950">
+				<div className="flex items-center justify-between px-4 py-3">
+					<div className="min-w-0">
+						<div className="text-[10px] font-black uppercase tracking-[0.45em] text-slate-300">
+							Full time
+						</div>
+						<div className="truncate text-xl font-black uppercase tracking-wider text-slate-50">
+							Results Board
+						</div>
 					</div>
-					<h3 className="text-2xl font-black uppercase tracking-wider text-foreground">
-						Recent Results
-					</h3>
-					<p className="text-sm text-muted-foreground">
-						Last three finished clashes
-					</p>
+					<div className="flex items-center gap-2">
+						<span className="rounded bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-white">
+							FT
+						</span>
+						<span className="rounded bg-slate-50/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-200">
+							Last 3
+						</span>
+					</div>
 				</div>
-				<div className="rounded bg-muted/30 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
-					Highlights
-				</div>
+				<div className="h-1 w-full bg-linear-to-r from-red-600 via-blue-700 to-amber-500" />
 			</div>
 
-			<div className="grid flex-1 gap-3">
-				{highlights.map((match) => (
-					<div
-						key={match.id}
-						className="rounded-lg border bg-muted/20 px-4 py-3"
-					>
-						<div className="flex items-start justify-between gap-3">
-							<div className="min-w-0">
-								<div className="text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
-									{match.matchType} • {match.status.toUpperCase()} •{" "}
-									{formatShortDate(match.date)}
+			{/* Scoreboard rows */}
+			<div className="grid min-h-0 flex-1 gap-3 overflow-hidden">
+				{rows.map((match) => {
+					const isHeadToHead = match.participants.length === 2;
+					const left = match.participants[0];
+					const right = match.participants[1];
+
+					const fixtureLine =
+						isHeadToHead && left && right
+							? `${left.name} vs ${right.name}`
+							: match.participants.length
+								? `${match.participants.length} warbands`
+								: "Participants TBD";
+
+					const winnersLine = match.winners.length
+						? match.winners
+								.slice(0, 2)
+								.map((w) => withIcon(w.icon, w.name))
+								.join(" • ")
+						: "TBD";
+
+					return (
+						<div
+							key={match.id}
+							className="overflow-hidden rounded-lg border bg-linear-to-br from-slate-950 via-slate-950 to-slate-900 text-slate-50 shadow"
+						>
+							<div className="flex items-center justify-between bg-linear-to-r from-blue-700/35 via-slate-950 to-red-700/30 px-4 py-2">
+								<div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.35em] text-slate-200">
+									<span className="rounded bg-slate-50/10 px-2 py-1">
+										{match.matchType.toUpperCase()}
+									</span>
+									<span className="rounded bg-red-600 px-2 py-1 text-white">
+										FT
+									</span>
 								</div>
-								<div className="truncate text-lg font-black text-foreground">
-									{match.name}
-								</div>
-								<div className="mt-2 flex flex-wrap gap-2">
-									{match.participants.map((participant) => (
-										<span
-											key={participant.id}
-											className="inline-flex items-center gap-2 rounded-full border bg-card/50 px-3 py-1 text-xs font-semibold"
-										>
-											<span
-												className="h-2 w-2 rounded-full"
-												style={{
-													backgroundColor: participant.color ?? "#f4b400",
-												}}
-											/>
-											<span className="truncate">
-												{participant.icon ? `${participant.icon} ` : ""}
-												{participant.name}
-											</span>
-										</span>
-									))}
+								<div className="text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-300">
+									{formatShortDate(match.date)} • {formatTime(match.date)}
 								</div>
 							</div>
-							<div className="shrink-0 text-right">
-								<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
-									Moments
+
+							<div className="grid gap-3 px-4 py-4 md:grid-cols-[1fr_auto]">
+								<div className="min-w-0">
+									<div className="truncate text-lg font-black uppercase tracking-wide">
+										{match.name}
+									</div>
+									<div className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.35em] text-slate-300">
+										{fixtureLine}
+									</div>
+
+									<div className="mt-3 flex flex-wrap items-center gap-2">
+										<span className="rounded bg-amber-500/20 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-amber-200">
+											Winners
+										</span>
+										<span className="truncate text-sm font-semibold text-slate-100">
+											{winnersLine}
+										</span>
+									</div>
+
+									<div className="mt-3 flex flex-wrap gap-2">
+										{match.participants.slice(0, 4).map((participant) => (
+											<span
+												key={participant.id}
+												className="inline-flex items-center gap-2 rounded-full border border-slate-50/10 bg-slate-50/5 px-3 py-1 text-xs font-semibold text-slate-100"
+											>
+												<span
+													className="h-2 w-2 rounded-full"
+													style={{
+														backgroundColor: participant.color ?? "#f4b400",
+													}}
+												/>
+												<span className="truncate">
+													{participant.icon ? `${participant.icon} ` : ""}
+													{participant.name}
+												</span>
+											</span>
+										))}
+										{match.participants.length > 4 ? (
+											<span className="rounded-full border border-slate-50/10 bg-slate-50/5 px-3 py-1 text-xs font-semibold text-slate-200">
+												+{match.participants.length - 4}
+											</span>
+										) : null}
+									</div>
 								</div>
-								<div className="mt-1 text-sm font-black tabular-nums text-foreground">
-									{match.totalMoments}
-								</div>
-								<div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-muted-foreground">
-									<span>
-										{match.kills} {pluralize(match.kills, "kill")}
-									</span>
-									<span>
-										{match.injuries} {pluralize(match.injuries, "injury")}
-									</span>
+
+								<div className="shrink-0 rounded-lg border border-slate-50/10 bg-slate-50/5 px-4 py-3">
+									<div className="text-[10px] font-black uppercase tracking-[0.45em] text-slate-300">
+										Incidents
+									</div>
+									<div className="mt-1 text-3xl font-black tabular-nums text-slate-50">
+										{match.kills + match.injuries}
+									</div>
+									<div className="mt-3 grid gap-2 text-xs font-semibold">
+										<div className="flex items-center justify-between gap-4 text-slate-200">
+											<span className="uppercase tracking-[0.25em] text-slate-300">
+												☠️ Kills
+											</span>
+											<span className="font-mono">{match.kills}</span>
+										</div>
+										<div className="flex items-center justify-between gap-4 text-slate-200">
+											<span className="uppercase tracking-[0.25em] text-slate-300">
+												🩸 Injuries
+											</span>
+											<span className="font-mono">{match.injuries}</span>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-				))}
+					);
+				})}
 			</div>
 		</div>
 	);
@@ -1807,4 +1990,13 @@ function formatTime(date: Date | string | null | undefined) {
 function pluralize(value: number, singular: string, plural?: string) {
 	const suffix = value === 1 ? singular : (plural ?? `${singular}s`);
 	return `${value} ${suffix}`;
+}
+
+function withIcon(icon: string | null | undefined, label: string) {
+	return icon ? `${icon} ${label}` : label;
+}
+
+function truncate(value: string, max: number) {
+	if (value.length <= max) return value;
+	return `${value.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
 }

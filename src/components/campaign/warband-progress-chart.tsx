@@ -24,6 +24,7 @@ interface WarbandProgressChartProps {
 	defaultColor?: string;
 	height?: number;
 	showLegend?: boolean;
+	variant?: "card" | "embedded";
 }
 
 function WarbandProgressTooltip({
@@ -94,10 +95,17 @@ export function WarbandProgressChart({
 	defaultColor = "#8884d8",
 	height = 400,
 	showLegend = true,
+	variant = "card",
 }: WarbandProgressChartProps) {
 	const maxStep = Math.max(1, chartData.length);
+
+	const containerClassName =
+		variant === "embedded"
+			? "w-full"
+			: "rounded-lg border bg-card p-6 shadow-lg";
+
 	return (
-		<div className="rounded-lg border bg-card p-6 shadow-lg">
+		<div className={containerClassName}>
 			{title ? <h2 className="mb-4 text-xl font-bold">{title}</h2> : null}
 			<ResponsiveContainer width="100%" height={height}>
 				<LineChart data={chartData}>

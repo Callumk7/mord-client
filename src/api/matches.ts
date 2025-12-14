@@ -30,6 +30,11 @@ async function getCampaignMatches(campaignId: number) {
 					warband: true,
 				},
 			},
+			winners: {
+				with: {
+					warband: true,
+				},
+			},
 			events: {
 				with: {
 					warrior: true,
