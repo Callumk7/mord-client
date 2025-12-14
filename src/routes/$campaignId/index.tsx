@@ -146,6 +146,10 @@ function RouteComponent() {
 			label: "Rating",
 			color: "var(--chart-2)",
 		},
+		wins: {
+			label: "Wins",
+			color: "var(--chart-3)",
+		},
 	} satisfies ChartConfig;
 
 	const warbandWealthAndRatingData = (() => {
@@ -158,6 +162,7 @@ function RouteComponent() {
 				color: string | null;
 				treasury: number;
 				rating: number;
+				wins: number;
 			}
 		>();
 
@@ -170,6 +175,7 @@ function RouteComponent() {
 				color: entry.warband.color,
 				treasury: entry.treasury ?? 0,
 				rating: existing?.rating ?? 0,
+				wins: existing?.wins ?? 0,
 			});
 		}
 
@@ -182,6 +188,20 @@ function RouteComponent() {
 				color: entry.warband.color,
 				treasury: existing?.treasury ?? 0,
 				rating: entry.rating ?? 0,
+				wins: existing?.wins ?? 0,
+			});
+		}
+
+		for (const entry of gamesWon) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: entry.wins ?? 0,
 			});
 		}
 
@@ -270,6 +290,7 @@ function RouteComponent() {
 										axisLine={false}
 										width={48}
 									/>
+									<YAxis yAxisId="wins" hide />
 									<ChartTooltip
 										content={
 											<ChartTooltipContent
@@ -289,6 +310,12 @@ function RouteComponent() {
 										yAxisId="rating"
 										dataKey="rating"
 										fill="var(--color-rating)"
+										radius={[4, 4, 0, 0]}
+									/>
+									<Bar
+										yAxisId="wins"
+										dataKey="wins"
+										fill="var(--color-wins)"
 										radius={[4, 4, 0, 0]}
 									/>
 								</BarChart>
