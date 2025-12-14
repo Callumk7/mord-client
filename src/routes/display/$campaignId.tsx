@@ -59,6 +59,28 @@ interface MatchHighlight {
 	totalMoments: number;
 }
 
+interface MatchCenterMatch {
+	id: number;
+	name: string;
+	date: Date | string;
+	matchType: string;
+	status: "active" | "ended" | "scheduled" | "resolved";
+	participants: {
+		id: number;
+		warbandId: number;
+		name: string;
+		icon: string | null;
+		color: string | null;
+	}[];
+	events: {
+		id: number;
+		death: boolean;
+		injury: boolean;
+		warrior?: { warbandId: number } | null;
+		defender?: { warbandId: number } | null;
+	}[];
+}
+
 interface WarbandSpotlightData {
 	name: string;
 	faction: string;
@@ -235,12 +257,37 @@ function RouteComponent() {
 		totalMatches,
 	]);
 
-	const matchHighlights = useMemo<MatchHighlight[]>(() => {
-		if (!matches.length) {
-			return [];
-		}
+	const matchCenterMatches = useMemo<MatchCenterMatch[]>(() => {
+		return matches.map((match) => ({
+			id: match.id,
+			name: match.name,
+			date: match.date,
+			status: match.status,
+			matchType: match.matchType,
+			participants: match.participants.map((participant) => ({
+				id: participant.id,
+				warbandId: participant.warbandId,
+				name: participant.warband.name,
+				icon: participant.warband.icon,
+				color: participant.warband.color,
+			})),
+			events: match.events.map((event) => ({
+				id: event.id,
+				death: event.death,
+				injury: event.injury,
+				warrior: event.warrior ? { warbandId: event.warrior.warbandId } : null,
+				defender: event.defender
+					? { warbandId: event.defender.warbandId }
+					: null,
+			})),
+		}));
+	}, [matches]);
 
+	const recentMatchHighlights = useMemo<MatchHighlight[]>(() => {
 		return [...matches]
+			.filter(
+				(match) => match.status === "ended" || match.status === "resolved",
+			)
 			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 			.slice(0, 3)
 			.map((match) => ({
@@ -337,7 +384,10 @@ function RouteComponent() {
 			<div className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row">
 				<div className="flex min-h-0 flex-1 flex-col gap-4">
 					<StatCarousel stats={stats} />
-					<MatchSpotlight highlights={matchHighlights} />
+					<MatchCenter
+						matches={matchCenterMatches}
+						recent={recentMatchHighlights}
+					/>
 				</div>
 				<aside className="flex w-full flex-col gap-4 lg:w-80">
 					<WarbandSpotlight data={warbandSpotlight} />
@@ -373,7 +423,7 @@ function BroadcastHeader({
 		: "Schedule pending";
 
 	return (
-		<div className="border-b-4 border-accent bg-gradient-to-r from-red-300 via-red-500 to-blue-400 px-6 py-4 text-background">
+		<div className="border-b-4 border-accent bg-linear-to-r from-red-300 via-red-500 to-blue-400 px-6 py-4 text-background">
 			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 				<div>
 					<div className="text-sm font-bold uppercase tracking-[0.3em] text-accent-foreground/90">
@@ -422,7 +472,7 @@ function StatCarousel({ stats }: StatCarouselProps) {
 	return (
 		<div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg">
 			<div
-				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-gradient-to-br ${stat?.gradient}`}
+				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-linear-to-br ${stat?.gradient}`}
 			>
 				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card p-8">
 					<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
@@ -496,7 +546,7 @@ function MatchSpotlight({ highlights }: MatchSpotlightProps) {
 	if (highlights.length === 0) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-				No matches recorded for this campaign yet.
+				No completed matches to recap yet.
 			</div>
 		);
 	}
@@ -505,13 +555,13 @@ function MatchSpotlight({ highlights }: MatchSpotlightProps) {
 		<div className="rounded-lg border bg-card p-4 shadow-lg">
 			<div className="mb-4 flex items-center justify-between">
 				<div>
-					<h2 className="text-2xl font-bold text-foreground">Match Center</h2>
+					<h2 className="text-2xl font-bold text-foreground">Recent Results</h2>
 					<p className="text-sm text-muted-foreground">
-						Latest three broadcasts
+						Last three finished clashes
 					</p>
 				</div>
 				<div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-					Field reports
+					Full time
 				</div>
 			</div>
 			<div className="grid gap-4 md:grid-cols-3">
@@ -752,7 +802,7 @@ function NewsTicker({ items }: NewsTickerProps) {
 	return (
 		<div className="border-t border-accent/30 bg-primary px-4 py-3 text-primary-foreground">
 			<div className="flex items-center gap-4">
-				<div className="flex-shrink-0">
+				<div className="shrink-0">
 					<div className="text-xs font-bold uppercase tracking-[0.4em] text-accent">
 						Breaking
 					</div>
@@ -774,6 +824,345 @@ function NewsTicker({ items }: NewsTickerProps) {
 	);
 }
 
+interface MatchCenterProps {
+	matches: MatchCenterMatch[];
+	recent: MatchHighlight[];
+}
+
+function MatchCenter({ matches, recent }: MatchCenterProps) {
+	const { live, scheduled } = useMemo(() => {
+		const liveMatches = matches
+			.filter((match) => match.status === "active")
+			.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+		const scheduledMatches = matches
+			.filter((match) => match.status === "scheduled")
+			.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+		return { live: liveMatches, scheduled: scheduledMatches };
+	}, [matches]);
+
+	return (
+		<div className="flex min-h-0 flex-1 flex-col gap-4">
+			<div className="rounded-lg border bg-card shadow-lg">
+				<div className="border-b bg-muted/20 px-4 py-3">
+					<div className="flex items-baseline justify-between gap-4">
+						<div>
+							<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
+								Match Center
+							</div>
+							<div className="text-xl font-black uppercase tracking-wider text-foreground">
+								Live Now &amp; Upcoming
+							</div>
+						</div>
+						<div className="text-xs font-semibold text-muted-foreground">
+							<span className="mr-3">
+								{live.length}{" "}
+								{pluralize(live.length, "live game", "live games")}
+							</span>
+							<span>
+								{scheduled.length}{" "}
+								{pluralize(scheduled.length, "fixture", "fixtures")}
+							</span>
+						</div>
+					</div>
+				</div>
+
+				<div className="grid gap-4 p-4 lg:grid-cols-3">
+					<div className="lg:col-span-2">
+						<LiveNowGrid matches={live} />
+					</div>
+					<div className="lg:col-span-1">
+						<UpcomingFixtures matches={scheduled} />
+					</div>
+				</div>
+			</div>
+
+			<MatchSpotlight highlights={recent} />
+		</div>
+	);
+}
+
+function LiveNowGrid({ matches }: { matches: MatchCenterMatch[] }) {
+	if (matches.length === 0) {
+		return (
+			<div className="flex h-full flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+				<div className="text-sm font-semibold text-muted-foreground">
+					No games in progress.
+				</div>
+				<div className="mt-1 text-xs text-muted-foreground">
+					Start a match to light up the broadcast.
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="space-y-3">
+			<div className="flex items-center justify-between">
+				<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
+					Live Now
+				</div>
+				<div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+					<span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+					LIVE
+				</div>
+			</div>
+			<div className="grid gap-3 md:grid-cols-2">
+				{matches.slice(0, 4).map((match) => (
+					<LiveScoreCard key={match.id} match={match} />
+				))}
+			</div>
+			{matches.length > 4 && (
+				<div className="text-xs text-muted-foreground">
+					Showing 4 of {matches.length} live matches.
+				</div>
+			)}
+		</div>
+	);
+}
+
+function UpcomingFixtures({ matches }: { matches: MatchCenterMatch[] }) {
+	return (
+		<div className="space-y-3">
+			<div className="flex items-center justify-between">
+				<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
+					Upcoming
+				</div>
+				<div className="text-xs font-semibold text-muted-foreground">
+					Next up
+				</div>
+			</div>
+			<div className="space-y-2">
+				{matches.length === 0 ? (
+					<div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+						No scheduled fixtures yet.
+					</div>
+				) : (
+					matches
+						.slice(0, 6)
+						.map((match) => <FixtureRow key={match.id} match={match} />)
+				)}
+			</div>
+			{matches.length > 6 && (
+				<div className="text-xs text-muted-foreground">
+					Showing 6 of {matches.length} scheduled matches.
+				</div>
+			)}
+		</div>
+	);
+}
+
+function LiveScoreCard({ match }: { match: MatchCenterMatch }) {
+	const scoreboard = useMemo(() => {
+		const participants = match.participants.map((participant) => {
+			const kills = match.events.filter(
+				(event) =>
+					event.death && event.warrior?.warbandId === participant.warbandId,
+			).length;
+			const injuries = match.events.filter(
+				(event) =>
+					event.injury &&
+					!event.death &&
+					event.warrior?.warbandId === participant.warbandId,
+			).length;
+
+			return { ...participant, kills, injuries };
+		});
+
+		const ordered = [...participants].sort((a, b) => b.kills - a.kills);
+		return { participants, ordered };
+	}, [match.events, match.participants]);
+
+	const isHeadToHead = scoreboard.participants.length === 2;
+	const left = isHeadToHead ? scoreboard.participants[0] : null;
+	const right = isHeadToHead ? scoreboard.participants[1] : null;
+	const leader =
+		scoreboard.ordered[0] && scoreboard.ordered[0].kills > 0
+			? scoreboard.ordered[0]
+			: null;
+
+	return (
+		<div className="overflow-hidden rounded-lg border bg-linear-to-r from-slate-950 via-slate-950 to-slate-900 text-slate-50 shadow">
+			<div className="flex items-center justify-between bg-linear-to-r from-blue-600/60 via-blue-600/30 to-red-600/60 px-3 py-2">
+				<div className="truncate text-xs font-bold uppercase tracking-[0.25em]">
+					{match.matchType.toUpperCase()} • LIVE
+				</div>
+				<div className="text-xs font-semibold text-slate-200">
+					{formatTime(match.date)}
+				</div>
+			</div>
+
+			<div className="space-y-3 px-4 py-4">
+				<div className="truncate text-sm font-semibold text-slate-200">
+					{match.name}
+				</div>
+
+				{isHeadToHead && left && right ? (
+					<div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+						<ScoreSide
+							align="right"
+							name={left.name}
+							icon={left.icon}
+							color={left.color}
+							kills={left.kills}
+							injuries={left.injuries}
+						/>
+						<div className="flex flex-col items-center">
+							<div className="rounded bg-slate-50 px-3 py-1 text-lg font-black text-slate-950">
+								{left.kills}–{right.kills}
+							</div>
+							<div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-300">
+								KILLS
+							</div>
+						</div>
+						<ScoreSide
+							align="left"
+							name={right.name}
+							icon={right.icon}
+							color={right.color}
+							kills={right.kills}
+							injuries={right.injuries}
+						/>
+					</div>
+				) : (
+					<div className="space-y-2">
+						<div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.35em] text-slate-300">
+							<span>Table</span>
+							<span>K / I</span>
+						</div>
+						<div className="space-y-2">
+							{scoreboard.ordered.slice(0, 4).map((participant) => (
+								<div
+									key={participant.warbandId}
+									className="flex items-center justify-between rounded bg-slate-50/5 px-3 py-2"
+								>
+									<div className="flex min-w-0 items-center gap-2">
+										<span
+											className="h-2 w-2 shrink-0 rounded-full"
+											style={{
+												backgroundColor: participant.color ?? "#f4b400",
+											}}
+										/>
+										<div className="min-w-0 truncate text-sm font-semibold">
+											{participant.icon ? `${participant.icon} ` : ""}
+											{participant.name}
+										</div>
+										{leader?.warbandId === participant.warbandId && (
+											<span className="ml-2 rounded bg-yellow-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.25em] text-slate-950">
+												Lead
+											</span>
+										)}
+									</div>
+									<div className="flex items-baseline gap-2 font-mono text-sm font-semibold">
+										<span>{participant.kills}</span>
+										<span className="text-slate-400">/</span>
+										<span className="text-slate-200">
+											{participant.injuries}
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+
+				<div className="flex items-center justify-between border-t border-slate-50/10 pt-3 text-[11px] font-semibold text-slate-300">
+					<span>{pluralize(match.events.length, "event")} logged</span>
+					<span className="uppercase tracking-[0.25em]">Sky Desk</span>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ScoreSide({
+	align,
+	name,
+	icon,
+	color,
+	kills,
+	injuries,
+}: {
+	align: "left" | "right";
+	name: string;
+	icon: string | null;
+	color: string | null;
+	kills: number;
+	injuries: number;
+}) {
+	return (
+		<div
+			className={`min-w-0 ${align === "right" ? "text-right" : "text-left"}`}
+		>
+			<div className="flex items-center gap-2">
+				{align === "left" ? (
+					<span
+						className="h-3 w-3 shrink-0 rounded-full"
+						style={{ backgroundColor: color ?? "#f4b400" }}
+					/>
+				) : null}
+				<div className="min-w-0 flex-1 truncate text-lg font-black uppercase tracking-wide">
+					{icon ? `${icon} ` : ""}
+					{name}
+				</div>
+				{align === "right" ? (
+					<span
+						className="h-3 w-3 shrink-0 rounded-full"
+						style={{ backgroundColor: color ?? "#f4b400" }}
+					/>
+				) : null}
+			</div>
+			<div className="mt-1 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-300">
+				<span className="uppercase tracking-[0.25em]">Injuries</span>
+				<span className="font-mono">{injuries}</span>
+			</div>
+			<div className="mt-1 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-300">
+				<span className="uppercase tracking-[0.25em]">Kills</span>
+				<span className="font-mono">{kills}</span>
+			</div>
+		</div>
+	);
+}
+
+function FixtureRow({ match }: { match: MatchCenterMatch }) {
+	const vsLine = useMemo(() => {
+		if (match.participants.length === 0) {
+			return "Participants TBD";
+		}
+		if (match.participants.length === 2) {
+			const left = match.participants[0];
+			const right = match.participants[1];
+			return `${left.name} vs ${right.name}`;
+		}
+		return `${match.participants.length} warbands scheduled`;
+	}, [match.participants]);
+
+	return (
+		<div className="rounded-lg border bg-muted/20 px-3 py-3">
+			<div className="flex items-start justify-between gap-3">
+				<div className="min-w-0">
+					<div className="text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
+						{formatShortDate(match.date)} • {formatTime(match.date)}
+					</div>
+					<div className="truncate text-sm font-bold text-foreground">
+						{match.name}
+					</div>
+					<div className="truncate text-xs text-muted-foreground">{vsLine}</div>
+				</div>
+				<div className="flex shrink-0 flex-col items-end gap-2">
+					<div className="rounded bg-chart-2/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-chart-2">
+						Scheduled
+					</div>
+					<div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+						{match.matchType.toUpperCase()}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 function formatDate(date: Date | string | null | undefined) {
 	if (!date) {
 		return "Unknown date";
@@ -783,6 +1172,28 @@ function formatDate(date: Date | string | null | undefined) {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
+	});
+}
+
+function formatShortDate(date: Date | string | null | undefined) {
+	if (!date) {
+		return "TBD";
+	}
+	const parsed = new Date(date);
+	return parsed.toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+	});
+}
+
+function formatTime(date: Date | string | null | undefined) {
+	if (!date) {
+		return "TBD";
+	}
+	const parsed = new Date(date);
+	return parsed.toLocaleTimeString("en-US", {
+		hour: "2-digit",
+		minute: "2-digit",
 	});
 }
 
