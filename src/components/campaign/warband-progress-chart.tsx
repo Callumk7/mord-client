@@ -8,101 +8,43 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import type {
-	ProgressChartRow,
-	ProgressMetric,
-	WarbandMeta,
+import type { WarbandGroup } from "~/lib/campaign-history";
+import {
+	formatChartTimestamp,
+	formatTooltipTimestamp,
 } from "~/lib/campaign-history";
-import { formatTooltipTimestamp, seriesKeyFor } from "~/lib/campaign-history";
 
 interface WarbandProgressChartProps {
 	title: string;
-	chartData: ProgressChartRow[];
-	warbands: WarbandMeta[];
-	metric: ProgressMetric;
+	data: Array<{
+		timestamp: Date;
+		rating?: number;
+		treasury?: number;
+		experience?: number;
+	}>;
+	warbandGroups: Record<number, WarbandGroup>;
+	dataKey: "rating" | "treasury" | "experience";
 	yAxisLabel: string;
 	defaultColor?: string;
 }
 
-function WarbandProgressTooltip({
-	active,
-	payload,
-	label,
-}: {
-	active?: boolean;
-	payload?: Array<{
-		name?: string;
-		value?: number | string | null;
-		color?: string;
-		payload?: ProgressChartRow;
-	}>;
-	label?: number;
-}) {
-	if (!active || !payload || payload.length === 0) return null;
-
-	const first = payload[0]?.payload;
-	if (!first) return null;
-
-	const entries = payload
-		.map((p) => ({
-			name: p.name ?? "",
-			value: p.value,
-			color: p.color,
-		}))
-		.filter((p) => typeof p.value === "number" && Number.isFinite(p.value));
-
-	if (entries.length === 0) return null;
-
-	return (
-		<div
-			className="rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
-			style={{
-				// Ensure the tooltip is fully opaque (no alpha blending).
-				opacity: 1,
-			}}
-		>
-			<div className="mb-2 font-medium">
-				Match {label ?? first.x}
-				{first.matchDate ? ` • ${formatTooltipTimestamp(first.matchDate)}` : ""}
-				{" • "}
-				{first.matchName}
-			</div>
-			<div className="space-y-1">
-				{entries.map((entry) => (
-					<div
-						key={entry.name}
-						className="flex items-center justify-between gap-4"
-					>
-						<span style={{ color: entry.color }}>{entry.name}</span>
-						<span className="tabular-nums">{entry.value}</span>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
 export function WarbandProgressChart({
 	title,
-	chartData,
-	warbands,
-	metric,
+	data,
+	warbandGroups,
+	dataKey,
 	yAxisLabel,
 	defaultColor = "#8884d8",
 }: WarbandProgressChartProps) {
-	const maxStep = Math.max(1, chartData.length);
 	return (
 		<div className="rounded-lg border bg-card p-6 shadow-lg">
 			<h2 className="mb-4 text-xl font-bold">{title}</h2>
 			<ResponsiveContainer width="100%" height={400}>
-				<LineChart data={chartData}>
+				<LineChart data={data}>
 					<CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 					<XAxis
-						dataKey="x"
-						type="number"
-						allowDecimals={false}
-						domain={[1, maxStep]}
-						tickFormatter={(value) => `M${value}`}
+						dataKey="timestamp"
+						tickFormatter={(value) => formatChartTimestamp(value)}
 						className="text-xs"
 					/>
 					<YAxis
@@ -115,21 +57,25 @@ export function WarbandProgressChart({
 						className="text-xs"
 					/>
 					<Tooltip
-						content={<WarbandProgressTooltip />}
 						labelFormatter={(value) => formatTooltipTimestamp(value)}
+						contentStyle={{
+							backgroundColor: "hsl(var(--card))",
+							border: "1px solid hsl(var(--border))",
+							borderRadius: "0.5rem",
+						}}
 					/>
 					<Legend />
-					{warbands.map((warband) => (
+					{Object.values(warbandGroups).map((warband) => (
 						<Line
 							key={warband.warbandId}
 							type="monotone"
-							dataKey={seriesKeyFor(warband.warbandId, metric)}
+							dataKey={dataKey}
+							data={warband.dataPoints}
 							name={warband.warbandName}
 							stroke={warband.warbandColor || defaultColor}
 							strokeWidth={2}
 							dot={{ r: 4 }}
 							activeDot={{ r: 6 }}
-							connectNulls={false}
 						/>
 					))}
 				</LineChart>

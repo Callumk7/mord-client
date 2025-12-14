@@ -2,11 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { getCampaignHistoryOptions } from "~/api/campaign-history";
 import { WarbandProgressChart } from "~/components/campaign/warband-progress-chart";
-import {
-	buildPerMatchWarbandPoints,
-	buildProgressChartData,
-	getWarbandsFromPoints,
-} from "~/lib/campaign-history";
+import { buildTimeSeriesData, groupByWarband } from "~/lib/campaign-history";
 
 export const Route = createFileRoute("/$campaignId/progress/")({
 	loader: async ({ params, context }) => {
@@ -24,11 +20,11 @@ function ProgressPage() {
 		getCampaignHistoryOptions(Number(campaignId)),
 	);
 
-	const points = buildPerMatchWarbandPoints(history);
-	const warbands = getWarbandsFromPoints(points);
+	const timeSeriesData = buildTimeSeriesData(history);
+	const warbandGroups = groupByWarband(timeSeriesData);
 
 	// If no data yet, show empty state
-	if (points.length === 0) {
+	if (timeSeriesData.length === 0) {
 		return (
 			<div className="mx-auto max-w-7xl">
 				<h1 className="mb-8 text-3xl font-bold">Campaign Progress</h1>
@@ -48,27 +44,27 @@ function ProgressPage() {
 
 			<WarbandProgressChart
 				title="Rating Progression"
-				chartData={buildProgressChartData(points, "rating")}
-				warbands={warbands}
-				metric="rating"
+				data={timeSeriesData}
+				warbandGroups={warbandGroups}
+				dataKey="rating"
 				yAxisLabel="Rating"
 				defaultColor="#8884d8"
 			/>
 
 			<WarbandProgressChart
 				title="Treasury Progression"
-				chartData={buildProgressChartData(points, "treasury")}
-				warbands={warbands}
-				metric="treasury"
+				data={timeSeriesData}
+				warbandGroups={warbandGroups}
+				dataKey="treasury"
 				yAxisLabel="Gold Crowns"
 				defaultColor="#82ca9d"
 			/>
 
 			<WarbandProgressChart
 				title="Experience Progression"
-				chartData={buildProgressChartData(points, "experience")}
-				warbands={warbands}
-				metric="experience"
+				data={timeSeriesData}
+				warbandGroups={warbandGroups}
+				dataKey="experience"
 				yAxisLabel="Experience"
 				defaultColor="#ffc658"
 			/>
