@@ -50,6 +50,7 @@ type WarriorInjuriesInflictedRow = Awaited<
 >[number];
 
 interface BroadcastStat {
+	type: "stat";
 	id: string;
 	title: string;
 	value: string;
@@ -57,6 +58,13 @@ interface BroadcastStat {
 	description: string;
 	gradient: string;
 	footnote?: string;
+}
+
+interface BroadcastChart {
+	type: "chart";
+	id: string;
+	gradient: string;
+	content: React.ReactNode;
 }
 
 interface MatchHighlight {
@@ -199,6 +207,10 @@ function RouteComponent() {
 	const { data: warbands } = useSuspenseQuery(
 		getCampaignWarbandsWithWarriorsOptions(campaignId),
 	);
+	const { data: history } = useSuspenseQuery(
+		getCampaignHistoryOptions(campaignId),
+	);
+	const { data: rating } = useSuspenseQuery(getMostRatingOptions(campaignId));
 
 	const leader = gamesWon[0];
 	const richest = treasury[0];
@@ -218,6 +230,7 @@ function RouteComponent() {
 	const stats = useMemo<BroadcastStat[]>(() => {
 		const result: BroadcastStat[] = [
 			{
+				type: "stat",
 				id: "leader",
 				title: "Campaign Leader",
 				value: leader?.warband.name ?? "Awaiting champion",
@@ -229,6 +242,7 @@ function RouteComponent() {
 				footnote: leader?.warband.icon ?? undefined,
 			},
 			{
+				type: "stat",
 				id: "treasury",
 				title: "Treasure Hoard",
 				value: richest ? `${richest.warband.name}` : "No ledger data",
@@ -239,6 +253,7 @@ function RouteComponent() {
 				footnote: "Economy Watch",
 			},
 			{
+				type: "stat",
 				id: "fiercest",
 				title: "Fiercest Warrior",
 				value: fiercestWarrior?.warrior.name ?? "Unknown fighter",
@@ -250,6 +265,7 @@ function RouteComponent() {
 				gradient: gradients[2],
 			},
 			{
+				type: "stat",
 				id: "casualties",
 				title: "Casualty Watch",
 				value: `${casualtyCount}`,
@@ -259,6 +275,7 @@ function RouteComponent() {
 				footnote: "Event feed",
 			},
 			{
+				type: "stat",
 				id: "forces",
 				title: "Active Forces",
 				value: `${activeWarbands} warbands`,
@@ -395,6 +412,244 @@ function RouteComponent() {
 			});
 	}, [events, campaign]);
 
+	// Progress chart data
+	const progressData = useMemo(() => {
+		const points = buildPerMatchWarbandPoints(history);
+		const warbandsMeta = getWarbandsFromPoints(points);
+
+		return {
+			ratingData: buildProgressChartData(points, "rating"),
+			treasuryData: buildProgressChartData(points, "treasury"),
+			experienceData: buildProgressChartData(points, "experience"),
+			warbands: warbandsMeta,
+		};
+	}, [history]);
+
+	// Grouped bar chart data (treasury, rating, wins)
+	const warbandWealthAndRatingData = useMemo(() => {
+		const byId = new Map<
+			number,
+			{
+				warbandId: number;
+				name: string;
+				icon: string | null;
+				color: string | null;
+				treasury: number;
+				rating: number;
+				wins: number;
+			}
+		>();
+
+		for (const entry of treasury) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: entry.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: existing?.wins ?? 0,
+			});
+		}
+
+		for (const entry of rating) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: entry.rating ?? 0,
+				wins: existing?.wins ?? 0,
+			});
+		}
+
+		for (const entry of gamesWon) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: entry.wins ?? 0,
+			});
+		}
+
+		return Array.from(byId.values()).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	}, [treasury, rating, gamesWon]);
+
+	const warbandWealthAndRatingConfig = {
+		treasury: {
+			label: "Treasury (gc)",
+			color: "var(--chart-1)",
+		},
+		rating: {
+			label: "Rating",
+			color: "var(--chart-2)",
+		},
+		wins: {
+			label: "Wins",
+			color: "var(--chart-3)",
+		},
+	} satisfies ChartConfig;
+
+	// Combine stats and charts into carousel items
+	const carouselItems = useMemo<(BroadcastStat | BroadcastChart)[]>(() => {
+		const items: (BroadcastStat | BroadcastChart)[] = [...stats];
+
+		// Add grouped bar chart if data exists
+		if (warbandWealthAndRatingData.length > 0) {
+			items.push({
+				type: "chart",
+				id: "warband-stats-chart",
+				gradient: "from-purple-600 to-pink-500",
+				content: (
+					<div className="h-full w-full p-6">
+						<div className="mb-4">
+							<h3 className="text-xl font-bold text-foreground">
+								Warband Standings
+							</h3>
+							<p className="text-sm text-muted-foreground">
+								Treasury, Rating & Wins
+							</p>
+						</div>
+						<ChartContainer
+							config={warbandWealthAndRatingConfig}
+							className="h-[calc(100%-5rem)] w-full"
+						>
+							<BarChart
+								data={warbandWealthAndRatingData}
+								margin={{ left: 12, right: 12, bottom: 36 }}
+							>
+								<CartesianGrid vertical={false} className="stroke-border/50" />
+								<XAxis
+									dataKey="name"
+									tickLine={false}
+									axisLine={false}
+									interval={0}
+									height={60}
+									angle={-30}
+									textAnchor="end"
+								/>
+								<YAxis
+									yAxisId="treasury"
+									tickLine={false}
+									axisLine={false}
+									width={48}
+								/>
+								<YAxis
+									yAxisId="rating"
+									orientation="right"
+									tickLine={false}
+									axisLine={false}
+									width={48}
+								/>
+								<YAxis yAxisId="wins" hide />
+								<ChartTooltip
+									content={
+										<ChartTooltipContent
+											indicator="dot"
+											labelClassName="font-semibold"
+										/>
+									}
+								/>
+								<ChartLegend content={<ChartLegendContent />} />
+								<Bar
+									yAxisId="treasury"
+									dataKey="treasury"
+									fill="var(--color-treasury)"
+									radius={[4, 4, 0, 0]}
+								/>
+								<Bar
+									yAxisId="rating"
+									dataKey="rating"
+									fill="var(--color-rating)"
+									radius={[4, 4, 0, 0]}
+								/>
+								<Bar
+									yAxisId="wins"
+									dataKey="wins"
+									fill="var(--color-wins)"
+									radius={[4, 4, 0, 0]}
+								/>
+							</BarChart>
+						</ChartContainer>
+					</div>
+				),
+			});
+		}
+
+		// Add progress charts if data exists
+		if (progressData.warbands.length > 0) {
+			items.push({
+				type: "chart",
+				id: "rating-progression",
+				gradient: "from-blue-600 to-cyan-500",
+				content: (
+					<div className="h-full w-full p-6">
+						<WarbandProgressChart
+							title="Rating Progression"
+							chartData={progressData.ratingData}
+							warbands={progressData.warbands}
+							metric="rating"
+							yAxisLabel="Rating"
+							defaultColor="#8884d8"
+						/>
+					</div>
+				),
+			});
+
+			items.push({
+				type: "chart",
+				id: "treasury-progression",
+				gradient: "from-emerald-600 to-teal-500",
+				content: (
+					<div className="h-full w-full p-6">
+						<WarbandProgressChart
+							title="Treasury Progression"
+							chartData={progressData.treasuryData}
+							warbands={progressData.warbands}
+							metric="treasury"
+							yAxisLabel="Gold Crowns"
+							defaultColor="#82ca9d"
+						/>
+					</div>
+				),
+			});
+
+			items.push({
+				type: "chart",
+				id: "experience-progression",
+				gradient: "from-orange-600 to-amber-500",
+				content: (
+					<div className="h-full w-full p-6">
+						<WarbandProgressChart
+							title="Experience Progression"
+							chartData={progressData.experienceData}
+							warbands={progressData.warbands}
+							metric="experience"
+							yAxisLabel="Experience"
+							defaultColor="#ffc658"
+						/>
+					</div>
+				),
+			});
+		}
+
+		return items;
+	}, [
+		stats,
+		warbandWealthAndRatingData,
+		progressData,
+		warbandWealthAndRatingConfig,
+	]);
+
 	return (
 		<div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
 			<BroadcastHeader
@@ -406,7 +661,8 @@ function RouteComponent() {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row">
 				<div className="flex min-h-0 flex-1 flex-col gap-4">
-					<StatCarousel stats={stats} />
+					<StatCarousel items={carouselItems} />
+
 					<MatchCenter
 						matches={matchCenterMatches}
 						recent={recentMatchHighlights}
@@ -474,59 +730,77 @@ function BroadcastHeader({
 }
 
 interface StatCarouselProps {
-	stats: BroadcastStat[];
+	items: (BroadcastStat | BroadcastChart)[];
 }
 
-function StatCarousel({ stats }: StatCarouselProps) {
+function StatCarousel({ items }: StatCarouselProps) {
 	const [current, setCurrent] = useState(0);
 
 	useEffect(() => {
-		if (stats.length <= 1) {
+		if (items.length <= 1) {
 			return;
 		}
 		const interval = setInterval(() => {
-			setCurrent((prev) => (prev + 1) % stats.length);
+			setCurrent((prev) => (prev + 1) % items.length);
 		}, 7000);
 		return () => clearInterval(interval);
-	}, [stats.length]);
+	}, [items.length]);
 
-	const stat = stats[current];
+	const currentItem = items[current];
 
 	return (
 		<div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg">
 			<div
-				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-linear-to-br ${stat?.gradient}`}
+				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-linear-to-br ${currentItem?.gradient}`}
 			>
-				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card p-8">
-					<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
-					<div className="relative z-10 space-y-2">
-						<div className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground">
-							{stat?.title}
-						</div>
-						<div className="text-5xl font-black text-foreground">
-							{stat?.value}
-						</div>
-						<div className="text-lg text-foreground/80">{stat?.statLine}</div>
-						<div className="border-t border-border/50 pt-4 text-sm text-foreground/60">
-							{stat?.description}
-						</div>
-					</div>
-					<div className="relative z-10 flex items-center justify-between text-xs text-foreground/60">
-						<span>{stat?.footnote}</span>
-						<span>
-							{String(current + 1).padStart(2, "0")} /{" "}
-							{String(stats.length).padStart(2, "0")}
-						</span>
-					</div>
+				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card">
+					{currentItem?.type === "stat" ? (
+						<>
+							<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
+							<div className="relative z-10 space-y-2 p-8">
+								<div className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground">
+									{currentItem.title}
+								</div>
+								<div className="text-5xl font-black text-foreground">
+									{currentItem.value}
+								</div>
+								<div className="text-lg text-foreground/80">
+									{currentItem.statLine}
+								</div>
+								<div className="border-t border-border/50 pt-4 text-sm text-foreground/60">
+									{currentItem.description}
+								</div>
+							</div>
+							<div className="relative z-10 flex items-center justify-between p-8 pt-0 text-xs text-foreground/60">
+								<span>{currentItem.footnote}</span>
+								<span>
+									{String(current + 1).padStart(2, "0")} /{" "}
+									{String(items.length).padStart(2, "0")}
+								</span>
+							</div>
+						</>
+					) : currentItem?.type === "chart" ? (
+						<>
+							<div className="relative z-10 flex-1 overflow-hidden">
+								{currentItem.content}
+							</div>
+							<div className="relative z-10 flex items-center justify-end p-4 text-xs text-foreground/60">
+								<span>
+									{String(current + 1).padStart(2, "0")} /{" "}
+									{String(items.length).padStart(2, "0")}
+								</span>
+							</div>
+						</>
+					) : null}
 				</div>
 			</div>
-			{stats.length > 1 && (
+			{items.length > 1 && (
 				<>
 					<button
 						type="button"
-						aria-label="Previous stat"
+						aria-label="Previous item"
 						onClick={() =>
-							setCurrent((prev) => (prev - 1 + stats.length) % stats.length)
+							setCurrent((prev) => (prev - 1 + items.length) % items.length)
 						}
 						className="absolute left-4 z-20 rounded-full bg-accent p-3 text-accent-foreground transition hover:bg-accent/80"
 					>
@@ -534,18 +808,18 @@ function StatCarousel({ stats }: StatCarouselProps) {
 					</button>
 					<button
 						type="button"
-						aria-label="Next stat"
-						onClick={() => setCurrent((prev) => (prev + 1) % stats.length)}
+						aria-label="Next item"
+						onClick={() => setCurrent((prev) => (prev + 1) % items.length)}
 						className="absolute right-4 z-20 rounded-full bg-accent p-3 text-accent-foreground transition hover:bg-accent/80"
 					>
 						<ChevronRight className="h-5 w-5" />
 					</button>
 					<div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-						{stats.map((_, index) => (
+						{items.map((item, index) => (
 							<button
-								key={_.id}
+								key={item.id}
 								type="button"
-								aria-label={`Go to stat ${index + 1}`}
+								aria-label={`Go to item ${index + 1}`}
 								onClick={() => setCurrent(index)}
 								className={`h-2 rounded-full transition-all ${
 									index === current
