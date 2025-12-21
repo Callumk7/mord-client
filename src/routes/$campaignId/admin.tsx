@@ -217,8 +217,7 @@ function RouteComponent() {
 		return matches.filter((m) => {
 			return (
 				m.name.toLowerCase().includes(q) ||
-				m.status.toLowerCase().includes(q) ||
-				m.matchType.toLowerCase().includes(q)
+				m.status.toLowerCase().includes(q)
 			);
 		});
 	}, [matchFilter, matches]);
@@ -634,7 +633,6 @@ function RouteComponent() {
 								<TableHead>Match</TableHead>
 								<TableHead>Date</TableHead>
 								<TableHead>Status</TableHead>
-								<TableHead>Type</TableHead>
 								<TableHead className="text-right">Players</TableHead>
 								<TableHead className="w-[60px]" />
 							</TableRow>
@@ -642,7 +640,7 @@ function RouteComponent() {
 						<TableBody>
 							{filteredMatches.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-muted-foreground">
+									<TableCell colSpan={5} className="text-muted-foreground">
 										No matches match this filter.
 									</TableCell>
 								</TableRow>
@@ -678,9 +676,7 @@ function RouteComponent() {
 													{match.status}
 												</Badge>
 											</TableCell>
-											<TableCell className="text-muted-foreground">
-												{match.matchType}
-											</TableCell>
+
 											<TableCell className="text-right tabular-nums">
 												{match.participants?.length ?? 0}
 											</TableCell>

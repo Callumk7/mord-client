@@ -132,7 +132,6 @@ export const getMatchWarbandsOptions = (matchId: number) =>
 // Create Match
 export const createMatchFormSchema = z.object({
 	name: z.string().min(1, "Match name is required"),
-	matchType: z.enum(["1v1", "multiplayer"]),
 	scenarioId: z.number(),
 });
 
@@ -144,7 +143,6 @@ export const createMatchFn = createServerFn({ method: "POST" })
 			.values({
 				name: data.name,
 				date: new Date(),
-				matchType: data.matchType,
 				scenarioId: data.scenarioId,
 				status: "scheduled",
 				campaignId: data.campaignId,
@@ -175,7 +173,6 @@ export const addParticipantsFn = createServerFn({ method: "POST" })
 // Update Match
 const updateMatchFormSchema = z.object({
 	name: z.string().min(1, "Match name is required").optional(),
-	matchType: z.enum(["1v1", "multiplayer"]).optional(),
 	status: z.enum(["active", "ended", "scheduled"]).optional(),
 	scenarioId: z.number().optional(),
 });

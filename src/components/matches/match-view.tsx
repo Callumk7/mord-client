@@ -9,7 +9,7 @@ import { db } from "~/db";
 import type { EventWithParticipants, Warband } from "~/db/schema";
 import { warriors } from "~/db/schema";
 import { useUpdateMatchMutation } from "~/hooks/mutations/matches";
-import { formatDate } from "~/lib/utils";
+import { formatDate, getMatchTypeLabel } from "~/lib/utils";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 
@@ -33,20 +33,11 @@ const updateMatchCountFn = createServerFn({ method: "POST" })
 			);
 	});
 
-// Helper Functions
-const getMatchTypeLabel = (matchType: string) => {
-	if (matchType === "battle_royale") {
-		return "Battle Royale";
-	}
-	return matchType.toUpperCase();
-};
-
 interface MatchViewProps {
 	campaignId: number;
 	matchId: number;
 	matchName: string;
 	matchDate: Date;
-	matchType: "1v1" | "multiplayer";
 	matchStatus: string;
 	events: EventWithParticipants[];
 	participants: {
@@ -64,7 +55,6 @@ export function MatchView({
 	matchId,
 	matchName,
 	matchDate,
-	matchType,
 	matchStatus,
 	events,
 	participants,
@@ -117,7 +107,7 @@ export function MatchView({
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="text-sm px-3 py-1 bg-primary/20 text-primary rounded">
-						{getMatchTypeLabel(matchType)}
+						{getMatchTypeLabel(participants.length)}
 					</span>
 					{matchStatus === "scheduled" ? (
 						<Button size="sm" onClick={() => handleStatusChange("active")}>
@@ -145,7 +135,6 @@ export function MatchView({
 				<MatchEndedCard
 					campaignId={campaignId}
 					matchId={matchId}
-					matchType={matchType}
 					participants={participants}
 					winners={winners}
 				/>

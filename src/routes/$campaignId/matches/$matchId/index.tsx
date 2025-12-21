@@ -40,7 +40,6 @@ function RouteComponent() {
 			matchId={match.id}
 			matchName={match.name}
 			matchDate={match.date}
-			matchType={match.matchType}
 			matchStatus={match.status}
 			events={match.events}
 			participants={match.participants}

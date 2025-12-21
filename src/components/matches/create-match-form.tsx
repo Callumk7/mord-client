@@ -4,14 +4,6 @@ import { createMatchFn, createMatchFormSchema, matchKeys } from "~/api/matches";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectPositioner,
-	SelectTrigger,
-	SelectValue,
-} from "../ui/select";
 
 type FormValues = z.infer<typeof createMatchFormSchema>;
 
@@ -41,7 +33,6 @@ export function CreateMatchForm({
 	const form = useAppForm({
 		defaultValues: {
 			name: "",
-			matchType: "1v1" as FormValues["matchType"],
 			scenarioId: 1,
 		},
 		validators: {
@@ -51,7 +42,6 @@ export function CreateMatchForm({
 			mutation.mutate({
 				data: {
 					name: value.name,
-					matchType: value.matchType,
 					scenarioId: value.scenarioId,
 					campaignId: campaignId,
 				},
@@ -83,31 +73,6 @@ export function CreateMatchForm({
 								/>
 							</field.Control>
 							<field.Description>The name of the match</field.Description>
-						</form.Item>
-					)}
-				</form.AppField>
-
-				<form.AppField name="matchType">
-					{(field) => (
-						<form.Item>
-							<field.Label>Match Type</field.Label>
-							<field.Control>
-								<Select
-									value={field.state.value}
-									onValueChange={(value) => field.handleChange(value)}
-								>
-									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select a match type" />
-									</SelectTrigger>
-									<SelectPositioner>
-										<SelectContent>
-											<SelectItem value={"1v1"}>1v1</SelectItem>
-											<SelectItem value={"multiplayer"}>Multiplayer</SelectItem>
-										</SelectContent>
-									</SelectPositioner>
-								</Select>
-							</field.Control>
-							<field.Description>Type of match format</field.Description>
 						</form.Item>
 					)}
 				</form.AppField>

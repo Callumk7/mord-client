@@ -1,6 +1,7 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { Button } from "~/components/ui/button";
 import type { CampaignMatch } from "~/db/schema";
+import { getMatchTypeLabel } from "~/lib/utils";
 
 interface MatchCardProps {
 	match: CampaignMatch;
@@ -15,13 +16,6 @@ export function MatchCard({ match }: MatchCardProps) {
 			day: "numeric",
 			year: "numeric",
 		});
-	};
-
-	const getMatchTypeLabel = (matchType: string) => {
-		if (matchType === "battle_royale") {
-			return "Battle Royale";
-		}
-		return matchType.toUpperCase();
 	};
 
 	const getStatusBadge = (status: string) => {
@@ -44,7 +38,7 @@ export function MatchCard({ match }: MatchCardProps) {
 					</p>
 					<div className="flex gap-2 mt-2">
 						<span className="text-xs px-2 py-1 bg-primary/20 text-primary rounded">
-							{getMatchTypeLabel(match.matchType)}
+							{getMatchTypeLabel(match.participants.length)}
 						</span>
 						<span
 							className={`text-xs px-2 py-1 rounded ${getStatusBadge(match.status)}`}
