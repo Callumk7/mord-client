@@ -1,11 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type z from "zod";
 import { createMatchFn, createMatchFormSchema, matchKeys } from "~/api/matches";
 import { Button } from "../ui/button";
 import { createFormHook } from "../ui/form-tanstack";
 import { Input } from "../ui/input";
-
-type FormValues = z.infer<typeof createMatchFormSchema>;
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectPositioner,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select";
 
 const { useAppForm } = createFormHook();
 
@@ -34,6 +39,7 @@ export function CreateMatchForm({
 		defaultValues: {
 			name: "",
 			scenarioId: 1,
+			matchType: "1v1" as "1v1" | "multiplayer",
 		},
 		validators: {
 			onChange: createMatchFormSchema,
@@ -43,6 +49,7 @@ export function CreateMatchForm({
 				data: {
 					name: value.name,
 					scenarioId: value.scenarioId,
+					matchType: value.matchType,
 					campaignId: campaignId,
 				},
 			});
@@ -92,6 +99,37 @@ export function CreateMatchForm({
 								/>
 							</field.Control>
 							<field.Description>The scenario being played</field.Description>
+						</form.Item>
+					)}
+				</form.AppField>
+
+				<form.AppField name="matchType">
+					{(field) => (
+						<form.Item>
+							<field.Label>Match Type</field.Label>
+							<field.Control>
+								<Select
+									value={[field.state.value]}
+									onValueChange={(value) =>
+										field.handleChange(value as "1v1" | "multiplayer")
+									}
+									items={[
+										{ label: "1v1", value: "1v1" },
+										{ label: "Multiplayer", value: "multiplayer" },
+									]}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="Select match type" />
+									</SelectTrigger>
+									<SelectPositioner>
+										<SelectContent>
+											<SelectItem value="1v1">1v1</SelectItem>
+											<SelectItem value="multiplayer">Multiplayer</SelectItem>
+										</SelectContent>
+									</SelectPositioner>
+								</Select>
+							</field.Control>
+							<field.Description>Type of match</field.Description>
 						</form.Item>
 					)}
 				</form.AppField>

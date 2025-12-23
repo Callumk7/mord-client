@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { formatShortDate, formatTime } from "~/lib/display-utils";
-import { getMatchTypeLabel } from "~/lib/utils";
 import type { MatchCenterMatch } from "~/types/display";
 
 export interface FixtureRowProps {
@@ -37,7 +36,7 @@ export function FixtureRow({ match }: FixtureRowProps) {
 						Scheduled
 					</div>
 					<div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-						{match.matchType.toUpperCase()}
+						{match.matchType?.toUpperCase() ?? "MATCH"}
 					</div>
 				</div>
 			</div>

@@ -53,6 +53,7 @@ export function useMatchCenterMatches(matches: any[]): MatchCenterMatch[] {
 			name: match.name,
 			date: match.date,
 			status: match.status,
+			matchType: match.matchType,
 			participants: match.participants.map((participant: any) => ({
 				id: participant.id,
 				warbandId: participant.warbandId,
@@ -93,13 +94,17 @@ export function useRecentMatchHighlights(matches: any[]): MatchHighlight[] {
 			.filter(
 				(match: any) => match.status === "ended" || match.status === "resolved",
 			)
-			.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+			.sort(
+				(a: any, b: any) =>
+					new Date(b.date).getTime() - new Date(a.date).getTime(),
+			)
 			.slice(0, 3)
 			.map((match: any) => ({
 				id: match.id,
 				name: match.name,
 				date: match.date,
 				status: match.status,
+				matchType: match.matchType,
 				winners: (match.winners ?? []).map((winner: any) => ({
 					id: winner.warbandId,
 					name: winner.warband.name,
@@ -113,8 +118,9 @@ export function useRecentMatchHighlights(matches: any[]): MatchHighlight[] {
 					color: participant.warband.color,
 				})),
 				kills: match.events.filter((event: any) => event.death).length,
-				injuries: match.events.filter((event: any) => event.injury && !event.death)
-					.length,
+				injuries: match.events.filter(
+					(event: any) => event.injury && !event.death,
+				).length,
 				totalMoments: match.events.length,
 			}));
 	}, [matches]);
@@ -201,7 +207,8 @@ export function useNewsItems(
 		const lastFinished = [...matches]
 			.filter((m: any) => m.status === "ended" || m.status === "resolved")
 			.sort(
-				(a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+				(a: any, b: any) =>
+					new Date(b.date).getTime() - new Date(a.date).getTime(),
 			)[0];
 
 		const warpstoneIndex = totalMatches

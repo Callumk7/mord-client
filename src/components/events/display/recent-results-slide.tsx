@@ -70,7 +70,7 @@ export function RecentResultsSlide({ highlights }: RecentResultsSlideProps) {
 							<div className="flex h-full w-full items-stretch">
 								<div className="flex w-[92px] flex-col items-center justify-center gap-2 border-r border-slate-50/10 bg-linear-to-b from-blue-700/35 via-slate-950 to-red-700/30 px-3">
 									<div className="rounded bg-slate-50/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-slate-200">
-										{match.matchType.toUpperCase()}
+										{match.matchType?.toUpperCase() ?? "MATCH"}
 									</div>
 									<div className="rounded bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-white">
 										FT
