@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Fish, PlusCircle, Shield, TrendingUp } from "lucide-react";
 import { getCampaignsOptions } from "~/api/campaign";
 import { getCampaignMatchesOptions } from "~/api/matches";
 import { campaignWarbandsQueryOptions } from "~/api/warbands";
@@ -14,7 +15,6 @@ import {
 	NavigationMenuPositioner,
 	NavigationMenuTrigger,
 } from "./ui/navigation-menu";
-import { Fish, PlusCircle, Shield, TrendingUp } from "lucide-react";
 import { Separator } from "./ui/separator";
 
 interface HeaderProps {
@@ -28,6 +28,15 @@ export function Header({ campaignId }: HeaderProps) {
 		<NavigationMenu className="p-4 w-full max-w-full">
 			<NavigationMenuList className="justify-between w-full">
 				<div className="flex items-center gap-1">
+					<NavigationMenuItem>
+						<NavigationMenuLink
+							render={
+								<Link to="/display/$campaignId" params={{ campaignId }} />
+							}
+						>
+							Display
+						</NavigationMenuLink>
+					</NavigationMenuItem>
 					<NavigationMenuItem>
 						<NavigationMenuLink
 							render={<Link to="/$campaignId" params={{ campaignId }} />}

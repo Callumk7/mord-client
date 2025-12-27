@@ -1,17 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { getMatchDetailsOptions, updateMatchFn } from "~/api/matches";
-import { formatDate } from "~/lib/utils";
+import { formatDate, getMatchTypeLabel } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { Link } from "../ui/link";
-
-// Helper Functions
-const getMatchTypeLabel = (matchType: string) => {
-	if (matchType === "battle_royale") {
-		return "Battle Royale";
-	}
-	return matchType.toUpperCase();
-};
 
 const getStatusBadge = (status: string) => {
 	const styles = {
@@ -28,7 +20,7 @@ interface MatchHeaderProps {
 	matchId: number;
 	matchName: string;
 	matchDate: Date;
-	matchType: string;
+	participantCount: number;
 	matchStatus: string;
 }
 
@@ -37,7 +29,7 @@ export function MatchHeader({
 	matchId,
 	matchName,
 	matchDate,
-	matchType,
+	participantCount,
 	matchStatus,
 }: MatchHeaderProps) {
 	const queryClient = useQueryClient();
@@ -91,7 +83,7 @@ export function MatchHeader({
 			</Button>
 			<div className="flex items-center gap-2">
 				<span className="text-sm px-3 py-1 bg-primary/20 text-primary rounded">
-					{getMatchTypeLabel(matchType)}
+					{getMatchTypeLabel(participantCount)}
 				</span>
 				<span
 					className={`text-sm px-3 py-1 rounded ${getStatusBadge(matchStatus)}`}

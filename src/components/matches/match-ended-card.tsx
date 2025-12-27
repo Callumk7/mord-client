@@ -9,7 +9,6 @@ import { Link } from "../ui/link";
 interface MatchEndedCardProps {
 	campaignId: number;
 	matchId: number;
-	matchType: "1v1" | "multiplayer";
 	participants: {
 		id: number;
 		warband: Warband;
@@ -23,7 +22,6 @@ interface MatchEndedCardProps {
 export function MatchEndedCard({
 	campaignId,
 	matchId,
-	matchType,
 	participants,
 	winners,
 }: MatchEndedCardProps) {
@@ -43,12 +41,6 @@ export function MatchEndedCard({
 
 	const toggleWinner = (warbandId: number) => {
 		setSelectedWinners((prev) => {
-			// For 1v1, only allow one winner
-			if (matchType === "1v1") {
-				return [warbandId];
-			}
-
-			// For multiplayer, allow multiple winners
 			if (prev.includes(warbandId)) {
 				return prev.filter((id) => id !== warbandId);
 			}
@@ -81,9 +73,7 @@ export function MatchEndedCard({
 						Match Results
 					</h3>
 					<p className="text-sm text-muted-foreground">
-						{matchType === "1v1"
-							? "Select the winning warband"
-							: "Select the winning warband(s)"}
+						Select the winning warband(s)
 					</p>
 				</div>
 

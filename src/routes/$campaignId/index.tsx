@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
 	getCampaignOptions,
 	getMostGamesWonOptions,
@@ -9,6 +10,14 @@ import {
 	getMostRatingOptions,
 	getMostTreasuryOptions,
 } from "~/api/campaign";
+import type { ChartConfig } from "~/components/ui/chart";
+import {
+	ChartContainer,
+	ChartLegend,
+	ChartLegendContent,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "~/components/ui/chart";
 
 export const Route = createFileRoute("/$campaignId/")({
 	loader: async ({ params, context }) => {
@@ -69,6 +78,7 @@ function RouteComponent() {
 		icon: entry.warband.icon,
 		color: entry.warband.color,
 		wins: entry.wins,
+		linkTo: `/${campaignId}/warbands/${entry.warbandId}`,
 	}));
 
 	const opportunistLeaderboard = treasury.slice(0, 5).map((entry) => ({
@@ -78,6 +88,7 @@ function RouteComponent() {
 		icon: entry.warband.icon,
 		color: entry.warband.color,
 		treasury: entry.treasury,
+		linkTo: `/${campaignId}/warbands/${entry.warbandId}`,
 	}));
 
 	const survivorLeaderboard = rating.slice(0, 5).map((entry) => ({
@@ -87,6 +98,7 @@ function RouteComponent() {
 		icon: entry.warband.icon,
 		color: entry.warband.color,
 		rating: entry.rating,
+		linkTo: `/${campaignId}/warbands/${entry.warbandId}`,
 	}));
 
 	const killsFromEventsLeaderboard = killsFromEvents
@@ -98,6 +110,7 @@ function RouteComponent() {
 			warbandIcon: entry.warbandIcon,
 			warbandColor: entry.warbandColor,
 			kills: entry.kills,
+			linkTo: `/${campaignId}/warriors/${entry.warriorId}`,
 		}));
 
 	const injuriesFromEventsLeaderboard = injuriesFromEvents
@@ -109,6 +122,7 @@ function RouteComponent() {
 			warbandIcon: entry.warbandIcon,
 			warbandColor: entry.warbandColor,
 			injuriesReceived: entry.injuriesReceived,
+			linkTo: `/${campaignId}/warriors/${entry.warriorId}`,
 		}));
 
 	const injuriesInflictedLeaderboard = injuriesInflictedFromEvents
@@ -120,7 +134,81 @@ function RouteComponent() {
 			warbandIcon: entry.warbandIcon,
 			warbandColor: entry.warbandColor,
 			injuriesInflicted: entry.injuriesInflicted,
+			linkTo: `/${campaignId}/warriors/${entry.warriorId}`,
 		}));
+
+	const warbandWealthAndRatingConfig = {
+		treasury: {
+			label: "Treasury (gc)",
+			color: "var(--chart-1)",
+		},
+		rating: {
+			label: "Rating",
+			color: "var(--chart-2)",
+		},
+		wins: {
+			label: "Wins",
+			color: "var(--chart-3)",
+		},
+	} satisfies ChartConfig;
+
+	const warbandWealthAndRatingData = (() => {
+		const byId = new Map<
+			number,
+			{
+				warbandId: number;
+				name: string;
+				icon: string | null;
+				color: string | null;
+				treasury: number;
+				rating: number;
+				wins: number;
+			}
+		>();
+
+		for (const entry of treasury) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: entry.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: existing?.wins ?? 0,
+			});
+		}
+
+		for (const entry of rating) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: entry.rating ?? 0,
+				wins: existing?.wins ?? 0,
+			});
+		}
+
+		for (const entry of gamesWon) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: entry.wins ?? 0,
+			});
+		}
+
+		return Array.from(byId.values()).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	})();
 
 	return (
 		<div className="mx-auto max-w-7xl">
@@ -151,6 +239,89 @@ function RouteComponent() {
 					<h2 className="mb-4 text-3xl font-bold text-foreground">
 						Warband Leaderboards
 					</h2>
+
+					{/* Warband Treasury + Rating chart */}
+					<div className="mb-6 rounded-lg border bg-card p-6 shadow-lg">
+						<div className="mb-4">
+							<h3 className="text-xl font-bold text-foreground">
+								Treasury & Rating
+							</h3>
+							<p className="text-sm text-muted-foreground">
+								Side-by-side bars for each warband.
+							</p>
+						</div>
+
+						{warbandWealthAndRatingData.length === 0 ? (
+							<p className="py-10 text-center text-sm text-muted-foreground">
+								No warband data yet
+							</p>
+						) : (
+							<ChartContainer
+								config={warbandWealthAndRatingConfig}
+								className="aspect-auto h-[360px] w-full"
+							>
+								<BarChart
+									data={warbandWealthAndRatingData}
+									margin={{ left: 12, right: 12, bottom: 36 }}
+								>
+									<CartesianGrid
+										vertical={false}
+										className="stroke-border/50"
+									/>
+									<XAxis
+										dataKey="name"
+										tickLine={false}
+										axisLine={false}
+										interval={0}
+										height={60}
+										angle={-30}
+										textAnchor="end"
+									/>
+									<YAxis
+										yAxisId="treasury"
+										tickLine={false}
+										axisLine={false}
+										width={48}
+									/>
+									<YAxis
+										yAxisId="rating"
+										orientation="right"
+										tickLine={false}
+										axisLine={false}
+										width={48}
+									/>
+									<YAxis yAxisId="wins" hide />
+									<ChartTooltip
+										content={
+											<ChartTooltipContent
+												indicator="dot"
+												labelClassName="font-semibold"
+											/>
+										}
+									/>
+									<ChartLegend content={<ChartLegendContent />} />
+									<Bar
+										yAxisId="treasury"
+										dataKey="treasury"
+										fill="var(--color-treasury)"
+										radius={[4, 4, 0, 0]}
+									/>
+									<Bar
+										yAxisId="rating"
+										dataKey="rating"
+										fill="var(--color-rating)"
+										radius={[4, 4, 0, 0]}
+									/>
+									<Bar
+										yAxisId="wins"
+										dataKey="wins"
+										fill="var(--color-wins)"
+										radius={[4, 4, 0, 0]}
+									/>
+								</BarChart>
+							</ChartContainer>
+						)}
+					</div>
 					<div className="grid gap-6 md:grid-cols-3">
 						{/* The Tyrant */}
 						<LeaderboardCard
@@ -165,6 +336,7 @@ function RouteComponent() {
 								suffix: entry.wins === 1 ? "win" : "wins",
 								icon: entry.icon,
 								color: entry.color,
+								linkTo: entry.linkTo,
 							}))}
 						/>
 
@@ -181,6 +353,7 @@ function RouteComponent() {
 								suffix: "gc",
 								icon: entry.icon,
 								color: entry.color,
+								linkTo: entry.linkTo,
 							}))}
 						/>
 
@@ -197,6 +370,7 @@ function RouteComponent() {
 								suffix: "rating",
 								icon: entry.icon,
 								color: entry.color,
+								linkTo: entry.linkTo,
 							}))}
 						/>
 					</div>
@@ -221,6 +395,7 @@ function RouteComponent() {
 								suffix: entry.kills === 1 ? "kill" : "kills",
 								icon: entry.warbandIcon,
 								color: entry.warbandColor,
+								linkTo: entry.linkTo,
 							}))}
 						/>
 
@@ -237,6 +412,7 @@ function RouteComponent() {
 								suffix: entry.injuriesInflicted === 1 ? "injury" : "injuries",
 								icon: entry.warbandIcon,
 								color: entry.warbandColor,
+								linkTo: entry.linkTo,
 							}))}
 						/>
 
@@ -253,6 +429,7 @@ function RouteComponent() {
 								suffix: entry.injuriesReceived === 1 ? "injury" : "injuries",
 								icon: entry.warbandIcon,
 								color: entry.warbandColor,
+								linkTo: entry.linkTo,
 							}))}
 						/>
 					</div>
@@ -270,6 +447,7 @@ interface LeaderboardEntry {
 	suffix: string;
 	icon: string | null;
 	color: string | null;
+	linkTo?: string;
 }
 
 interface LeaderboardCardProps {
@@ -306,47 +484,63 @@ function LeaderboardCard({
 					</p>
 				) : (
 					<div className="space-y-3">
-						{entries.map((entry, index) => (
-							<div
-								key={`${entry.name}-${entry.value}-${index}`}
-								className="flex items-center gap-3 rounded-lg border bg-background p-3 transition-colors hover:bg-muted/50"
-							>
-								{/* Rank */}
-								<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted font-bold text-foreground">
-									{index + 1}
-								</div>
+						{entries.map((entry, index) => {
+							const content = (
+								<>
+									{/* Rank */}
+									<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted font-bold text-foreground">
+										{index + 1}
+									</div>
 
-								{/* Icon */}
-								{entry.icon && (
-									<div
-										className="text-xl"
-										style={{ color: entry.color || undefined }}
-									>
-										{entry.icon}
-									</div>
-								)}
+									{/* Icon */}
+									{entry.icon && (
+										<div
+											className="text-xl"
+											style={{ color: entry.color || undefined }}
+										>
+											{entry.icon}
+										</div>
+									)}
 
-								{/* Name and Subtitle */}
-								<div className="min-w-0 flex-1">
-									<div className="truncate font-semibold text-foreground">
-										{entry.name}
+									{/* Name and Subtitle */}
+									<div className="min-w-0 flex-1">
+										<div className="truncate font-semibold text-foreground">
+											{entry.name}
+										</div>
+										<div className="truncate text-xs text-muted-foreground">
+											{entry.subtitle}
+										</div>
 									</div>
-									<div className="truncate text-xs text-muted-foreground">
-										{entry.subtitle}
-									</div>
-								</div>
 
-								{/* Value */}
-								<div className="shrink-0 text-right">
-									<div className="text-lg font-bold text-foreground">
-										{entry.value}
+									{/* Value */}
+									<div className="shrink-0 text-right">
+										<div className="text-lg font-bold text-foreground">
+											{entry.value}
+										</div>
+										<div className="text-xs text-muted-foreground">
+											{entry.suffix}
+										</div>
 									</div>
-									<div className="text-xs text-muted-foreground">
-										{entry.suffix}
-									</div>
+								</>
+							);
+
+							return entry.linkTo ? (
+								<Link
+									key={`${entry.name}-${entry.value}-${index}`}
+									to={entry.linkTo}
+									className="flex items-center gap-3 rounded-lg border bg-background p-3 transition-colors hover:bg-muted/50"
+								>
+									{content}
+								</Link>
+							) : (
+								<div
+									key={`${entry.name}-${entry.value}-${index}`}
+									className="flex items-center gap-3 rounded-lg border bg-background p-3 transition-colors hover:bg-muted/50"
+								>
+									{content}
 								</div>
-							</div>
-						))}
+							);
+						})}
 					</div>
 				)}
 			</div>

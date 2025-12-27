@@ -60,3 +60,12 @@ export function parseNumber(value: string) {
 	}
 	return number;
 }
+
+/**
+ * Get the match type label based on participant count
+ * @param participantCount - Number of participants in the match
+ * @returns "1V1" for 2 participants, "MULTIPLAYER" for more
+ */
+export function getMatchTypeLabel(participantCount: number): string {
+	return participantCount === 2 ? "1V1" : "MULTIPLAYER";
+}

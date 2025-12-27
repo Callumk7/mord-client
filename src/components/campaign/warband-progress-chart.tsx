@@ -8,40 +8,114 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import type { WarbandGroup } from "~/lib/campaign-history";
-import { formatChartTimestamp, formatTooltipTimestamp } from "~/lib/campaign-history";
+import type {
+	ProgressChartRow,
+	ProgressMetric,
+	WarbandMeta,
+} from "~/lib/campaign-history";
+import { formatTooltipTimestamp, seriesKeyFor } from "~/lib/campaign-history";
 
 interface WarbandProgressChartProps {
 	title: string;
-	data: Array<{
-		timestamp: Date;
-		rating?: number;
-		treasury?: number;
-		experience?: number;
-	}>;
-	warbandGroups: Record<number, WarbandGroup>;
-	dataKey: "rating" | "treasury" | "experience";
+	chartData: ProgressChartRow[];
+	warbands: WarbandMeta[];
+	metric: ProgressMetric;
 	yAxisLabel: string;
 	defaultColor?: string;
+	height?: number;
+	showLegend?: boolean;
+	variant?: "card" | "embedded";
+}
+
+function WarbandProgressTooltip({
+	active,
+	payload,
+	label,
+}: {
+	active?: boolean;
+	payload?: Array<{
+		name?: string;
+		value?: unknown;
+		color?: string;
+		payload?: ProgressChartRow;
+	}>;
+	label?: number;
+}) {
+	if (!active || !payload || payload.length === 0) return null;
+
+	const first = payload[0]?.payload;
+	if (!first) return null;
+
+	const entries = payload
+		.map((p) => ({
+			name: p.name ?? "",
+			value: p.value,
+			color: p.color,
+		}))
+		.filter(
+			(p): p is { name: string; value: number; color: string | undefined } =>
+				typeof p.value === "number" && Number.isFinite(p.value),
+		);
+
+	if (entries.length === 0) return null;
+
+	// Use the tooltip label (match index) when provided by Recharts.
+	const matchIndex = typeof label === "number" ? label : first.x;
+
+	return (
+		<div className="rounded-lg border bg-card p-3 text-sm text-foreground shadow-lg">
+			<div className="mb-2 font-medium">
+				Match {matchIndex}
+				{" • "}
+				{formatTooltipTimestamp(first.matchDate)}
+				{" • "}
+				{first.matchName}
+			</div>
+			<div className="space-y-1">
+				{entries.map((entry) => (
+					<div
+						key={entry.name}
+						className="flex items-center justify-between gap-4"
+					>
+						<span style={{ color: entry.color }}>{entry.name}</span>
+						<span className="tabular-nums">{entry.value}</span>
+					</div>
+				))}
+			</div>
+		</div>
+	);
 }
 
 export function WarbandProgressChart({
 	title,
-	data,
-	warbandGroups,
-	dataKey,
+	chartData,
+	warbands,
+	metric,
 	yAxisLabel,
 	defaultColor = "#8884d8",
+	height = 400,
+	showLegend = true,
+	variant = "card",
 }: WarbandProgressChartProps) {
+	const maxStep = Math.max(1, chartData.length);
+
+	const containerClassName =
+		variant === "embedded"
+			? "w-full"
+			: "rounded-lg border bg-card p-6 shadow-lg";
+
 	return (
-		<div className="rounded-lg border bg-card p-6 shadow-lg">
-			<h2 className="mb-4 text-xl font-bold">{title}</h2>
-			<ResponsiveContainer width="100%" height={400}>
-				<LineChart data={data}>
+		<div className={containerClassName}>
+			{title ? <h2 className="mb-4 text-xl font-bold">{title}</h2> : null}
+			<ResponsiveContainer width="100%" height={height}>
+				<LineChart data={chartData}>
 					<CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 					<XAxis
-						dataKey="timestamp"
-						tickFormatter={(value) => formatChartTimestamp(value)}
+						dataKey="x"
+						type="number"
+						allowDecimals={false}
+						domain={[1, maxStep]}
+						tickFormatter={(value) => `M${value}`}
 						className="text-xs"
 					/>
 					<YAxis
@@ -54,25 +128,21 @@ export function WarbandProgressChart({
 						className="text-xs"
 					/>
 					<Tooltip
-						labelFormatter={(value) => formatTooltipTimestamp(value)}
-						contentStyle={{
-							backgroundColor: "hsl(var(--card))",
-							border: "1px solid hsl(var(--border))",
-							borderRadius: "0.5rem",
-						}}
+						content={<WarbandProgressTooltip />}
+						labelFormatter={(value) => `Match ${String(value)}`}
 					/>
-					<Legend />
-					{Object.values(warbandGroups).map((warband) => (
+					{showLegend ? <Legend /> : null}
+					{warbands.map((warband) => (
 						<Line
 							key={warband.warbandId}
 							type="monotone"
-							dataKey={dataKey}
-							data={warband.dataPoints}
+							dataKey={seriesKeyFor(warband.warbandId, metric)}
 							name={warband.warbandName}
 							stroke={warband.warbandColor || defaultColor}
 							strokeWidth={2}
 							dot={{ r: 4 }}
 							activeDot={{ r: 6 }}
+							connectNulls={false}
 						/>
 					))}
 				</LineChart>

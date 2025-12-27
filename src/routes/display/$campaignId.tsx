@@ -1,83 +1,50 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import type {
-	getMostInjuriesFromEvents,
-	getMostInjuriesInflictedFromEvents,
-	getMostKillsFromEvents,
-} from "~/api/campaign";
+import { useMemo } from "react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
 	getCampaignOptions,
 	getMostGamesWonOptions,
 	getMostInjuriesFromEventsOptions,
 	getMostInjuriesInflictedFromEventsOptions,
 	getMostKillsFromEventsOptions,
+	getMostRatingOptions,
 	getMostTreasuryOptions,
 } from "~/api/campaign";
+import { getCampaignHistoryOptions } from "~/api/campaign-history";
 import { campaignEventsQueryOptions } from "~/api/events";
 import { getCampaignMatchesOptions } from "~/api/matches";
 import { getCampaignWarbandsWithWarriorsOptions } from "~/api/warbands";
-import type { Campaign } from "~/db/schema";
-
-type WarriorKillsRow = Awaited<
-	ReturnType<typeof getMostKillsFromEvents>
->[number];
-
-type WarriorInjuriesTakenRow = Awaited<
-	ReturnType<typeof getMostInjuriesFromEvents>
->[number];
-
-type WarriorInjuriesInflictedRow = Awaited<
-	ReturnType<typeof getMostInjuriesInflictedFromEvents>
->[number];
-
-interface BroadcastStat {
-	id: string;
-	title: string;
-	value: string;
-	statLine: string;
-	description: string;
-	gradient: string;
-	footnote?: string;
-}
-
-interface MatchHighlight {
-	id: number;
-	name: string;
-	date: Date | string;
-	matchType: string;
-	status: string;
-	participants: {
-		id: number;
-		name: string;
-		icon: string | null;
-		color: string | null;
-	}[];
-	kills: number;
-	injuries: number;
-	totalMoments: number;
-}
-
-interface WarbandSpotlightData {
-	name: string;
-	faction: string;
-	icon: string | null;
-	color: string | null;
-	wins: number;
-	treasury: number;
-	warriorsAlive: number;
-	eventsInflicted: number;
-	eventsSuffered: number;
-}
-
-const gradients = [
-	"from-rose-600 to-orange-500",
-	"from-purple-600 to-fuchsia-500",
-	"from-amber-500 to-yellow-400",
-	"from-cyan-500 to-blue-600",
-	"from-emerald-500 to-lime-500",
-];
+import { WarbandProgressChart } from "~/components/campaign/warband-progress-chart";
+import { BroadcastHeader } from "~/components/events/display/broadcast-header";
+import { CasualtyReport } from "~/components/events/display/casualty-report";
+import { MatchCenter } from "~/components/events/display/match-center";
+import { NewsTicker } from "~/components/events/display/news-ticker";
+import { RecentResultsSlide } from "~/components/events/display/recent-results-slide";
+import { StatCarousel } from "~/components/events/display/stat-carousel";
+import { WarbandSpotlight } from "~/components/events/display/warband-spotlight";
+import type { ChartConfig } from "~/components/ui/chart";
+import {
+	ChartContainer,
+	ChartLegend,
+	ChartLegendContent,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "~/components/ui/chart";
+import {
+	useBreakingHeadline,
+	useMatchCenterMatches,
+	useNewsItems,
+	useRecentMatchHighlights,
+	useWarbandSpotlight,
+} from "~/hooks/use-broadcast-data";
+import {
+	buildPerMatchWarbandPoints,
+	buildProgressChartData,
+	getWarbandsFromPoints,
+} from "~/lib/campaign-history";
+import { gradients, pluralize } from "~/lib/display-utils";
+import type { BroadcastChart, BroadcastStat } from "~/types/display";
 
 export const Route = createFileRoute("/display/$campaignId")({
 	params: {
@@ -104,6 +71,9 @@ export const Route = createFileRoute("/display/$campaignId")({
 				getMostTreasuryOptions(params.campaignId),
 			),
 			context.queryClient.ensureQueryData(
+				getMostRatingOptions(params.campaignId),
+			),
+			context.queryClient.ensureQueryData(
 				getMostKillsFromEventsOptions(params.campaignId),
 			),
 			context.queryClient.ensureQueryData(
@@ -120,6 +90,9 @@ export const Route = createFileRoute("/display/$campaignId")({
 			),
 			context.queryClient.ensureQueryData(
 				getCampaignWarbandsWithWarriorsOptions(params.campaignId),
+			),
+			context.queryClient.ensureQueryData(
+				getCampaignHistoryOptions(params.campaignId),
 			),
 		]);
 	},
@@ -154,6 +127,10 @@ function RouteComponent() {
 	const { data: warbands } = useSuspenseQuery(
 		getCampaignWarbandsWithWarriorsOptions(campaignId),
 	);
+	const { data: history } = useSuspenseQuery(
+		getCampaignHistoryOptions(campaignId),
+	);
+	const { data: rating } = useSuspenseQuery(getMostRatingOptions(campaignId));
 
 	const leader = gamesWon[0];
 	const richest = treasury[0];
@@ -170,9 +147,16 @@ function RouteComponent() {
 		return sum + alive;
 	}, 0);
 
+	const breakingHeadline = useBreakingHeadline(events, campaign, gamesWon);
+
 	const stats = useMemo<BroadcastStat[]>(() => {
+		const warpstoneIndex = totalMatches
+			? Math.round(((casualtyCount + injuryCount) / totalMatches) * 10) / 10
+			: 0;
+
 		const result: BroadcastStat[] = [
 			{
+				type: "stat",
 				id: "leader",
 				title: "Campaign Leader",
 				value: leader?.warband.name ?? "Awaiting champion",
@@ -184,6 +168,7 @@ function RouteComponent() {
 				footnote: leader?.warband.icon ?? undefined,
 			},
 			{
+				type: "stat",
 				id: "treasury",
 				title: "Treasure Hoard",
 				value: richest ? `${richest.warband.name}` : "No ledger data",
@@ -194,6 +179,7 @@ function RouteComponent() {
 				footnote: "Economy Watch",
 			},
 			{
+				type: "stat",
 				id: "fiercest",
 				title: "Fiercest Warrior",
 				value: fiercestWarrior?.warrior.name ?? "Unknown fighter",
@@ -205,6 +191,7 @@ function RouteComponent() {
 				gradient: gradients[2],
 			},
 			{
+				type: "stat",
 				id: "casualties",
 				title: "Casualty Watch",
 				value: `${casualtyCount}`,
@@ -214,12 +201,23 @@ function RouteComponent() {
 				footnote: "Event feed",
 			},
 			{
+				type: "stat",
 				id: "forces",
 				title: "Active Forces",
 				value: `${activeWarbands} warbands`,
 				statLine: `${activeWarriors} warriors ready`,
 				description: `${totalMatches} matches logged`,
 				gradient: gradients[4],
+			},
+			{
+				type: "stat",
+				id: "warpstone-index",
+				title: "Warpstone Index",
+				value: `${warpstoneIndex}`,
+				statLine: `${pluralize(casualtyCount + injuryCount, "incident")} / ${pluralize(totalMatches, "match")}`,
+				description: "Higher is worse. Probably. (The desk cannot confirm.)",
+				gradient: "from-slate-950 via-emerald-700/25 to-lime-600/25",
+				footnote: "Mord Markets",
 			},
 		];
 
@@ -235,109 +233,366 @@ function RouteComponent() {
 		totalMatches,
 	]);
 
-	const matchHighlights = useMemo<MatchHighlight[]>(() => {
-		if (!matches.length) {
-			return [];
-		}
+	const matchCenterMatches = useMatchCenterMatches(matches);
+	const recentMatchHighlights = useRecentMatchHighlights(matches);
+	const warbandSpotlight = useWarbandSpotlight(
+		leader,
+		warbands,
+		events,
+		treasury,
+	);
 
-		return [...matches]
-			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-			.slice(0, 3)
-			.map((match) => ({
-				id: match.id,
-				name: match.name,
-				date: match.date,
-				status: match.status,
-				matchType: match.matchType,
-				participants: match.participants.map((participant) => ({
-					id: participant.warbandId,
-					name: participant.warband.name,
-					icon: participant.warband.icon,
-					color: participant.warband.color,
-				})),
-				kills: match.events.filter((event) => event.death).length,
-				injuries: match.events.filter((event) => event.injury && !event.death)
-					.length,
-				totalMoments: match.events.length,
-			}));
-	}, [matches]);
+	const newsItems = useNewsItems(
+		events,
+		matches,
+		leader,
+		richest,
+		fiercestWarrior,
+		casualtyCount,
+		injuryCount,
+		totalMatches,
+		breakingHeadline,
+	);
 
-	const warbandSpotlight = useMemo<WarbandSpotlightData | null>(() => {
-		if (!leader) {
-			return null;
-		}
-
-		const roster = warbands.find((w) => w.id === leader.warbandId);
-		if (!roster) {
-			return null;
-		}
-
-		const inflicted = events.filter(
-			(event) => event.warrior?.warbandId === leader.warbandId,
-		).length;
-		const suffered = events.filter(
-			(event) => event.defender?.warbandId === leader.warbandId,
-		).length;
-
-		const treasuryEntry =
-			treasury.find((row) => row.warbandId === leader.warbandId)?.treasury ??
-			roster.treasury;
+	// Progress chart data
+	const progressData = useMemo(() => {
+		const points = buildPerMatchWarbandPoints(history);
+		const warbandsMeta = getWarbandsFromPoints(points);
 
 		return {
-			name: roster.name,
-			faction: roster.faction,
-			icon: roster.icon,
-			color: roster.color,
-			wins: leader.wins,
-			treasury: treasuryEntry,
-			warriorsAlive: roster.warriors.filter((warrior) => warrior.isAlive)
-				.length,
-			eventsInflicted: inflicted,
-			eventsSuffered: suffered,
+			ratingData: buildProgressChartData(points, "rating"),
+			treasuryData: buildProgressChartData(points, "treasury"),
+			experienceData: buildProgressChartData(points, "experience"),
+			warbands: warbandsMeta,
 		};
-	}, [leader, warbands, events, treasury]);
+	}, [history]);
 
-	const newsItems = useMemo(() => {
-		if (!events.length) {
-			return [
-				"🕰️ Broadcast desk is ready — waiting for the first recorded clash.",
-			];
+	// Grouped bar chart data (treasury, rating, wins)
+	const warbandWealthAndRatingData = useMemo(() => {
+		const byId = new Map<
+			number,
+			{
+				warbandId: number;
+				name: string;
+				icon: string | null;
+				color: string | null;
+				treasury: number;
+				rating: number;
+				wins: number;
+			}
+		>();
+
+		for (const entry of treasury) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: entry.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: existing?.wins ?? 0,
+			});
 		}
 
-		return [...events]
-			.sort(
-				(a, b) =>
-					new Date(b.timestamp ?? b.createdAt).getTime() -
-					new Date(a.timestamp ?? a.createdAt).getTime(),
-			)
-			.slice(0, 12)
-			.map((event) => {
-				const icon = event.death ? "☠️" : event.injury ? "🩸" : "⚔️";
-				const attacker = event.warrior?.name ?? "Unknown warrior";
-				const defender = event.defender?.name;
-				const detail =
-					event.description ??
-					(defender
-						? `${attacker} overwhelmed ${defender}`
-						: `${attacker} seized the spotlight`);
-				const label = event.match?.name ?? campaign?.name ?? "Campaign feed";
-				return `${icon} ${label}: ${detail}`;
+		for (const entry of rating) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: entry.rating ?? 0,
+				wins: existing?.wins ?? 0,
 			});
-	}, [events, campaign]);
+		}
+
+		for (const entry of gamesWon) {
+			const existing = byId.get(entry.warbandId);
+			byId.set(entry.warbandId, {
+				warbandId: entry.warbandId,
+				name: entry.warband.name,
+				icon: entry.warband.icon,
+				color: entry.warband.color,
+				treasury: existing?.treasury ?? 0,
+				rating: existing?.rating ?? 0,
+				wins: entry.wins ?? 0,
+			});
+		}
+
+		return Array.from(byId.values()).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	}, [treasury, rating, gamesWon]);
+
+	const warbandWealthAndRatingConfig = {
+		treasury: {
+			label: "Treasury (gc)",
+			color: "var(--chart-1)",
+		},
+		rating: {
+			label: "Rating",
+			color: "var(--chart-2)",
+		},
+		wins: {
+			label: "Wins",
+			color: "var(--chart-3)",
+		},
+	} satisfies ChartConfig;
+
+	// Combine stats and charts into carousel items
+	const carouselItems = useMemo<(BroadcastStat | BroadcastChart)[]>(() => {
+		const items: (BroadcastStat | BroadcastChart)[] = [...stats];
+
+		// Add recent results as a broadcast slide (prevents vertical cut-off).
+		if (recentMatchHighlights.length > 0) {
+			items.push({
+				type: "chart",
+				id: "recent-results-slide",
+				gradient: "from-slate-950 to-slate-800",
+				content: (
+					<div className="h-full w-full p-4">
+						<RecentResultsSlide highlights={recentMatchHighlights} />
+					</div>
+				),
+			});
+		}
+
+		// Add grouped bar chart if data exists
+		if (warbandWealthAndRatingData.length > 0) {
+			items.push({
+				type: "chart",
+				id: "warband-stats-chart",
+				gradient: "from-slate-950 via-blue-700/30 to-red-700/30",
+				content: (
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black tracking-wider text-foreground">
+								Warband Standings
+							</h3>
+							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
+								Treasury • Rating • Wins
+							</p>
+						</div>
+						<ChartContainer
+							config={warbandWealthAndRatingConfig}
+							className="min-h-0 flex-1 w-full"
+						>
+							<BarChart
+								data={warbandWealthAndRatingData}
+								margin={{ left: 10, right: 10, bottom: 28, top: 10 }}
+							>
+								<CartesianGrid vertical={false} className="stroke-border/50" />
+								<XAxis
+									dataKey="name"
+									tickLine={false}
+									axisLine={false}
+									interval={0}
+									height={44}
+									angle={-20}
+									textAnchor="end"
+								/>
+								<YAxis
+									yAxisId="treasury"
+									tickLine={false}
+									axisLine={false}
+									width={48}
+								/>
+								<YAxis
+									yAxisId="rating"
+									orientation="right"
+									tickLine={false}
+									axisLine={false}
+									width={48}
+								/>
+								<YAxis yAxisId="wins" hide />
+								<ChartTooltip
+									content={
+										<ChartTooltipContent
+											indicator="dot"
+											labelClassName="font-semibold"
+										/>
+									}
+								/>
+								<ChartLegend content={<ChartLegendContent />} />
+								<Bar
+									yAxisId="treasury"
+									dataKey="treasury"
+									fill="var(--color-treasury)"
+									radius={[4, 4, 0, 0]}
+								/>
+								<Bar
+									yAxisId="rating"
+									dataKey="rating"
+									fill="var(--color-rating)"
+									radius={[4, 4, 0, 0]}
+								/>
+								<Bar
+									yAxisId="wins"
+									dataKey="wins"
+									fill="var(--color-wins)"
+									radius={[4, 4, 0, 0]}
+								/>
+							</BarChart>
+						</ChartContainer>
+					</div>
+				),
+			});
+		}
+
+		// Add progress charts if data exists
+		if (progressData.warbands.length > 0) {
+			items.push({
+				type: "chart",
+				id: "rating-progression",
+				gradient: "from-slate-950 via-blue-700/30 to-cyan-600/25",
+				content: (
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black tracking-wider text-foreground">
+								Rating Progression
+							</h3>
+							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
+								Match-by-match
+							</p>
+						</div>
+						<div className="min-h-0 flex-1">
+							<WarbandProgressChart
+								title=""
+								chartData={progressData.ratingData}
+								warbands={progressData.warbands}
+								metric="rating"
+								yAxisLabel="Rating"
+								defaultColor="#8884d8"
+								height={320}
+								showLegend={false}
+								variant="embedded"
+							/>
+						</div>
+					</div>
+				),
+			});
+
+			items.push({
+				type: "chart",
+				id: "treasury-progression",
+				gradient: "from-slate-950 via-emerald-700/25 to-teal-600/25",
+				content: (
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black tracking-wider text-foreground">
+								Treasury Progression
+							</h3>
+							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
+								Gold Crowns
+							</p>
+						</div>
+						<div className="min-h-0 flex-1">
+							<WarbandProgressChart
+								title=""
+								chartData={progressData.treasuryData}
+								warbands={progressData.warbands}
+								metric="treasury"
+								yAxisLabel="Gold Crowns"
+								defaultColor="#82ca9d"
+								height={320}
+								showLegend={false}
+								variant="embedded"
+							/>
+						</div>
+					</div>
+				),
+			});
+
+			items.push({
+				type: "chart",
+				id: "experience-progression",
+				gradient: "from-slate-950 via-amber-600/25 to-red-700/20",
+				content: (
+					<div className="flex h-full w-full min-h-0 flex-col p-4">
+						<div className="mb-3">
+							<h3 className="text-lg font-black tracking-wider text-foreground">
+								Experience Progression
+							</h3>
+							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
+								Experience Points
+							</p>
+						</div>
+						<div className="min-h-0 flex-1">
+							<WarbandProgressChart
+								title=""
+								chartData={progressData.experienceData}
+								warbands={progressData.warbands}
+								metric="experience"
+								yAxisLabel="Experience"
+								defaultColor="#ffc658"
+								height={320}
+								showLegend={false}
+								variant="embedded"
+							/>
+						</div>
+					</div>
+				),
+			});
+		}
+
+		return items;
+	}, [
+		stats,
+		recentMatchHighlights,
+		warbandWealthAndRatingData,
+		progressData,
+		warbandWealthAndRatingConfig,
+	]);
 
 	return (
-		<div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+		<div className="relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+			<style>{`
+				@keyframes mordScan {
+					from { background-position: 0 0; }
+					to { background-position: 0 32px; }
+				}
+				@keyframes mordGlow {
+					0%, 100% { opacity: .10; }
+					50% { opacity: .18; }
+				}
+			`}</style>
+			<div className="pointer-events-none absolute inset-0">
+				<div
+					className="absolute inset-0 bg-linear-to-br from-red-500 via-blue-500 to-amber-400"
+					style={{
+						opacity: 0.08,
+						animation: "mordGlow 6s ease-in-out infinite",
+					}}
+				/>
+				<div
+					className="absolute inset-0 mix-blend-overlay"
+					style={{
+						opacity: 0.06,
+						backgroundImage:
+							"repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0, rgba(255,255,255,0.12) 1px, rgba(255,255,255,0) 2px, rgba(255,255,255,0) 4px)",
+						animation: "mordScan 2.2s linear infinite",
+					}}
+				/>
+			</div>
 			<BroadcastHeader
 				campaign={campaign}
 				topWarbandName={leader?.warband.name}
 				totalMatches={totalMatches}
 				casualtyCount={casualtyCount}
 				activeWarbands={activeWarbands}
+				breaking={breakingHeadline}
 			/>
 			<div className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row">
 				<div className="flex min-h-0 flex-1 flex-col gap-4">
-					<StatCarousel stats={stats} />
-					<MatchSpotlight highlights={matchHighlights} />
+					{/* Give the carousel more room than Match Center */}
+					<div className="flex min-h-0 flex-[1.7] flex-col">
+						<StatCarousel items={carouselItems} headline={breakingHeadline} />
+					</div>
+					<div className="flex min-h-0 flex-1 flex-col">
+						<MatchCenter matches={matchCenterMatches} />
+					</div>
 				</div>
 				<aside className="flex w-full flex-col gap-4 lg:w-80">
 					<WarbandSpotlight data={warbandSpotlight} />
@@ -348,445 +603,7 @@ function RouteComponent() {
 					/>
 				</aside>
 			</div>
-			<NewsTicker items={newsItems} />
+			<NewsTicker items={newsItems} label="Breaking" />
 		</div>
 	);
-}
-
-interface BroadcastHeaderProps {
-	campaign: Campaign | null | undefined;
-	topWarbandName?: string;
-	totalMatches: number;
-	casualtyCount: number;
-	activeWarbands: number;
-}
-
-function BroadcastHeader({
-	campaign,
-	topWarbandName,
-	totalMatches,
-	casualtyCount,
-	activeWarbands,
-}: BroadcastHeaderProps) {
-	const timeframe = campaign
-		? `${formatDate(campaign.startDate)} – ${formatDate(campaign.endDate)}`
-		: "Schedule pending";
-
-	return (
-		<div className="border-b-4 border-accent bg-gradient-to-r from-red-300 via-red-500 to-blue-400 px-6 py-4 text-background">
-			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-				<div>
-					<div className="text-sm font-bold uppercase tracking-[0.3em] text-accent-foreground/90">
-						Live Broadcast
-					</div>
-					<h1 className="text-3xl font-black uppercase tracking-wider md:text-4xl">
-						{campaign?.name ?? "Mordheim Campaign Report"}
-					</h1>
-					<p className="text-sm text-background/80">{timeframe}</p>
-				</div>
-				<div className="flex flex-col gap-2 text-right text-background">
-					<div className="text-2xl font-black">LIVE</div>
-					<div className="text-sm uppercase tracking-[0.3em] text-background/80">
-						Top warband: {topWarbandName ?? "TBD"}
-					</div>
-					<div className="flex gap-4 text-xs font-semibold">
-						<span>{pluralize(totalMatches, "match")} reported</span>
-						<span>{pluralize(casualtyCount, "casualty")} logged</span>
-						<span>{activeWarbands} warbands active</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-interface StatCarouselProps {
-	stats: BroadcastStat[];
-}
-
-function StatCarousel({ stats }: StatCarouselProps) {
-	const [current, setCurrent] = useState(0);
-
-	useEffect(() => {
-		if (stats.length <= 1) {
-			return;
-		}
-		const interval = setInterval(() => {
-			setCurrent((prev) => (prev + 1) % stats.length);
-		}, 7000);
-		return () => clearInterval(interval);
-	}, [stats.length]);
-
-	const stat = stats[current];
-
-	return (
-		<div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg">
-			<div
-				className={`absolute inset-0 rounded-lg p-1 transition-all duration-500 bg-gradient-to-br ${stat?.gradient}`}
-			>
-				<div className="relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card p-8">
-					<div className="absolute right-0 top-0 h-32 w-32 -translate-y-12 translate-x-12 rounded-full bg-accent/10 blur-3xl" />
-					<div className="relative z-10 space-y-2">
-						<div className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground">
-							{stat?.title}
-						</div>
-						<div className="text-5xl font-black text-foreground">
-							{stat?.value}
-						</div>
-						<div className="text-lg text-foreground/80">{stat?.statLine}</div>
-						<div className="border-t border-border/50 pt-4 text-sm text-foreground/60">
-							{stat?.description}
-						</div>
-					</div>
-					<div className="relative z-10 flex items-center justify-between text-xs text-foreground/60">
-						<span>{stat?.footnote}</span>
-						<span>
-							{String(current + 1).padStart(2, "0")} /{" "}
-							{String(stats.length).padStart(2, "0")}
-						</span>
-					</div>
-				</div>
-			</div>
-			{stats.length > 1 && (
-				<>
-					<button
-						type="button"
-						aria-label="Previous stat"
-						onClick={() =>
-							setCurrent((prev) => (prev - 1 + stats.length) % stats.length)
-						}
-						className="absolute left-4 z-20 rounded-full bg-accent p-3 text-accent-foreground transition hover:bg-accent/80"
-					>
-						<ChevronLeft className="h-5 w-5" />
-					</button>
-					<button
-						type="button"
-						aria-label="Next stat"
-						onClick={() => setCurrent((prev) => (prev + 1) % stats.length)}
-						className="absolute right-4 z-20 rounded-full bg-accent p-3 text-accent-foreground transition hover:bg-accent/80"
-					>
-						<ChevronRight className="h-5 w-5" />
-					</button>
-					<div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-						{stats.map((_, index) => (
-							<button
-								key={_.id}
-								type="button"
-								aria-label={`Go to stat ${index + 1}`}
-								onClick={() => setCurrent(index)}
-								className={`h-2 rounded-full transition-all ${
-									index === current
-										? "w-8 bg-accent"
-										: "w-2 bg-foreground/30 hover:bg-foreground/60"
-								}`}
-							/>
-						))}
-					</div>
-				</>
-			)}
-		</div>
-	);
-}
-
-interface MatchSpotlightProps {
-	highlights: MatchHighlight[];
-}
-
-function MatchSpotlight({ highlights }: MatchSpotlightProps) {
-	if (highlights.length === 0) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-				No matches recorded for this campaign yet.
-			</div>
-		);
-	}
-
-	return (
-		<div className="rounded-lg border bg-card p-4 shadow-lg">
-			<div className="mb-4 flex items-center justify-between">
-				<div>
-					<h2 className="text-2xl font-bold text-foreground">Match Center</h2>
-					<p className="text-sm text-muted-foreground">
-						Latest three broadcasts
-					</p>
-				</div>
-				<div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-					Field reports
-				</div>
-			</div>
-			<div className="grid gap-4 md:grid-cols-3">
-				{highlights.map((match) => (
-					<div
-						key={match.id}
-						className="flex flex-col rounded-lg border bg-muted/30 p-4"
-					>
-						<div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-							{match.matchType} • {match.status.toUpperCase()}
-						</div>
-						<div className="truncate text-lg font-bold text-foreground">
-							{match.name}
-						</div>
-						<div className="text-xs text-muted-foreground">
-							{formatDate(match.date)}
-						</div>
-						<div className="mt-3 space-y-1">
-							{match.participants.map((participant) => (
-								<div
-									key={participant.id}
-									className="flex items-center gap-2 text-sm text-foreground"
-								>
-									<span
-										className="h-2 w-2 rounded-full"
-										style={{
-											backgroundColor: participant.color ?? "#f4b400",
-										}}
-									/>
-									<span className="truncate">
-										{participant.icon ? `${participant.icon} ` : ""}
-										{participant.name}
-									</span>
-								</div>
-							))}
-						</div>
-						<div className="mt-4 flex gap-4 text-xs font-semibold text-muted-foreground">
-							<span>
-								{match.kills} {pluralize(match.kills, "kill")}
-							</span>
-							<span>
-								{match.injuries} {pluralize(match.injuries, "injury")}
-							</span>
-							<span>{match.totalMoments} events</span>
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
-interface WarbandSpotlightProps {
-	data: WarbandSpotlightData | null;
-}
-
-function WarbandSpotlight({ data }: WarbandSpotlightProps) {
-	if (!data) {
-		return (
-			<div className="rounded-lg border bg-card p-4 shadow">
-				<p className="text-sm text-muted-foreground">
-					No warband spotlight yet. Play a match to crown a leader.
-				</p>
-			</div>
-		);
-	}
-
-	return (
-		<div className="rounded-lg border bg-card p-5 shadow">
-			<div className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
-				Warband Spotlight
-			</div>
-			<div className="mt-2 text-2xl font-black text-foreground">
-				{data.icon ? `${data.icon} ` : ""}
-				{data.name}
-			</div>
-			<div className="text-sm text-muted-foreground">{data.faction}</div>
-			<div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-				<div className="rounded-lg bg-muted/40 p-3">
-					<div className="text-xs uppercase text-muted-foreground">Wins</div>
-					<div className="text-xl font-bold">{data.wins}</div>
-				</div>
-				<div className="rounded-lg bg-muted/40 p-3">
-					<div className="text-xs uppercase text-muted-foreground">
-						Treasury
-					</div>
-					<div className="text-xl font-bold">{data.treasury} gc</div>
-				</div>
-				<div className="rounded-lg bg-muted/40 p-3">
-					<div className="text-xs uppercase text-muted-foreground">
-						Warriors Alive
-					</div>
-					<div className="text-xl font-bold">{data.warriorsAlive}</div>
-				</div>
-				<div className="rounded-lg bg-muted/40 p-3">
-					<div className="text-xs uppercase text-muted-foreground">
-						Event Impact
-					</div>
-					<div className="text-xl font-bold">
-						{data.eventsInflicted} / {data.eventsSuffered}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-interface CasualtyReportProps {
-	kills: WarriorKillsRow[];
-	injuriesTaken: WarriorInjuriesTakenRow[];
-	injuriesInflicted: WarriorInjuriesInflictedRow[];
-}
-
-function CasualtyReport({
-	kills,
-	injuriesTaken,
-	injuriesInflicted,
-}: CasualtyReportProps) {
-	const sections = [
-		{
-			title: "Lethal Warriors",
-			icon: "⚔️",
-			entries: kills.map((entry) => ({
-				name: entry.warrior.name,
-				warband: entry.warbandName,
-				value: `${entry.kills} ${pluralize(entry.kills, "kill")}`,
-			})),
-		},
-		{
-			title: "Walking Wounded",
-			icon: "🩹",
-			entries: injuriesTaken.map((entry) => ({
-				name: entry.warrior.name,
-				warband: entry.warbandName,
-				value: `${entry.injuriesReceived} ${pluralize(entry.injuriesReceived, "hit")}`,
-			})),
-		},
-		{
-			title: "Delivery Squad",
-			icon: "🔥",
-			entries: injuriesInflicted.map((entry) => ({
-				name: entry.warrior.name,
-				warband: entry.warbandName,
-				value: `${entry.injuriesInflicted} ${pluralize(entry.injuriesInflicted, "injury")}`,
-			})),
-		},
-	];
-
-	return (
-		<div className="rounded-lg border bg-card p-5 shadow">
-			<div className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
-				Casualty Desk
-			</div>
-			<div className="mt-4 space-y-4">
-				{sections.map((section) => (
-					<div key={section.title}>
-						<div className="text-sm font-semibold text-foreground">
-							{section.icon} {section.title}
-						</div>
-						{section.entries.length === 0 ? (
-							<p className="text-xs text-muted-foreground">No data yet.</p>
-						) : (
-							<div className="mt-2 space-y-1 text-sm">
-								{section.entries.map((entry) => (
-									<div
-										key={`${section.title}-${entry.name}`}
-										className="flex justify-between text-foreground/90"
-									>
-										<div className="truncate">
-											<span className="font-semibold">{entry.name}</span>{" "}
-											<span className="text-muted-foreground">
-												({entry.warband})
-											</span>
-										</div>
-										<div className="text-right font-semibold">
-											{entry.value}
-										</div>
-									</div>
-								))}
-							</div>
-						)}
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
-interface NewsTickerProps {
-	items: string[];
-}
-
-function NewsTicker({ items }: NewsTickerProps) {
-	const tickerRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!items.length) {
-			return;
-		}
-
-		const container = tickerRef.current;
-		if (!container) {
-			return;
-		}
-
-		let animationId: number;
-		let scrollPosition = 0;
-		const scrollSpeed = 0.5;
-
-		const step = () => {
-			scrollPosition += scrollSpeed;
-
-			if (scrollPosition >= container.scrollWidth / 2) {
-				scrollPosition = 0;
-			}
-
-			container.scrollLeft = scrollPosition;
-			animationId = requestAnimationFrame(step);
-		};
-
-		animationId = requestAnimationFrame(step);
-
-		return () => cancelAnimationFrame(animationId);
-	}, [items.length]);
-
-	const loopItems = useMemo(() => {
-		const primary = items.map((item, index) => ({
-			id: `primary-${index}-${item}`,
-			text: item,
-		}));
-		const duplicate = primary.map((entry) => ({
-			id: `loop-${entry.id}`,
-			text: entry.text,
-		}));
-		return [...primary, ...duplicate];
-	}, [items]);
-
-	return (
-		<div className="border-t border-accent/30 bg-primary px-4 py-3 text-primary-foreground">
-			<div className="flex items-center gap-4">
-				<div className="flex-shrink-0">
-					<div className="text-xs font-bold uppercase tracking-[0.4em] text-accent">
-						Breaking
-					</div>
-				</div>
-				<div
-					ref={tickerRef}
-					className="flex-1 overflow-hidden whitespace-nowrap"
-				>
-					<div className="flex gap-12">
-						{loopItems.map((entry) => (
-							<span key={entry.id} className="text-sm font-medium">
-								{entry.text}
-							</span>
-						))}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function formatDate(date: Date | string | null | undefined) {
-	if (!date) {
-		return "Unknown date";
-	}
-	const parsed = new Date(date);
-	return parsed.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	});
-}
-
-function pluralize(value: number, singular: string, plural?: string) {
-	const suffix = value === 1 ? singular : (plural ?? `${singular}s`);
-	return `${value} ${suffix}`;
 }
