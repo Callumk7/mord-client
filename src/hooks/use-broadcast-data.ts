@@ -53,7 +53,6 @@ export function useMatchCenterMatches(matches: any[]): MatchCenterMatch[] {
 			name: match.name,
 			date: match.date,
 			status: match.status,
-			matchType: match.matchType,
 			participants: match.participants.map((participant: any) => ({
 				id: participant.id,
 				warbandId: participant.warbandId,
@@ -104,7 +103,6 @@ export function useRecentMatchHighlights(matches: any[]): MatchHighlight[] {
 				name: match.name,
 				date: match.date,
 				status: match.status,
-				matchType: match.matchType,
 				winners: (match.winners ?? []).map((winner: any) => ({
 					id: winner.warbandId,
 					name: winner.warband.name,

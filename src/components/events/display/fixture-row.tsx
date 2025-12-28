@@ -19,6 +19,9 @@ export function FixtureRow({ match }: FixtureRowProps) {
 		return `${match.participants.length} warbands scheduled`;
 	}, [match.participants]);
 
+	// Determine match format based on participant count
+	const matchFormat = match.participants.length === 2 ? "1V1" : "MULTI";
+
 	return (
 		<div className="rounded-lg border bg-muted/20 px-3 py-3">
 			<div className="flex items-start justify-between gap-3">
@@ -36,7 +39,7 @@ export function FixtureRow({ match }: FixtureRowProps) {
 						Scheduled
 					</div>
 					<div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-						{match.matchType?.toUpperCase() ?? "MATCH"}
+						{matchFormat}
 					</div>
 				</div>
 			</div>

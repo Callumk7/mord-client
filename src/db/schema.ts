@@ -110,11 +110,9 @@ export const matches = pgTable("matches", {
 	id: serial("id").primaryKey(),
 	name: text("name").notNull(),
 	date: timestamp("date").notNull(),
-	matchType: text("match_type").notNull().$type<"1v1" | "multiplayer">(),
 	status: text("status")
 		.notNull()
 		.$type<"active" | "ended" | "scheduled" | "resolved">(),
-	scenarioId: integer("scenario_id").notNull(),
 	campaignId: integer("campaign_id")
 		.notNull()
 		.references(() => campaigns.id),

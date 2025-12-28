@@ -13,6 +13,7 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import type { EventWithParticipants } from "~/db/schema";
 import { ResolveEventForm } from "../events/resolve-event-form";
+import { ResolveHenchmanEventForm } from "../events/resolve-henchman-event-form";
 
 interface PostMatchEventResolutionProps {
 	events: EventWithParticipants[];
@@ -100,6 +101,7 @@ function EventResolutionItem({
 
 	const isKnockDown = event.type === "knock_down";
 	const isMoment = event.type === "moment";
+	const isHenchman = event.defender?.type === "henchman";
 
 	return (
 		<div
@@ -122,6 +124,11 @@ function EventResolutionItem({
 								→ {event.defender.name}
 							</span>
 						)}
+						{isHenchman && (
+							<Badge variant="outline" className="text-xs">
+								Henchman
+							</Badge>
+						)}
 					</div>
 					{event.description && (
 						<p className="text-sm text-muted-foreground mt-1">
@@ -135,6 +142,13 @@ function EventResolutionItem({
 							</Badge>
 						</div>
 					)}
+					{event.resolved && isHenchman && (
+						<div className="mt-2">
+							<Badge variant={event.death ? "destructive" : "outline"}>
+								{event.death ? "Dead" : "Survived"}
+							</Badge>
+						</div>
+					)}
 				</div>
 				<div className="flex justify-end items-end flex-col gap-1">
 					<p className="text-xs text-muted-foreground whitespace-nowrap">
@@ -145,10 +159,14 @@ function EventResolutionItem({
 					) : isKnockDown ? (
 						<Dialog>
 							<DialogTrigger render={<Button size="sm" variant="outline" />}>
-								Resolve Injury
+								{isHenchman ? "Resolve" : "Resolve Injury"}
 							</DialogTrigger>
 							<DialogContent>
-								<ResolveEventForm event={event} />
+								{isHenchman ? (
+									<ResolveHenchmanEventForm event={event} />
+								) : (
+									<ResolveEventForm event={event} />
+								)}
 							</DialogContent>
 						</Dialog>
 					) : isMoment ? (

@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { eventKeys, resolveEventFn } from "~/api/events";
+import {
+	eventKeys,
+	resolveEventFn,
+	resolveHenchmanEventFn,
+} from "~/api/events";
 import { matchKeys } from "~/api/matches";
 
 interface UseResolveEventOptions {
@@ -19,6 +23,31 @@ export function useResolveEvent({
 
 	return useMutation({
 		mutationFn: resolveEventFn,
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: matchKeys.detail(matchId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: eventKeys.listByCampaign(campaignId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: eventKeys.detail(eventId),
+			});
+			onSuccess?.();
+		},
+	});
+}
+
+export function useResolveHenchmanEvent({
+	matchId,
+	campaignId,
+	eventId,
+	onSuccess,
+}: UseResolveEventOptions) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: resolveHenchmanEventFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: matchKeys.detail(matchId),

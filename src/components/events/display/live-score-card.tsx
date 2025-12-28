@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { formatTime, pluralize } from "~/lib/display-utils";
 import type { MatchCenterMatch } from "~/types/display";
-import { getMatchTypeLabel } from "~/lib/utils";
 
 interface ScoreSideProps {
 	align: "left" | "right";
@@ -56,7 +55,9 @@ export function LiveScoreCard({ match }: LiveScoreCardProps) {
 			return { ...participant, eventCount };
 		});
 
-		const ordered = [...participants].sort((a, b) => b.eventCount - a.eventCount);
+		const ordered = [...participants].sort(
+			(a, b) => b.eventCount - a.eventCount,
+		);
 		return { participants, ordered };
 	}, [match.events, match.participants]);
 
@@ -81,9 +82,6 @@ export function LiveScoreCard({ match }: LiveScoreCardProps) {
 	return (
 		<div className="overflow-hidden rounded-lg border bg-linear-to-r from-slate-950 via-slate-950 to-slate-900 text-slate-50 shadow">
 			<div className="flex items-center justify-between bg-linear-to-r from-blue-600/60 via-blue-600/30 to-red-600/60 px-3 py-2">
-				<div className="truncate text-xs font-bold uppercase tracking-[0.25em]">
-					{getMatchTypeLabel(match.participants.length)} • LIVE
-				</div>
 				<div className="text-xs font-semibold text-slate-200">
 					{formatTime(match.date)}
 				</div>
@@ -163,17 +161,14 @@ export function LiveScoreCard({ match }: LiveScoreCardProps) {
 							Recent Events
 						</div>
 						{recentEvents.map((event) => {
-							const icon = event.death ? "☠️" : event.injury ? "🩸" : "⚔️";
+							const icon = event.death ? "☠" : event.injury ? "🩸" : "⚔";
 							const text =
 								event.description ??
 								(event.warrior && event.defender
 									? `${event.warrior.name} vs ${event.defender.name}`
-									: event.warrior?.name ?? "Event");
+									: (event.warrior?.name ?? "Event"));
 							return (
-								<div
-									key={event.id}
-									className="truncate text-xs text-slate-300"
-								>
+								<div key={event.id} className="truncate text-xs text-slate-300">
 									<span className="mr-1.5">{icon}</span>
 									{text}
 								</div>

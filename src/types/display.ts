@@ -39,7 +39,6 @@ export interface MatchHighlight {
 	name: string;
 	date: Date | string;
 	status: string;
-	matchType: "1v1" | "multiplayer";
 	winners: {
 		id: number;
 		name: string;
@@ -62,7 +61,6 @@ export interface MatchCenterMatch {
 	name: string;
 	date: Date | string;
 	status: "active" | "ended" | "scheduled" | "resolved";
-	matchType: "1v1" | "multiplayer";
 	participants: {
 		id: number;
 		warbandId: number;

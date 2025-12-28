@@ -180,6 +180,58 @@ export const resolveEventFn = createServerFn({ method: "POST" })
 		});
 	});
 
+export const resolveHenchmanEventFn = createServerFn({ method: "POST" })
+	.inputValidator(
+		z.object({
+			eventId: z.number(),
+			death: z.boolean(),
+		}),
+	)
+	.handler(async ({ data }) => {
+		const { eventId, death } = data;
+
+		// Fetch the event to get defender ID
+		const event = await db.query.events.findFirst({
+			where: eq(events.id, eventId),
+		});
+
+		if (!event) {
+			throw new Error(`Event with id ${eventId} not found`);
+		}
+
+		// Use transaction to ensure atomicity
+		return await db.transaction(async (tx) => {
+			// Update the event - mark as resolved, set death status, no injury
+			const [updatedEvent] = await tx
+				.update(events)
+				.set({
+					resolved: true,
+					death,
+					injury: false,
+					injuryType: null,
+				})
+				.where(eq(events.id, eventId))
+				.returning();
+
+			if (!updatedEvent) {
+				throw new Error(`Failed to update event with id ${eventId}`);
+			}
+
+			// If death and defender exists, mark defender as dead
+			if (death && event.defenderId) {
+				await tx
+					.update(warriors)
+					.set({
+						isAlive: false,
+						deathDate: new Date(),
+					})
+					.where(eq(warriors.id, event.defenderId));
+			}
+
+			return updatedEvent;
+		});
+	});
+
 export const getMatchEventsFn = createServerFn({ method: "GET" })
 	.inputValidator((data: { matchId: number }) => data)
 	.handler(async ({ data }) => {

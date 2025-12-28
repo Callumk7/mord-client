@@ -198,33 +198,19 @@ async function seed() {
 
 		console.log(`✅ Created ${createdWarriors.length} warriors`);
 
-		// Create matches
-		console.log("🎲 Creating matches...");
-		const matchData: Array<typeof matches.$inferInsert> = [];
+	// Create matches
+	console.log("🎲 Creating matches...");
+	const matchData: Array<typeof matches.$inferInsert> = [];
 
-		// Create 10 1v1 matches
-		for (let i = 1; i <= 10; i++) {
-			matchData.push({
-				name: `Match ${i}`,
-				date: randomDate(startDate, endDate),
-				matchType: "1v1",
-				status: "ended",
-				scenarioId: randomInt(1, 9),
-				campaignId: campaign.id,
-			});
-		}
-
-		// Create 6 multiplayer matches (2-4 players each)
-		for (let i = 1; i <= 6; i++) {
-			matchData.push({
-				name: `Multiplayer Battle ${i}`,
-				date: randomDate(startDate, endDate),
-				matchType: "multiplayer",
-				status: "ended",
-				scenarioId: randomInt(1, 9),
-				campaignId: campaign.id,
-			});
-		}
+	// Create 16 matches with varying participant counts
+	for (let i = 1; i <= 16; i++) {
+		matchData.push({
+			name: `Match ${i}`,
+			date: randomDate(startDate, endDate),
+			status: "ended",
+			campaignId: campaign.id,
+		});
+	}
 
 		const createdMatches = await db
 			.insert(matches)
@@ -233,61 +219,40 @@ async function seed() {
 
 		console.log(`✅ Created ${createdMatches.length} matches`);
 
-		// Create match participants and winners
-		console.log("👥 Creating match participants and winners...");
+	// Create match participants and winners
+	console.log("👥 Creating match participants and winners...");
 
-		for (const match of createdMatches) {
-			if (match.matchType === "1v1") {
-				// Pick 2 random warbands
-				const warband1 = randomElement(createdWarbands);
-				const warband2 = randomElement(
-					createdWarbands.filter((w) => w.id !== warband1.id),
-				);
+	for (const match of createdMatches) {
+		// Randomly decide how many participants (2-4 warbands)
+		const participantCount = randomInt(2, 4);
+		const availableWarbands = [...createdWarbands];
+		const selectedWarbands = [];
 
-				// Add both warbands as participants
-				await db.insert(matchParticipants).values([
-					{ matchId: match.id, warbandId: warband1.id },
-					{ matchId: match.id, warbandId: warband2.id },
-				]);
-
-				// Randomly pick winner
-				const winner = Math.random() > 0.5 ? warband1 : warband2;
-				await db.insert(matchWinners).values({
-					matchId: match.id,
-					warbandId: winner.id,
-				});
-			} else if (match.matchType === "multiplayer") {
-				// Pick 2-4 random warbands for this match
-				const participantCount = randomInt(2, 4);
-				const availableWarbands = [...createdWarbands];
-				const selectedWarbands = [];
-
-				for (let i = 0; i < participantCount; i++) {
-					const index = randomInt(0, availableWarbands.length - 1);
-					selectedWarbands.push(availableWarbands.splice(index, 1)[0]!);
-				}
-
-				// Add all participants
-				await db.insert(matchParticipants).values(
-					selectedWarbands.map((w) => ({
-						matchId: match.id,
-						warbandId: w.id,
-					})),
-				);
-
-				// Pick 1-2 winners randomly
-				const winnerCount = Math.random() > 0.7 ? 2 : 1; // 30% chance of 2 winners (draw/team)
-				const shuffledWarbands = [...selectedWarbands].sort(() => Math.random() - 0.5);
-				const winners = shuffledWarbands.slice(0, winnerCount);
-
-				await db.insert(matchWinners).values(
-					winners.map((w) => ({
-						matchId: match.id,
-						warbandId: w.id,
-					})),
-				);
-			}
+		for (let i = 0; i < participantCount; i++) {
+			const index = randomInt(0, availableWarbands.length - 1);
+			selectedWarbands.push(availableWarbands.splice(index, 1)[0]!);
 		}
+
+		// Add all participants
+		await db.insert(matchParticipants).values(
+			selectedWarbands.map((w) => ({
+				matchId: match.id,
+				warbandId: w.id,
+			})),
+		);
+
+		// Pick 1-2 winners randomly
+		const winnerCount = Math.random() > 0.7 ? 2 : 1; // 30% chance of 2 winners (draw/team)
+		const shuffledWarbands = [...selectedWarbands].sort(() => Math.random() - 0.5);
+		const winners = shuffledWarbands.slice(0, winnerCount);
+
+		await db.insert(matchWinners).values(
+			winners.map((w) => ({
+				matchId: match.id,
+				warbandId: w.id,
+			})),
+		);
+	}
 
 		console.log("✅ Created match participants and winners");
 

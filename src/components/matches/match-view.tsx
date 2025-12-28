@@ -9,7 +9,7 @@ import { db } from "~/db";
 import type { EventWithParticipants, Warband } from "~/db/schema";
 import { warriors } from "~/db/schema";
 import { useUpdateMatchMutation } from "~/hooks/mutations/matches";
-import { formatDate, getMatchTypeLabel } from "~/lib/utils";
+import { formatDate } from "~/lib/utils";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 
@@ -106,9 +106,6 @@ export function MatchView({
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="text-sm px-3 py-1 bg-primary/20 text-primary rounded">
-						{getMatchTypeLabel(participants.length)}
-					</span>
 					{matchStatus === "scheduled" ? (
 						<Button size="sm" onClick={() => handleStatusChange("active")}>
 							Start Match
