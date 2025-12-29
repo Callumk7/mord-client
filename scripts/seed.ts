@@ -7,6 +7,7 @@ import {
 	matches,
 	matchParticipants,
 	matchWinners,
+	warbandStateChanges,
 	events,
 } from "../src/db/schema.ts";
 import {
@@ -93,6 +94,7 @@ async function seed() {
 		// Clear existing data (in reverse order of dependencies)
 		console.log("🧹 Clearing existing data...");
 		await db.delete(events);
+		await db.delete(warbandStateChanges);
 		await db.delete(matchWinners);
 		await db.delete(matchParticipants);
 		await db.delete(matches);

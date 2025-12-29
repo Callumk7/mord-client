@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Badge } from "~/components/ui/badge";
 import {
 	Table,
 	TableBody,
@@ -8,7 +9,6 @@ import {
 	TableRow,
 } from "~/components/ui/table";
 import { closeCombatWeapons } from "~/data/close-combat-weapons";
-import { Badge } from "~/components/ui/badge";
 
 export const Route = createFileRoute("/reference/close-combat-weapons")({
 	component: RouteComponent,

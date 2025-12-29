@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import type { MatchCenterMatch } from "~/types/display";
 import { FixtureRow } from "./fixture-row";
 import { LiveScoreCard } from "./live-score-card";
@@ -51,8 +51,61 @@ interface UpcomingFixturesProps {
 }
 
 function UpcomingFixtures({ matches }: UpcomingFixturesProps) {
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const contentRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!scrollRef.current || !contentRef.current || matches.length === 0) {
+			return;
+		}
+
+		const scrollContainer = scrollRef.current;
+		const content = contentRef.current;
+		let animationId: number;
+		let scrollPosition = 0;
+
+		// Calculate scroll speed based on content (pixels per frame)
+		const scrollSpeed = 0.3;
+
+		const animate = () => {
+			scrollPosition += scrollSpeed;
+
+			// Get the height of a single set of fixtures
+			const contentHeight = content.offsetHeight / 2;
+
+			// Reset scroll position when we've scrolled past one full set
+			if (scrollPosition >= contentHeight) {
+				scrollPosition = 0;
+			}
+
+			scrollContainer.scrollTop = scrollPosition;
+			animationId = requestAnimationFrame(animate);
+		};
+
+		// Start animation
+		animationId = requestAnimationFrame(animate);
+
+		// Pause on hover
+		const handleMouseEnter = () => {
+			cancelAnimationFrame(animationId);
+		};
+
+		const handleMouseLeave = () => {
+			animationId = requestAnimationFrame(animate);
+		};
+
+		scrollContainer.addEventListener("mouseenter", handleMouseEnter);
+		scrollContainer.addEventListener("mouseleave", handleMouseLeave);
+
+		return () => {
+			cancelAnimationFrame(animationId);
+			scrollContainer.removeEventListener("mouseenter", handleMouseEnter);
+			scrollContainer.removeEventListener("mouseleave", handleMouseLeave);
+		};
+	}, [matches]);
+
 	return (
-		<div className="space-y-3">
+		<div className="flex h-full flex-col space-y-3">
 			<div className="flex items-center justify-between">
 				<div className="text-xs font-bold uppercase tracking-[0.35em] text-muted-foreground">
 					Upcoming
@@ -61,20 +114,29 @@ function UpcomingFixtures({ matches }: UpcomingFixturesProps) {
 					Next up
 				</div>
 			</div>
-			<div className="space-y-2">
-				{matches.length === 0 ? (
-					<div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-						No scheduled fixtures yet.
+			{matches.length === 0 ? (
+				<div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+					No scheduled fixtures yet.
+				</div>
+			) : (
+				<div
+					ref={scrollRef}
+					className="min-h-0 flex-1 overflow-hidden"
+					style={{
+						maskImage:
+							"linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)",
+					}}
+				>
+					<div ref={contentRef} className="space-y-2">
+						{/* First set of fixtures */}
+						{matches.map((match) => (
+							<FixtureRow key={`first-${match.id}`} match={match} />
+						))}
+						{/* Duplicate set for seamless loop */}
+						{matches.map((match) => (
+							<FixtureRow key={`second-${match.id}`} match={match} />
+						))}
 					</div>
-				) : (
-					matches
-						.slice(0, 6)
-						.map((match) => <FixtureRow key={match.id} match={match} />)
-				)}
-			</div>
-			{matches.length > 6 && (
-				<div className="text-xs text-muted-foreground">
-					Showing 6 of {matches.length} scheduled matches.
 				</div>
 			)}
 		</div>

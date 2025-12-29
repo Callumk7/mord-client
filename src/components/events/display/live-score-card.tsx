@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import { formatTime, pluralize } from "~/lib/display-utils";
 import type { MatchCenterMatch } from "~/types/display";
 
@@ -10,7 +10,58 @@ interface ScoreSideProps {
 	rating: number;
 }
 
+interface ScrollingTextProps {
+	children: string;
+	className?: string;
+}
+
+function ScrollingText({ children, className }: ScrollingTextProps) {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const textRef = useRef<HTMLSpanElement>(null);
+	const [shouldScroll, setShouldScroll] = useState(false);
+
+	useEffect(() => {
+		const checkOverflow = () => {
+			if (containerRef.current && textRef.current) {
+				const isOverflowing =
+					textRef.current.scrollWidth > containerRef.current.clientWidth;
+				setShouldScroll(isOverflowing);
+			}
+		};
+
+		checkOverflow();
+		const timer = setTimeout(checkOverflow, 100);
+		window.addEventListener("resize", checkOverflow);
+		return () => {
+			clearTimeout(timer);
+			window.removeEventListener("resize", checkOverflow);
+		};
+	}, []);
+
+	return (
+		<div
+			ref={containerRef}
+			className={`min-w-0 flex-1 overflow-hidden ${className ?? ""}`}
+		>
+			{shouldScroll ? (
+				<div className="whitespace-nowrap">
+					<span className="inline-block animate-marquee">
+						{children}
+						<span className="inline-block px-8">{children}</span>
+					</span>
+				</div>
+			) : (
+				<span ref={textRef} className="whitespace-nowrap">
+					{children}
+				</span>
+			)}
+		</div>
+	);
+}
+
 function ScoreSide({ align, name, icon, color, rating }: ScoreSideProps) {
+	const displayName = `${icon ? `${icon} ` : ""}${name}`;
+
 	return (
 		<div
 			className={`min-w-0 ${align === "right" ? "text-right" : "text-left"}`}
@@ -22,10 +73,9 @@ function ScoreSide({ align, name, icon, color, rating }: ScoreSideProps) {
 						style={{ backgroundColor: color ?? "#f4b400" }}
 					/>
 				) : null}
-				<div className="min-w-0 flex-1 truncate text-lg font-black uppercase tracking-wide">
-					{icon ? `${icon} ` : ""}
-					{name}
-				</div>
+				<ScrollingText className="text-lg font-black uppercase tracking-wide">
+					{displayName}
+				</ScrollingText>
 				{align === "right" ? (
 					<span
 						className="h-3 w-3 shrink-0 rounded-full"
@@ -124,33 +174,35 @@ export function LiveScoreCard({ match }: LiveScoreCardProps) {
 							<span>Rating</span>
 						</div>
 						<div className="space-y-2">
-							{scoreboard.ordered.slice(0, 4).map((participant) => (
-								<div
-									key={participant.warbandId}
-									className="flex items-center justify-between rounded bg-slate-50/5 px-3 py-2"
-								>
-									<div className="flex min-w-0 items-center gap-2">
-										<span
-											className="h-2 w-2 shrink-0 rounded-full"
-											style={{
-												backgroundColor: participant.color ?? "#f4b400",
-											}}
-										/>
-										<div className="min-w-0 truncate text-sm font-semibold">
-											{participant.icon ? `${participant.icon} ` : ""}
-											{participant.name}
+							{scoreboard.ordered.slice(0, 4).map((participant) => {
+								const displayName = `${participant.icon ? `${participant.icon} ` : ""}${participant.name}`;
+								return (
+									<div
+										key={participant.warbandId}
+										className="flex items-center justify-between gap-2 rounded bg-slate-50/5 px-3 py-2"
+									>
+										<div className="flex min-w-0 flex-1 items-center gap-2">
+											<span
+												className="h-2 w-2 shrink-0 rounded-full"
+												style={{
+													backgroundColor: participant.color ?? "#f4b400",
+												}}
+											/>
+											<ScrollingText className="text-sm font-semibold">
+												{displayName}
+											</ScrollingText>
+											{leader?.warbandId === participant.warbandId && (
+												<span className="shrink-0 rounded bg-yellow-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.25em] text-slate-950">
+													Lead
+												</span>
+											)}
 										</div>
-										{leader?.warbandId === participant.warbandId && (
-											<span className="ml-2 rounded bg-yellow-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.25em] text-slate-950">
-												Lead
-											</span>
-										)}
+										<div className="shrink-0 font-mono text-sm font-semibold">
+											{participant.rating}
+										</div>
 									</div>
-									<div className="font-mono text-sm font-semibold">
-										{participant.rating}
-									</div>
-								</div>
-							))}
+								);
+							})}
 						</div>
 					</div>
 				)}

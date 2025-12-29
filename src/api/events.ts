@@ -201,13 +201,14 @@ export const resolveHenchmanEventFn = createServerFn({ method: "POST" })
 
 		// Use transaction to ensure atomicity
 		return await db.transaction(async (tx) => {
-			// Update the event - mark as resolved, set death status, no injury
+			// Update the event - mark as resolved, set death status
+			// For henchmen: death=true means dead, death=false means survived but still counts as injury
 			const [updatedEvent] = await tx
 				.update(events)
 				.set({
 					resolved: true,
 					death,
-					injury: false,
+					injury: !death, // If not dead, they survived which counts as an injury taken
 					injuryType: null,
 				})
 				.where(eq(events.id, eventId))

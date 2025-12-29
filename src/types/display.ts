@@ -16,6 +16,13 @@ export type WarriorInjuriesInflictedRow = Awaited<
 	ReturnType<typeof getMostInjuriesInflictedFromEvents>
 >[number];
 
+export interface BroadcastStatEntry {
+	name: string;
+	value: string;
+	subtitle?: string;
+	icon?: string | null;
+}
+
 export interface BroadcastStat {
 	type: "stat";
 	id: string;
@@ -25,6 +32,7 @@ export interface BroadcastStat {
 	description: string;
 	gradient: string;
 	footnote?: string;
+	leaderboard?: BroadcastStatEntry[];
 }
 
 export interface BroadcastChart {
@@ -50,6 +58,8 @@ export interface MatchHighlight {
 		name: string;
 		icon: string | null;
 		color: string | null;
+		wins: number;
+		experience: number;
 	}[];
 	kills: number;
 	injuries: number;

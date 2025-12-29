@@ -101,13 +101,15 @@ export function WarbandProgressChart({
 
 	const containerClassName =
 		variant === "embedded"
-			? "w-full"
+			? "w-full h-full flex flex-col"
 			: "rounded-lg border bg-card p-6 shadow-lg";
+
+	const chartHeight = variant === "embedded" ? "100%" : height;
 
 	return (
 		<div className={containerClassName}>
 			{title ? <h2 className="mb-4 text-xl font-bold">{title}</h2> : null}
-			<ResponsiveContainer width="100%" height={height}>
+			<ResponsiveContainer width="100%" height={chartHeight}>
 				<LineChart data={chartData}>
 					<CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 					<XAxis

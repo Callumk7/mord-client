@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
 	getCampaignOptions,
+	getMostExperienceOptions,
 	getMostGamesWonOptions,
 	getMostInjuriesFromEventsOptions,
 	getMostInjuriesInflictedFromEventsOptions,
@@ -15,22 +15,17 @@ import { getCampaignHistoryOptions } from "~/api/campaign-history";
 import { campaignEventsQueryOptions } from "~/api/events";
 import { getCampaignMatchesOptions } from "~/api/matches";
 import { getCampaignWarbandsWithWarriorsOptions } from "~/api/warbands";
-import { WarbandProgressChart } from "~/components/campaign/warband-progress-chart";
 import { BroadcastHeader } from "~/components/events/display/broadcast-header";
 import { CasualtyReport } from "~/components/events/display/casualty-report";
 import { MatchCenter } from "~/components/events/display/match-center";
 import { NewsTicker } from "~/components/events/display/news-ticker";
-import { RecentResultsSlide } from "~/components/events/display/recent-results-slide";
+import {
+	createProgressionSlide,
+	createRecentResultsSlide,
+	createWarbandStandingsSlide,
+} from "~/components/events/display/slides";
 import { StatCarousel } from "~/components/events/display/stat-carousel";
 import { WarbandSpotlight } from "~/components/events/display/warband-spotlight";
-import type { ChartConfig } from "~/components/ui/chart";
-import {
-	ChartContainer,
-	ChartLegend,
-	ChartLegendContent,
-	ChartTooltip,
-	ChartTooltipContent,
-} from "~/components/ui/chart";
 import {
 	useBreakingHeadline,
 	useMatchCenterMatches,
@@ -43,22 +38,10 @@ import {
 	buildProgressChartData,
 	getWarbandsFromPoints,
 } from "~/lib/campaign-history";
-import { gradients, pluralize } from "~/lib/display-utils";
+import { CHART_GRADIENTS, gradients, pluralize } from "~/lib/display-utils";
 import type { BroadcastChart, BroadcastStat } from "~/types/display";
 
-export const Route = createFileRoute("/display/$campaignId")({
-	params: {
-		parse: (params) => {
-			const parsed = Number(params.campaignId);
-			if (Number.isNaN(parsed) || !Number.isFinite(parsed)) {
-				throw new Error(`Invalid campaign ID: ${params.campaignId}`);
-			}
-			return { campaignId: parsed };
-		},
-		stringify: (params) => ({
-			campaignId: String(params.campaignId),
-		}),
-	},
+export const Route = createFileRoute("/display/$campaignId/")({
 	loader: async ({ params, context }) => {
 		await Promise.all([
 			context.queryClient.ensureQueryData(
@@ -72,6 +55,9 @@ export const Route = createFileRoute("/display/$campaignId")({
 			),
 			context.queryClient.ensureQueryData(
 				getMostRatingOptions(params.campaignId),
+			),
+			context.queryClient.ensureQueryData(
+				getMostExperienceOptions(params.campaignId),
 			),
 			context.queryClient.ensureQueryData(
 				getMostKillsFromEventsOptions(params.campaignId),
@@ -108,6 +94,9 @@ function RouteComponent() {
 	);
 	const { data: treasury } = useSuspenseQuery(
 		getMostTreasuryOptions(campaignId),
+	);
+	const { data: experience } = useSuspenseQuery(
+		getMostExperienceOptions(campaignId),
 	);
 	const { data: killsFromEvents } = useSuspenseQuery(
 		getMostKillsFromEventsOptions(campaignId),
@@ -173,10 +162,33 @@ function RouteComponent() {
 				title: "Treasure Hoard",
 				value: richest ? `${richest.warband.name}` : "No ledger data",
 				statLine: richest ? `${richest.treasury} gc banked` : "0 gc",
-				description:
-					richest?.warband.faction ?? "Riches decide the spoils this season",
+				description: "Top warbands by gold crowns banked",
 				gradient: gradients[1],
 				footnote: "Economy Watch",
+				leaderboard: treasury.slice(0, 3).map((entry) => ({
+					name: entry.warband.name,
+					value: `${entry.treasury} gc`,
+					subtitle: entry.warband.faction,
+					icon: entry.warband.icon,
+				})),
+			},
+			{
+				type: "stat",
+				id: "experience",
+				title: "Most Experienced",
+				value: experience[0] ? experience[0].warband.name : "No data",
+				statLine: experience[0]
+					? `${experience[0].experience} XP earned`
+					: "0 XP",
+				description: "Top warbands by experience points",
+				gradient: gradients[2],
+				footnote: "Veteran Status",
+				leaderboard: experience.slice(0, 3).map((entry) => ({
+					name: entry.warband.name,
+					value: `${entry.experience} xp`,
+					subtitle: entry.warband.faction,
+					icon: entry.warband.icon,
+				})),
 			},
 			{
 				type: "stat",
@@ -188,7 +200,7 @@ function RouteComponent() {
 					: "Waiting for carnage",
 				description:
 					fiercestWarrior?.warbandName ?? "No standout warrior just yet",
-				gradient: gradients[2],
+				gradient: gradients[3],
 			},
 			{
 				type: "stat",
@@ -197,7 +209,7 @@ function RouteComponent() {
 				value: `${casualtyCount}`,
 				statLine: `${pluralize(casualtyCount, "fatality")}`,
 				description: `${injuryCount} additional injuries recorded`,
-				gradient: gradients[3],
+				gradient: gradients[4],
 				footnote: "Event feed",
 			},
 			{
@@ -207,7 +219,7 @@ function RouteComponent() {
 				value: `${activeWarbands} warbands`,
 				statLine: `${activeWarriors} warriors ready`,
 				description: `${totalMatches} matches logged`,
-				gradient: gradients[4],
+				gradient: gradients[0],
 			},
 			{
 				type: "stat",
@@ -216,7 +228,9 @@ function RouteComponent() {
 				value: `${warpstoneIndex}`,
 				statLine: `${pluralize(casualtyCount + injuryCount, "incident")} / ${pluralize(totalMatches, "match")}`,
 				description: "Higher is worse. Probably. (The desk cannot confirm.)",
-				gradient: "from-slate-950 via-emerald-700/25 to-lime-600/25",
+				gradient:
+					gradients[1] ??
+					"from-slate-950 via-red-600/30 via-amber-500/25 to-blue-600/30",
 				footnote: "Mord Markets",
 			},
 		];
@@ -231,6 +245,8 @@ function RouteComponent() {
 		activeWarbands,
 		activeWarriors,
 		totalMatches,
+		treasury,
+		experience,
 	]);
 
 	const matchCenterMatches = useMatchCenterMatches(matches);
@@ -326,225 +342,67 @@ function RouteComponent() {
 		);
 	}, [treasury, rating, gamesWon]);
 
-	const warbandWealthAndRatingConfig = {
-		treasury: {
-			label: "Treasury (gc)",
-			color: "var(--chart-1)",
-		},
-		rating: {
-			label: "Rating",
-			color: "var(--chart-2)",
-		},
-		wins: {
-			label: "Wins",
-			color: "var(--chart-3)",
-		},
-	} satisfies ChartConfig;
-
 	// Combine stats and charts into carousel items
 	const carouselItems = useMemo<(BroadcastStat | BroadcastChart)[]>(() => {
 		const items: (BroadcastStat | BroadcastChart)[] = [...stats];
 
-		// Add recent results as a broadcast slide (prevents vertical cut-off).
+		// Add recent results slide
 		if (recentMatchHighlights.length > 0) {
-			items.push({
-				type: "chart",
-				id: "recent-results-slide",
-				gradient: "from-slate-950 to-slate-800",
-				content: (
-					<div className="h-full w-full p-4">
-						<RecentResultsSlide highlights={recentMatchHighlights} />
-					</div>
-				),
-			});
+			items.push(createRecentResultsSlide(recentMatchHighlights));
 		}
 
-		// Add grouped bar chart if data exists
+		// Add warband standings slide
 		if (warbandWealthAndRatingData.length > 0) {
-			items.push({
-				type: "chart",
-				id: "warband-stats-chart",
-				gradient: "from-slate-950 via-blue-700/30 to-red-700/30",
-				content: (
-					<div className="flex h-full w-full min-h-0 flex-col p-4">
-						<div className="mb-3">
-							<h3 className="text-lg font-black tracking-wider text-foreground">
-								Warband Standings
-							</h3>
-							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
-								Treasury • Rating • Wins
-							</p>
-						</div>
-						<ChartContainer
-							config={warbandWealthAndRatingConfig}
-							className="min-h-0 flex-1 w-full"
-						>
-							<BarChart
-								data={warbandWealthAndRatingData}
-								margin={{ left: 10, right: 10, bottom: 28, top: 10 }}
-							>
-								<CartesianGrid vertical={false} className="stroke-border/50" />
-								<XAxis
-									dataKey="name"
-									tickLine={false}
-									axisLine={false}
-									interval={0}
-									height={44}
-									angle={-20}
-									textAnchor="end"
-								/>
-								<YAxis
-									yAxisId="treasury"
-									tickLine={false}
-									axisLine={false}
-									width={48}
-								/>
-								<YAxis
-									yAxisId="rating"
-									orientation="right"
-									tickLine={false}
-									axisLine={false}
-									width={48}
-								/>
-								<YAxis yAxisId="wins" hide />
-								<ChartTooltip
-									content={
-										<ChartTooltipContent
-											indicator="dot"
-											labelClassName="font-semibold"
-										/>
-									}
-								/>
-								<ChartLegend content={<ChartLegendContent />} />
-								<Bar
-									yAxisId="treasury"
-									dataKey="treasury"
-									fill="var(--color-treasury)"
-									radius={[4, 4, 0, 0]}
-								/>
-								<Bar
-									yAxisId="rating"
-									dataKey="rating"
-									fill="var(--color-rating)"
-									radius={[4, 4, 0, 0]}
-								/>
-								<Bar
-									yAxisId="wins"
-									dataKey="wins"
-									fill="var(--color-wins)"
-									radius={[4, 4, 0, 0]}
-								/>
-							</BarChart>
-						</ChartContainer>
-					</div>
-				),
-			});
+			items.push(createWarbandStandingsSlide(warbandWealthAndRatingData));
 		}
 
-		// Add progress charts if data exists
+		// Add progress chart slides
 		if (progressData.warbands.length > 0) {
-			items.push({
-				type: "chart",
-				id: "rating-progression",
-				gradient: "from-slate-950 via-blue-700/30 to-cyan-600/25",
-				content: (
-					<div className="flex h-full w-full min-h-0 flex-col p-4">
-						<div className="mb-3">
-							<h3 className="text-lg font-black tracking-wider text-foreground">
-								Rating Progression
-							</h3>
-							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
-								Match-by-match
-							</p>
-						</div>
-						<div className="min-h-0 flex-1">
-							<WarbandProgressChart
-								title=""
-								chartData={progressData.ratingData}
-								warbands={progressData.warbands}
-								metric="rating"
-								yAxisLabel="Rating"
-								defaultColor="#8884d8"
-								height={320}
-								showLegend={false}
-								variant="embedded"
-							/>
-						</div>
-					</div>
-				),
-			});
+			items.push(
+				createProgressionSlide({
+					id: "rating-progression",
+					title: "Rating Progression",
+					subtitle: "Match-by-match",
+					gradient: CHART_GRADIENTS.rating,
+					chartData: progressData.ratingData,
+					warbands: progressData.warbands,
+					metric: "rating",
+					yAxisLabel: "Rating",
+					defaultColor: "#8884d8",
+				}),
+			);
 
-			items.push({
-				type: "chart",
-				id: "treasury-progression",
-				gradient: "from-slate-950 via-emerald-700/25 to-teal-600/25",
-				content: (
-					<div className="flex h-full w-full min-h-0 flex-col p-4">
-						<div className="mb-3">
-							<h3 className="text-lg font-black tracking-wider text-foreground">
-								Treasury Progression
-							</h3>
-							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
-								Gold Crowns
-							</p>
-						</div>
-						<div className="min-h-0 flex-1">
-							<WarbandProgressChart
-								title=""
-								chartData={progressData.treasuryData}
-								warbands={progressData.warbands}
-								metric="treasury"
-								yAxisLabel="Gold Crowns"
-								defaultColor="#82ca9d"
-								height={320}
-								showLegend={false}
-								variant="embedded"
-							/>
-						</div>
-					</div>
-				),
-			});
+			items.push(
+				createProgressionSlide({
+					id: "treasury-progression",
+					title: "Treasury Progression",
+					subtitle: "Gold Crowns",
+					gradient: CHART_GRADIENTS.treasury,
+					chartData: progressData.treasuryData,
+					warbands: progressData.warbands,
+					metric: "treasury",
+					yAxisLabel: "Gold Crowns",
+					defaultColor: "#82ca9d",
+				}),
+			);
 
-			items.push({
-				type: "chart",
-				id: "experience-progression",
-				gradient: "from-slate-950 via-amber-600/25 to-red-700/20",
-				content: (
-					<div className="flex h-full w-full min-h-0 flex-col p-4">
-						<div className="mb-3">
-							<h3 className="text-lg font-black tracking-wider text-foreground">
-								Experience Progression
-							</h3>
-							<p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
-								Experience Points
-							</p>
-						</div>
-						<div className="min-h-0 flex-1">
-							<WarbandProgressChart
-								title=""
-								chartData={progressData.experienceData}
-								warbands={progressData.warbands}
-								metric="experience"
-								yAxisLabel="Experience"
-								defaultColor="#ffc658"
-								height={320}
-								showLegend={false}
-								variant="embedded"
-							/>
-						</div>
-					</div>
-				),
-			});
+			items.push(
+				createProgressionSlide({
+					id: "experience-progression",
+					title: "Experience Progression",
+					subtitle: "Experience Points",
+					gradient: CHART_GRADIENTS.experience,
+					chartData: progressData.experienceData,
+					warbands: progressData.warbands,
+					metric: "experience",
+					yAxisLabel: "Experience",
+					defaultColor: "#ffc658",
+				}),
+			);
 		}
 
 		return items;
-	}, [
-		stats,
-		recentMatchHighlights,
-		warbandWealthAndRatingData,
-		progressData,
-		warbandWealthAndRatingConfig,
-	]);
+	}, [stats, recentMatchHighlights, warbandWealthAndRatingData, progressData]);
 
 	return (
 		<div className="relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">

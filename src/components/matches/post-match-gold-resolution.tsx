@@ -69,6 +69,7 @@ function GoldCard({ warband, matchId }: GoldCardProps) {
 
 	const [goldValue, setGoldValue] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [isLogged, setIsLogged] = useState(false);
 
 	const id = useId();
 
@@ -99,6 +100,7 @@ function GoldCard({ warband, matchId }: GoldCardProps) {
 		} else {
 			setError(null);
 			handleUpdateGold(warband.id, parsed);
+			setIsLogged(true);
 		}
 	};
 
@@ -121,6 +123,7 @@ function GoldCard({ warband, matchId }: GoldCardProps) {
 							{error && <Badge variant="destructive">{error}</Badge>}
 						</div>
 						<Button onClick={handleAddClick}>Add</Button>
+						{isLogged && <Badge variant={"success"}>Logged!</Badge>}
 					</div>
 				</div>
 			</CardContent>

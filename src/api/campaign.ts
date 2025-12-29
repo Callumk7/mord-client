@@ -25,6 +25,8 @@ export const campaignKeys = {
 		[...campaignKeys.leaderboards(campaignId), "rating"] as const,
 	treasury: (campaignId: number) =>
 		[...campaignKeys.leaderboards(campaignId), "treasury"] as const,
+	experience: (campaignId: number) =>
+		[...campaignKeys.leaderboards(campaignId), "experience"] as const,
 	kills: (campaignId: number) =>
 		[...campaignKeys.leaderboards(campaignId), "kills"] as const,
 	killsFromEvents: (campaignId: number) =>
@@ -159,6 +161,34 @@ export const getMostRatingOptions = (campaignId: number) =>
 	queryOptions({
 		queryKey: campaignKeys.rating(campaignId),
 		queryFn: () => getMostRating({ data: { campaignId } }),
+	});
+
+async function getWarbandsRankedByExperience(campaignId: number) {
+	const results = await db
+		.select({
+			warbandId: warbands.id,
+			warband: warbands,
+			experience: warbands.experience,
+		})
+		.from(warbands)
+		.where(eq(warbands.campaignId, campaignId))
+		.orderBy(desc(warbands.experience));
+
+	return results;
+}
+
+export const getMostExperience = createServerFn({ method: "GET" })
+	.inputValidator((d: { campaignId: number }) => d)
+	.handler(async ({ data }) => {
+		const campaignId = data.campaignId;
+
+		return await getWarbandsRankedByExperience(campaignId);
+	});
+
+export const getMostExperienceOptions = (campaignId: number) =>
+	queryOptions({
+		queryKey: campaignKeys.experience(campaignId),
+		queryFn: () => getMostExperience({ data: { campaignId } }),
 	});
 
 // Warrior Leaderboards

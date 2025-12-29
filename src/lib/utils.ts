@@ -15,6 +15,10 @@ export function formatDate(date: Date) {
 	});
 }
 
+export function getMatchTypeLabel(participantCount: number) {
+	return participantCount === 2 ? "1V1" : "MULTI";
+}
+
 /**
  * Format a date as relative time ago (e.g., "2 hours ago", "3 days ago")
  */

@@ -30,9 +30,9 @@ import {
 	TableRow,
 } from "~/components/ui/table";
 import type { WarbandWithWarriors } from "~/db/schema";
-import { UpdateWarbandForm } from "./update-warband-form";
 import { calculateRating } from "~/lib/ratings";
 import { getActiveWarriors } from "~/lib/warbands";
+import { UpdateWarbandForm } from "./update-warband-form";
 
 interface WarbandsTableProps {
 	warbands: WarbandWithWarriors[];

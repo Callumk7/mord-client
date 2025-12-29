@@ -73,6 +73,7 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 
 	const [experienceValue, setExperienceValue] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [isLogged, setIsLogged] = useState(false);
 
 	const id = useId();
 
@@ -103,6 +104,7 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 		} else {
 			setError(null);
 			handleUpdateExperience(warband.id, parsed);
+			setIsLogged(true);
 		}
 	};
 
@@ -125,6 +127,7 @@ function ExperienceCard({ warband, matchId }: ExperienceCardProps) {
 							{error && <Badge variant="destructive">{error}</Badge>}
 						</div>
 						<Button onClick={handleAddClick}>Add</Button>
+						{isLogged && <Badge variant={"success"}>Logged!</Badge>}
 					</div>
 				</div>
 			</CardContent>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Campaign } from "~/db/schema";
+import type { Campaign, WarbandWithWarriors } from "~/db/schema";
 import { formatShortDate, pluralize, truncate } from "~/lib/display-utils";
 import type {
 	MatchCenterMatch,
@@ -8,19 +8,75 @@ import type {
 	WarriorKillsRow,
 } from "~/types/display";
 
+type BroadcastEvent = {
+	timestamp?: Date | string | null;
+	createdAt?: Date | string | null;
+	death?: boolean;
+	injury?: boolean;
+	description?: string | null;
+	warrior?: { warbandId: number; name: string | null } | null;
+	defender?: { warbandId: number; name: string | null } | null;
+	match?: { name: string | null } | null;
+};
+
+type GamesWonRow = {
+	warbandId: number;
+	wins: number;
+	warband: { name: string };
+};
+
+type TreasuryRow = {
+	warbandId: number;
+	treasury?: number | null;
+};
+
+type BroadcastMatchParticipant = {
+	id: number;
+	warbandId: number;
+	warband: {
+		name: string;
+		icon: string | null;
+		color: string | null;
+		rating?: number | null;
+		experience?: number | null;
+	};
+};
+
+type BroadcastMatchWinner = {
+	warbandId: number;
+	warband: {
+		name: string;
+		icon: string | null;
+		color: string | null;
+	};
+};
+
+type BroadcastMatch = {
+	id: number;
+	name: string;
+	date: Date | string;
+	status: "active" | "ended" | "scheduled" | "resolved";
+	participants: BroadcastMatchParticipant[];
+	winners?: BroadcastMatchWinner[];
+	events: (BroadcastEvent & {
+		id: number;
+		match?: { name: string | null } | null;
+	})[];
+};
+
 /**
  * Hook to generate the breaking headline from events and games won
  */
 export function useBreakingHeadline(
-	events: any[],
+	events: BroadcastEvent[],
 	campaign: Campaign | null | undefined,
-	gamesWon: any[],
+	gamesWon: GamesWonRow[],
 ) {
 	return useMemo(() => {
 		const latest = [...events].sort(
 			(a, b) =>
-				new Date(b.timestamp ?? b.createdAt).getTime() -
-				new Date(a.timestamp ?? a.createdAt).getTime(),
+				new Date(b.timestamp ?? b.createdAt ?? 0).getTime() -
+				new Date(a.timestamp ?? a.createdAt ?? 0).getTime(),
 		)[0];
 
 		if (latest) {
@@ -46,14 +102,16 @@ export function useBreakingHeadline(
 /**
  * Hook to transform matches into MatchCenterMatch format
  */
-export function useMatchCenterMatches(matches: any[]): MatchCenterMatch[] {
+export function useMatchCenterMatches(
+	matches: BroadcastMatch[],
+): MatchCenterMatch[] {
 	return useMemo(() => {
-		return matches.map((match: any) => ({
+		return matches.map((match) => ({
 			id: match.id,
 			name: match.name,
 			date: match.date,
 			status: match.status,
-			participants: match.participants.map((participant: any) => ({
+			participants: match.participants.map((participant) => ({
 				id: participant.id,
 				warbandId: participant.warbandId,
 				name: participant.warband.name,
@@ -61,10 +119,10 @@ export function useMatchCenterMatches(matches: any[]): MatchCenterMatch[] {
 				color: participant.warband.color,
 				rating: participant.warband.rating ?? 0,
 			})),
-			events: match.events.map((event: any) => ({
+			events: match.events.map((event) => ({
 				id: event.id,
-				death: event.death,
-				injury: event.injury,
+				death: Boolean(event.death),
+				injury: Boolean(event.injury),
 				description: event.description ?? null,
 				timestamp: event.timestamp ?? event.createdAt ?? null,
 				warrior: event.warrior
@@ -87,38 +145,47 @@ export function useMatchCenterMatches(matches: any[]): MatchCenterMatch[] {
 /**
  * Hook to generate recent match highlights
  */
-export function useRecentMatchHighlights(matches: any[]): MatchHighlight[] {
+export function useRecentMatchHighlights(
+	matches: BroadcastMatch[],
+): MatchHighlight[] {
 	return useMemo(() => {
+		const winsByWarbandId = new Map<number, number>();
+		for (const match of matches) {
+			if (match.status !== "ended" && match.status !== "resolved") continue;
+			for (const winner of match.winners ?? []) {
+				const id = Number(winner.warbandId);
+				winsByWarbandId.set(id, (winsByWarbandId.get(id) ?? 0) + 1);
+			}
+		}
+
 		return [...matches]
 			.filter(
-				(match: any) => match.status === "ended" || match.status === "resolved",
+				(match) => match.status === "ended" || match.status === "resolved",
 			)
-			.sort(
-				(a: any, b: any) =>
-					new Date(b.date).getTime() - new Date(a.date).getTime(),
-			)
+			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 			.slice(0, 3)
-			.map((match: any) => ({
+			.map((match) => ({
 				id: match.id,
 				name: match.name,
 				date: match.date,
 				status: match.status,
-				winners: (match.winners ?? []).map((winner: any) => ({
+				winners: (match.winners ?? []).map((winner) => ({
 					id: winner.warbandId,
 					name: winner.warband.name,
 					icon: winner.warband.icon,
 					color: winner.warband.color,
 				})),
-				participants: match.participants.map((participant: any) => ({
+				participants: match.participants.map((participant) => ({
 					id: participant.warbandId,
 					name: participant.warband.name,
 					icon: participant.warband.icon,
 					color: participant.warband.color,
+					wins: winsByWarbandId.get(Number(participant.warbandId)) ?? 0,
+					experience: participant.warband.experience ?? 0,
 				})),
-				kills: match.events.filter((event: any) => event.death).length,
-				injuries: match.events.filter(
-					(event: any) => event.injury && !event.death,
-				).length,
+				kills: match.events.filter((event) => event.death).length,
+				injuries: match.events.filter((event) => event.injury && !event.death)
+					.length,
 				totalMoments: match.events.length,
 			}));
 	}, [matches]);
@@ -128,10 +195,10 @@ export function useRecentMatchHighlights(matches: any[]): MatchHighlight[] {
  * Hook to generate warband spotlight data
  */
 export function useWarbandSpotlight(
-	leader: any,
-	warbands: any[],
-	events: any[],
-	treasury: any[],
+	leader: GamesWonRow | undefined,
+	warbands: WarbandWithWarriors[],
+	events: BroadcastEvent[],
+	treasury: TreasuryRow[],
 ): WarbandSpotlightData | null {
 	return useMemo(() => {
 		if (!leader) {
@@ -161,7 +228,7 @@ export function useWarbandSpotlight(
 			color: roster.color,
 			wins: leader.wins,
 			treasury: treasuryEntry,
-			warriorsAlive: roster.warriors.filter((warrior: any) => warrior.isAlive)
+			warriorsAlive: roster.warriors.filter((warrior) => warrior.isAlive)
 				.length,
 			eventsInflicted: inflicted,
 			eventsSuffered: suffered,
@@ -173,10 +240,10 @@ export function useWarbandSpotlight(
  * Hook to generate news ticker items
  */
 export function useNewsItems(
-	events: any[],
-	matches: any[],
-	leader: any,
-	richest: any,
+	events: BroadcastEvent[],
+	matches: BroadcastMatch[],
+	leader: GamesWonRow | undefined,
+	richest: { warband: { name: string }; treasury: number } | undefined,
 	fiercestWarrior: WarriorKillsRow | undefined,
 	casualtyCount: number,
 	injuryCount: number,
@@ -194,19 +261,18 @@ export function useNewsItems(
 			"📜 NOTICE: Anyone returning a missing sword may keep the sword.",
 		];
 
-		const liveCount = matches.filter((m: any) => m.status === "active").length;
+		const liveCount = matches.filter((m) => m.status === "active").length;
 		const scheduledCount = matches.filter(
-			(m: any) => m.status === "scheduled",
+			(m) => m.status === "scheduled",
 		).length;
 		const resolvedCount = matches.filter(
-			(m: any) => m.status === "ended" || m.status === "resolved",
+			(m) => m.status === "ended" || m.status === "resolved",
 		).length;
 
 		const lastFinished = [...matches]
-			.filter((m: any) => m.status === "ended" || m.status === "resolved")
+			.filter((m) => m.status === "ended" || m.status === "resolved")
 			.sort(
-				(a: any, b: any) =>
-					new Date(b.date).getTime() - new Date(a.date).getTime(),
+				(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
 			)[0];
 
 		const warpstoneIndex = totalMatches
@@ -227,12 +293,12 @@ export function useNewsItems(
 
 		const eventLines = [...events]
 			.sort(
-				(a: any, b: any) =>
-					new Date(b.timestamp ?? b.createdAt).getTime() -
-					new Date(a.timestamp ?? a.createdAt).getTime(),
+				(a, b) =>
+					new Date(b.timestamp ?? b.createdAt ?? 0).getTime() -
+					new Date(a.timestamp ?? a.createdAt ?? 0).getTime(),
 			)
 			.slice(0, 10)
-			.map((event: any) => {
+			.map((event) => {
 				const icon = event.death ? "☠️" : event.injury ? "🩸" : "⚔️";
 				const attacker = event.warrior?.name ?? "Unknown warrior";
 				const defender = event.defender?.name;

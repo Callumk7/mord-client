@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -10,7 +11,6 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import type { EventWithParticipants } from "~/db/schema";
 import { CreateEventForm } from "../create-event-form";
-import { useRef } from "react";
 
 interface EventsListProps {
 	events: EventWithParticipants[];
