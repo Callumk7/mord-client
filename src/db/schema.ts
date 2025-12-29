@@ -29,6 +29,7 @@ export const campaignsRelations = relations(campaigns, ({ many }) => ({
 	warriors: many(warriors),
 	matches: many(matches),
 	events: many(events),
+	customNewsItems: many(customNewsItems),
 }));
 
 // Warbands Table
@@ -287,5 +288,25 @@ export const eventsRelations = relations(events, ({ one }) => ({
 		fields: [events.defenderId],
 		references: [warriors.id],
 		relationName: "eventDefender",
+	}),
+}));
+
+export const customNewsItems = pgTable("custom_news_items", {
+	id: serial("id").primaryKey(),
+	campaignId: integer("campaign_id")
+		.notNull()
+		.references(() => campaigns.id),
+	content: text("content").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type CustomNewsItem = typeof customNewsItems.$inferSelect;
+export type NewCustomNewsItem = typeof customNewsItems.$inferInsert;
+
+export const customNewsItemsRelations = relations(customNewsItems, ({ one }) => ({
+	campaign: one(campaigns, {
+		fields: [customNewsItems.campaignId],
+		references: [campaigns.id],
 	}),
 }));

@@ -249,8 +249,11 @@ export function useNewsItems(
 	injuryCount: number,
 	totalMatches: number,
 	breakingHeadline: string,
+	customNews: string[],
 ) {
 	return useMemo(() => {
+		const breaking = truncate(breakingHeadline.trim(), 120);
+
 		const lore = [
 			"🕯️ WHISPERS: Witch Hunters report 'unlicensed miracles' in the Merchant Quarter.",
 			"🧟 RUMOUR MILL: A necromancer was seen 'shopping' for fresh recruits. Allegedly.",
@@ -280,7 +283,7 @@ export function useNewsItems(
 			: 0;
 
 		const deskStats: string[] = [
-			breakingHeadline,
+			breaking,
 			`📺 DESK: ${pluralize(liveCount, "live game", "live games")} • ${pluralize(scheduledCount, "fixture", "fixtures")} • ${pluralize(resolvedCount, "final", "finals")}`,
 			`🏆 TABLE: ${leader?.warband.name ?? "No leader yet"} • ${leader ? pluralize(leader.wins, "win") : "play a match to crown a champion"}`,
 			`💰 TREASURY: ${richest?.warband.name ?? "No ledger"} • ${richest ? `${richest.treasury} gc` : "0 gc"}`,
@@ -304,17 +307,29 @@ export function useNewsItems(
 				const defender = event.defender?.name;
 				const label = event.match?.name ?? "Match";
 
-				const detail =
-					event.description ??
-					(defender
-						? `${attacker} overwhelmed ${defender}`
-						: `${attacker} seized the spotlight`);
+				const description =
+					typeof event.description === "string" ? event.description.trim() : "";
+
+				const detail = description
+					? description
+					: event.death
+						? "death noted"
+						: event.injury
+							? "injury noted"
+							: defender
+								? `${attacker} overwhelmed ${defender}`
+								: `${attacker} seized the spotlight`;
 
 				return truncate(`${icon} ${label}: ${detail}`, 110);
 			});
 
+		const customLines = customNews
+			.map((line) => line.trim())
+			.filter(Boolean)
+			.map((line) => truncate(line, 120));
+
 		// Curate, de-dupe, and keep it punchy.
-		const all = [...deskStats, ...eventLines, ...lore]
+		const all = [...deskStats, ...eventLines, ...lore, ...customLines]
 			.map((line) => line.trim())
 			.filter(Boolean)
 			.map((line) => truncate(line, 120));
@@ -327,7 +342,15 @@ export function useNewsItems(
 			unique.push(line);
 		}
 
-		return unique.slice(0, 22);
+		const rest = unique.filter((line) => line !== breaking);
+
+		for (let i = rest.length - 1; i > 0; i -= 1) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[rest[i], rest[j]] = [rest[j], rest[i]];
+		}
+
+		const ordered = breaking ? [breaking, ...rest] : rest;
+		return ordered.slice(0, 22);
 	}, [
 		events,
 		matches,
@@ -338,5 +361,6 @@ export function useNewsItems(
 		injuryCount,
 		totalMatches,
 		breakingHeadline,
+		customNews,
 	]);
 }
