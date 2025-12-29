@@ -44,23 +44,23 @@ A web-based companion app for tracking a weekend Mordheim campaign (5-6 warbands
 ### Match Entry Fields:
 
 - Select participating warbands (2-4 players)
-    - Support for standard 1v1 matches
-    - Support for team battles (2v2, 3v1, etc.)
-    - Support for battle royale/free-for-all (3-4 players)
+  - Support for standard 1v1 matches
+  - Support for team battles (2v2, 3v1, etc.)
+  - Support for battle royale/free-for-all (3-4 players)
 - Record winner(s)
-    - Single winner for competitive scenarios
-    - Team winners for allied scenarios
-    - Placement tracking (1st, 2nd, 3rd, 4th) for battle royales
+  - Single winner for competitive scenarios
+  - Team winners for allied scenarios
+  - Placement tracking (1st, 2nd, 3rd, 4th) for battle royales
 - Log casualties and injuries
 - Track per warrior:
-    - Kills scored
-    - Injuries caused
-    - Injuries received
-    - Experience gained
+  - Kills scored
+  - Injuries caused
+  - Injuries received
+  - Experience gained
 - Track per warband:
-    - Games won/lost (with context: team victory, solo victory, placement)
-    - Treasury changes
-    - Wyrdstone/loot collected
+  - Games won/lost (with context: team victory, solo victory, placement)
+  - Treasury changes
+  - Wyrdstone/loot collected
 - Optional narrative notes field for memorable moments
 
 ### UX Considerations:
@@ -92,10 +92,10 @@ A web-based companion app for tracking a weekend Mordheim campaign (5-6 warbands
 ### Special Tracking:
 
 - **Rivalry/Nemesis System**
-    - Auto-detect when specific warriors face off repeatedly
-    - Track personal grudge matches
-    - "Nemesis" badges when two characters keep fighting
-    - History of their encounters
+  - Auto-detect when specific warriors face off repeatedly
+  - Track personal grudge matches
+  - "Nemesis" badges when two characters keep fighting
+  - History of their encounters
 
 ## 4. Weekend Campaign Victory Paths
 
@@ -112,26 +112,26 @@ Each path is tracked separately so multiple players can feel like "winners"
 ## 5. Scenario Management
 
 - **Random Scenario Generator**
-    - Pull from pool of Mordheim scenarios
-    - Display special rules for selected scenario
-    - **Support for different player counts:**
-        - 1v1 scenarios (standard competitive)
-        - 2v2 scenarios (team battles, alliances)
-        - 3-player free-for-all (battle royale)
-        - 4-player free-for-all (chaos multiplayer)
-    - Suggest appropriate scenarios based on available players
+  - Pull from pool of Mordheim scenarios
+  - Display special rules for selected scenario
+  - **Support for different player counts:**
+    - 1v1 scenarios (standard competitive)
+    - 2v2 scenarios (team battles, alliances)
+    - 3-player free-for-all (battle royale)
+    - 4-player free-for-all (chaos multiplayer)
+  - Suggest appropriate scenarios based on available players
 - **Scenario History Tracking**
-    - Mark scenarios as played
-    - Track player count and format for each scenario
-    - Avoid repetition throughout weekend
+  - Mark scenarios as played
+  - Track player count and format for each scenario
+  - Avoid repetition throughout weekend
 - **Optional: Dynamic Scenario Weighting**
-    - Give underdogs easier scenarios
-    - Balance based on current standings
+  - Give underdogs easier scenarios
+  - Balance based on current standings
 
 - Suggest team-ups to balance power levels in multiplayer games
 - **Optional: Narrative Chains**
-    - Scenarios loosely connect based on previous results
-    - "The warband that won last game is defending..." type hooks
+  - Scenarios loosely connect based on previous results
+  - "The warband that won last game is defending..." type hooks
 
 - Track alliances formed in team battles for future narrative hooks
 
@@ -155,8 +155,8 @@ Each path is tracked separately so multiple players can feel like "winners"
 
 - **Real-time leaderboard** viewable between matches
 - **"Breaking News"** style updates
-    - "Snikch the Assassin just claimed his 5th kill!"
-    - "The Reiklanders are on a 3-game winning streak!"
+  - "Snikch the Assassin just claimed his 5th kill!"
+  - "The Reiklanders are on a 3-game winning streak!"
 - Designed to generate friendly trash talk and hype
 
 ---
@@ -199,8 +199,7 @@ Each path is tracked separately so multiple players can feel like "winners"
 2. Create wireframes/mockups for key screens
 3. Set up development environment
 4. Build MVP focusing on:
-    - Warband creation
-    - Match logging
-    - Basic leaderboards
+   - Warband creation
+   - Match logging
+   - Basic leaderboards
 5. Iterate and add features as needed before campaign weekend
-
