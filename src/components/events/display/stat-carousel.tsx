@@ -88,15 +88,15 @@ export function StatCarousel({ items, headline }: StatCarouselProps) {
 													className="flex items-center justify-between rounded-lg bg-background/30 p-4 backdrop-blur-sm"
 												>
 													<div className="flex items-center gap-3">
-														<div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-600/20 to-amber-500/20 text-lg font-bold text-foreground">
+														<div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-600/20 to-amber-500/20 text-xl font-bold text-foreground">
 															{idx + 1}
 														</div>
 														<div>
-															<div className="font-bold text-foreground">
+															<div className="text-lg font-bold text-foreground">
 																{entry.name}
 															</div>
 															{entry.subtitle && (
-																<div className="text-xs text-foreground/60">
+																<div className="text-sm text-foreground/60">
 																	{entry.subtitle}
 																</div>
 															)}

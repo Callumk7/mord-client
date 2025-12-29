@@ -40,6 +40,8 @@ export const campaignKeys = {
 			...campaignKeys.leaderboards(campaignId),
 			"injuries-inflicted-from-events",
 		] as const,
+	mostInjuredHero: (campaignId: number) =>
+		[...campaignKeys.leaderboards(campaignId), "most-injured-hero"] as const,
 };
 
 export const getCampaigns = createServerFn({ method: "GET" }).handler(
@@ -296,4 +298,79 @@ export const getMostInjuriesInflictedFromEventsOptions = (campaignId: number) =>
 	queryOptions({
 		queryKey: campaignKeys.injuriesInflictedFromEvents(campaignId),
 		queryFn: () => getMostInjuriesInflictedFromEvents({ data: { campaignId } }),
+	});
+
+// Get the hero with the most injuries and their detailed injury information
+async function queryMostInjuredHeroWithDetails(campaignId: number) {
+	// First, get heroes with most injuries (defenders only, type='hero')
+	const heroesWithInjuries = await db
+		.select({
+			warriorId: warriors.id,
+			warrior: warriors,
+			warbandName: warbands.name,
+			warbandIcon: warbands.icon,
+			warbandColor: warbands.color,
+			injuriesReceived: sql<number>`COUNT(*)::int`.as("injuries_received"),
+		})
+		.from(events)
+		.innerJoin(warriors, eq(events.defenderId, warriors.id))
+		.innerJoin(warbands, eq(warriors.warbandId, warbands.id))
+		.where(
+			and(
+				eq(events.campaignId, campaignId),
+				eq(events.injury, true),
+				eq(warriors.type, "hero"),
+			),
+		)
+		.groupBy(warriors.id, warbands.id)
+		.orderBy(desc(sql`COUNT(*)`))
+		.limit(1);
+
+	if (heroesWithInjuries.length === 0) {
+		return null;
+	}
+
+	const topHero = heroesWithInjuries[0];
+
+	// Get all injury events for this hero with attacker information
+	const injuryDetails = await db
+		.select({
+			id: events.id,
+			injuryType: events.injuryType,
+			description: events.description,
+			death: events.death,
+			timestamp: events.timestamp,
+			attacker: warriors,
+			attackerWarband: warbands,
+		})
+		.from(events)
+		.innerJoin(warriors, eq(events.warriorId, warriors.id))
+		.innerJoin(warbands, eq(warriors.warbandId, warbands.id))
+		.where(
+			and(
+				eq(events.campaignId, campaignId),
+				eq(events.defenderId, topHero.warriorId),
+				eq(events.injury, true),
+			),
+		)
+		.orderBy(desc(events.timestamp));
+
+	return {
+		...topHero,
+		injuries: injuryDetails,
+	};
+}
+
+export const getMostInjuredHeroWithDetails = createServerFn({ method: "GET" })
+	.inputValidator((d: { campaignId: number }) => d)
+	.handler(async ({ data }) => {
+		const campaignId = data.campaignId;
+
+		return await queryMostInjuredHeroWithDetails(campaignId);
+	});
+
+export const getMostInjuredHeroWithDetailsOptions = (campaignId: number) =>
+	queryOptions({
+		queryKey: campaignKeys.mostInjuredHero(campaignId),
+		queryFn: () => getMostInjuredHeroWithDetails({ data: { campaignId } }),
 	});

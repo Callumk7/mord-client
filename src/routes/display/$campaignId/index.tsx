@@ -5,6 +5,7 @@ import {
 	getCampaignOptions,
 	getMostExperienceOptions,
 	getMostGamesWonOptions,
+	getMostInjuredHeroWithDetailsOptions,
 	getMostInjuriesFromEventsOptions,
 	getMostInjuriesInflictedFromEventsOptions,
 	getMostKillsFromEventsOptions,
@@ -40,6 +41,7 @@ import {
 	getWarbandsFromPoints,
 } from "~/lib/campaign-history";
 import { CHART_GRADIENTS, gradients, pluralize } from "~/lib/display-utils";
+import { injuryEnumToDisplayName } from "~/types/injuries";
 import type { BroadcastChart, BroadcastStat } from "~/types/display";
 
 export const Route = createFileRoute("/display/$campaignId/")({
@@ -68,6 +70,9 @@ export const Route = createFileRoute("/display/$campaignId/")({
 			),
 			context.queryClient.ensureQueryData(
 				getMostInjuriesInflictedFromEventsOptions(params.campaignId),
+			),
+			context.queryClient.ensureQueryData(
+				getMostInjuredHeroWithDetailsOptions(params.campaignId),
 			),
 			context.queryClient.ensureQueryData(
 				getCampaignMatchesOptions(params.campaignId),
@@ -110,6 +115,9 @@ function RouteComponent() {
 	);
 	const { data: injuriesInflictedFromEvents } = useSuspenseQuery(
 		getMostInjuriesInflictedFromEventsOptions(campaignId),
+	);
+	const { data: mostInjuredHero } = useSuspenseQuery(
+		getMostInjuredHeroWithDetailsOptions(campaignId),
 	);
 	const { data: matches } = useSuspenseQuery(
 		getCampaignMatchesOptions(campaignId),
@@ -205,9 +213,15 @@ function RouteComponent() {
 				statLine: fiercestWarrior
 					? `${fiercestWarrior.kills} confirmed ${pluralize(fiercestWarrior.kills, "kill")}`
 					: "Waiting for carnage",
-				description:
-					fiercestWarrior?.warbandName ?? "No standout warrior just yet",
+				description: "Top warriors by confirmed kills",
 				gradient: gradients[3],
+				footnote: "Kill Count",
+				leaderboard: killsFromEvents.slice(0, 3).map((entry) => ({
+					name: entry.warrior.name,
+					value: pluralize(entry.kills, "kill"),
+					subtitle: entry.warbandName,
+					icon: entry.warbandIcon,
+				})),
 			},
 			{
 				type: "stat",
@@ -215,9 +229,41 @@ function RouteComponent() {
 				title: "Casualty Watch",
 				value: `${casualtyCount}`,
 				statLine: `${pluralize(casualtyCount, "fatality")}`,
-				description: `${injuryCount} additional injuries recorded`,
+				description: "Warriors who have suffered the most",
 				gradient: gradients[4],
-				footnote: "Event feed",
+				footnote: "Injury Report",
+				leaderboard: injuriesFromEvents.slice(0, 3).map((entry) => ({
+					name: entry.warrior.name,
+					value: pluralize(entry.injuriesReceived, "injury", "injuries"),
+					subtitle: entry.warbandName,
+					icon: entry.warbandIcon,
+				})),
+			},
+			{
+				type: "stat",
+				id: "most-injured-hero",
+				title: "Most Battered Hero",
+				value: mostInjuredHero?.warrior.name ?? "No heroes injured yet",
+				statLine: mostInjuredHero
+					? `${pluralize(mostInjuredHero.injuriesReceived, "injury", "injuries")} sustained`
+					: "Heroes remain unscathed",
+				description: mostInjuredHero
+					? `${mostInjuredHero.warrior.name} of ${mostInjuredHero.warbandName}`
+					: "No heroes have been injured yet",
+				gradient: gradients[5],
+				footnote: mostInjuredHero?.warbandIcon ?? "Medical Records",
+				leaderboard: mostInjuredHero
+					? mostInjuredHero.injuries.map((injury) => ({
+							name: injury.injuryType
+								? injuryEnumToDisplayName(injury.injuryType)
+								: injury.death
+									? "Fatal Injury"
+									: "Injury",
+							value: `by ${injury.attacker.name}`,
+							subtitle: `${injury.attackerWarband.name}`,
+							icon: injury.attackerWarband.icon,
+						}))
+					: [],
 			},
 			{
 				type: "stat",
@@ -254,6 +300,9 @@ function RouteComponent() {
 		totalMatches,
 		treasury,
 		experience,
+		killsFromEvents,
+		injuriesFromEvents,
+		mostInjuredHero,
 	]);
 
 	const matchCenterMatches = useMatchCenterMatches(matches);
