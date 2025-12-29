@@ -14,6 +14,7 @@ import {
 import { getCampaignHistoryOptions } from "~/api/campaign-history";
 import { campaignEventsQueryOptions } from "~/api/events";
 import { getCampaignMatchesOptions } from "~/api/matches";
+import { getCampaignCustomNewsOptions } from "~/api/news";
 import { getCampaignWarbandsWithWarriorsOptions } from "~/api/warbands";
 import { BroadcastHeader } from "~/components/events/display/broadcast-header";
 import { CasualtyReport } from "~/components/events/display/casualty-report";
@@ -80,6 +81,9 @@ export const Route = createFileRoute("/display/$campaignId/")({
 			context.queryClient.ensureQueryData(
 				getCampaignHistoryOptions(params.campaignId),
 			),
+			context.queryClient.ensureQueryData(
+				getCampaignCustomNewsOptions(params.campaignId),
+			),
 		]);
 	},
 	component: RouteComponent,
@@ -118,6 +122,9 @@ function RouteComponent() {
 	);
 	const { data: history } = useSuspenseQuery(
 		getCampaignHistoryOptions(campaignId),
+	);
+	const { data: customNewsItems } = useSuspenseQuery(
+		getCampaignCustomNewsOptions(campaignId),
 	);
 	const { data: rating } = useSuspenseQuery(getMostRatingOptions(campaignId));
 
@@ -268,6 +275,7 @@ function RouteComponent() {
 		injuryCount,
 		totalMatches,
 		breakingHeadline,
+		customNewsItems.map((item) => item.content),
 	);
 
 	// Progress chart data

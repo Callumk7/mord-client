@@ -26,11 +26,13 @@ import { Route as CampaignIdWarriorsIndexRouteImport } from './routes/$campaignI
 import { Route as CampaignIdWarbandsIndexRouteImport } from './routes/$campaignId/warbands/index'
 import { Route as CampaignIdTimelineIndexRouteImport } from './routes/$campaignId/timeline/index'
 import { Route as CampaignIdProgressIndexRouteImport } from './routes/$campaignId/progress/index'
+import { Route as CampaignIdNewsIndexRouteImport } from './routes/$campaignId/news/index'
 import { Route as CampaignIdMatchesIndexRouteImport } from './routes/$campaignId/matches/index'
 import { Route as CampaignIdEventsIndexRouteImport } from './routes/$campaignId/events/index'
 import { Route as ReferenceScenariosScenarioIdRouteImport } from './routes/reference/scenarios.$scenarioId'
 import { Route as DisplayCampaignIdResultsRouteImport } from './routes/display/$campaignId/results'
 import { Route as CampaignIdWarriorsWarriorIdRouteImport } from './routes/$campaignId/warriors/$warriorId'
+import { Route as CampaignIdNewsEditRouteImport } from './routes/$campaignId/news/edit'
 import { Route as CampaignIdMatchesTableRouteImport } from './routes/$campaignId/matches/table'
 import { Route as CampaignIdMatchesNewRouteImport } from './routes/$campaignId/matches/new'
 import { Route as CampaignIdWarbandsWarbandIdIndexRouteImport } from './routes/$campaignId/warbands/$warbandId/index'
@@ -124,6 +126,11 @@ const CampaignIdProgressIndexRoute = CampaignIdProgressIndexRouteImport.update({
   path: '/progress/',
   getParentRoute: () => CampaignIdRouteRoute,
 } as any)
+const CampaignIdNewsIndexRoute = CampaignIdNewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
+  getParentRoute: () => CampaignIdRouteRoute,
+} as any)
 const CampaignIdMatchesIndexRoute = CampaignIdMatchesIndexRouteImport.update({
   id: '/matches/',
   path: '/matches/',
@@ -152,6 +159,11 @@ const CampaignIdWarriorsWarriorIdRoute =
     path: '/warriors/$warriorId',
     getParentRoute: () => CampaignIdRouteRoute,
   } as any)
+const CampaignIdNewsEditRoute = CampaignIdNewsEditRouteImport.update({
+  id: '/news/edit',
+  path: '/news/edit',
+  getParentRoute: () => CampaignIdRouteRoute,
+} as any)
 const CampaignIdMatchesTableRoute = CampaignIdMatchesTableRouteImport.update({
   id: '/matches/table',
   path: '/matches/table',
@@ -201,11 +213,13 @@ export interface FileRoutesByFullPath {
   '/reference/': typeof ReferenceIndexRoute
   '/$campaignId/matches/new': typeof CampaignIdMatchesNewRoute
   '/$campaignId/matches/table': typeof CampaignIdMatchesTableRoute
+  '/$campaignId/news/edit': typeof CampaignIdNewsEditRoute
   '/$campaignId/warriors/$warriorId': typeof CampaignIdWarriorsWarriorIdRoute
   '/display/$campaignId/results': typeof DisplayCampaignIdResultsRoute
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
   '/$campaignId/events': typeof CampaignIdEventsIndexRoute
   '/$campaignId/matches': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/news': typeof CampaignIdNewsIndexRoute
   '/$campaignId/progress': typeof CampaignIdProgressIndexRoute
   '/$campaignId/timeline': typeof CampaignIdTimelineIndexRoute
   '/$campaignId/warbands': typeof CampaignIdWarbandsIndexRoute
@@ -227,11 +241,13 @@ export interface FileRoutesByTo {
   '/reference': typeof ReferenceIndexRoute
   '/$campaignId/matches/new': typeof CampaignIdMatchesNewRoute
   '/$campaignId/matches/table': typeof CampaignIdMatchesTableRoute
+  '/$campaignId/news/edit': typeof CampaignIdNewsEditRoute
   '/$campaignId/warriors/$warriorId': typeof CampaignIdWarriorsWarriorIdRoute
   '/display/$campaignId/results': typeof DisplayCampaignIdResultsRoute
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
   '/$campaignId/events': typeof CampaignIdEventsIndexRoute
   '/$campaignId/matches': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/news': typeof CampaignIdNewsIndexRoute
   '/$campaignId/progress': typeof CampaignIdProgressIndexRoute
   '/$campaignId/timeline': typeof CampaignIdTimelineIndexRoute
   '/$campaignId/warbands': typeof CampaignIdWarbandsIndexRoute
@@ -258,11 +274,13 @@ export interface FileRoutesById {
   '/reference/': typeof ReferenceIndexRoute
   '/$campaignId/matches/new': typeof CampaignIdMatchesNewRoute
   '/$campaignId/matches/table': typeof CampaignIdMatchesTableRoute
+  '/$campaignId/news/edit': typeof CampaignIdNewsEditRoute
   '/$campaignId/warriors/$warriorId': typeof CampaignIdWarriorsWarriorIdRoute
   '/display/$campaignId/results': typeof DisplayCampaignIdResultsRoute
   '/reference/scenarios/$scenarioId': typeof ReferenceScenariosScenarioIdRoute
   '/$campaignId/events/': typeof CampaignIdEventsIndexRoute
   '/$campaignId/matches/': typeof CampaignIdMatchesIndexRoute
+  '/$campaignId/news/': typeof CampaignIdNewsIndexRoute
   '/$campaignId/progress/': typeof CampaignIdProgressIndexRoute
   '/$campaignId/timeline/': typeof CampaignIdTimelineIndexRoute
   '/$campaignId/warbands/': typeof CampaignIdWarbandsIndexRoute
@@ -290,11 +308,13 @@ export interface FileRouteTypes {
     | '/reference/'
     | '/$campaignId/matches/new'
     | '/$campaignId/matches/table'
+    | '/$campaignId/news/edit'
     | '/$campaignId/warriors/$warriorId'
     | '/display/$campaignId/results'
     | '/reference/scenarios/$scenarioId'
     | '/$campaignId/events'
     | '/$campaignId/matches'
+    | '/$campaignId/news'
     | '/$campaignId/progress'
     | '/$campaignId/timeline'
     | '/$campaignId/warbands'
@@ -316,11 +336,13 @@ export interface FileRouteTypes {
     | '/reference'
     | '/$campaignId/matches/new'
     | '/$campaignId/matches/table'
+    | '/$campaignId/news/edit'
     | '/$campaignId/warriors/$warriorId'
     | '/display/$campaignId/results'
     | '/reference/scenarios/$scenarioId'
     | '/$campaignId/events'
     | '/$campaignId/matches'
+    | '/$campaignId/news'
     | '/$campaignId/progress'
     | '/$campaignId/timeline'
     | '/$campaignId/warbands'
@@ -346,11 +368,13 @@ export interface FileRouteTypes {
     | '/reference/'
     | '/$campaignId/matches/new'
     | '/$campaignId/matches/table'
+    | '/$campaignId/news/edit'
     | '/$campaignId/warriors/$warriorId'
     | '/display/$campaignId/results'
     | '/reference/scenarios/$scenarioId'
     | '/$campaignId/events/'
     | '/$campaignId/matches/'
+    | '/$campaignId/news/'
     | '/$campaignId/progress/'
     | '/$campaignId/timeline/'
     | '/$campaignId/warbands/'
@@ -491,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignIdProgressIndexRouteImport
       parentRoute: typeof CampaignIdRouteRoute
     }
+    '/$campaignId/news/': {
+      id: '/$campaignId/news/'
+      path: '/news'
+      fullPath: '/$campaignId/news'
+      preLoaderRoute: typeof CampaignIdNewsIndexRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
+    }
     '/$campaignId/matches/': {
       id: '/$campaignId/matches/'
       path: '/matches'
@@ -524,6 +555,13 @@ declare module '@tanstack/react-router' {
       path: '/warriors/$warriorId'
       fullPath: '/$campaignId/warriors/$warriorId'
       preLoaderRoute: typeof CampaignIdWarriorsWarriorIdRouteImport
+      parentRoute: typeof CampaignIdRouteRoute
+    }
+    '/$campaignId/news/edit': {
+      id: '/$campaignId/news/edit'
+      path: '/news/edit'
+      fullPath: '/$campaignId/news/edit'
+      preLoaderRoute: typeof CampaignIdNewsEditRouteImport
       parentRoute: typeof CampaignIdRouteRoute
     }
     '/$campaignId/matches/table': {
@@ -576,9 +614,11 @@ interface CampaignIdRouteRouteChildren {
   CampaignIdIndexRoute: typeof CampaignIdIndexRoute
   CampaignIdMatchesNewRoute: typeof CampaignIdMatchesNewRoute
   CampaignIdMatchesTableRoute: typeof CampaignIdMatchesTableRoute
+  CampaignIdNewsEditRoute: typeof CampaignIdNewsEditRoute
   CampaignIdWarriorsWarriorIdRoute: typeof CampaignIdWarriorsWarriorIdRoute
   CampaignIdEventsIndexRoute: typeof CampaignIdEventsIndexRoute
   CampaignIdMatchesIndexRoute: typeof CampaignIdMatchesIndexRoute
+  CampaignIdNewsIndexRoute: typeof CampaignIdNewsIndexRoute
   CampaignIdProgressIndexRoute: typeof CampaignIdProgressIndexRoute
   CampaignIdTimelineIndexRoute: typeof CampaignIdTimelineIndexRoute
   CampaignIdWarbandsIndexRoute: typeof CampaignIdWarbandsIndexRoute
@@ -594,9 +634,11 @@ const CampaignIdRouteRouteChildren: CampaignIdRouteRouteChildren = {
   CampaignIdIndexRoute: CampaignIdIndexRoute,
   CampaignIdMatchesNewRoute: CampaignIdMatchesNewRoute,
   CampaignIdMatchesTableRoute: CampaignIdMatchesTableRoute,
+  CampaignIdNewsEditRoute: CampaignIdNewsEditRoute,
   CampaignIdWarriorsWarriorIdRoute: CampaignIdWarriorsWarriorIdRoute,
   CampaignIdEventsIndexRoute: CampaignIdEventsIndexRoute,
   CampaignIdMatchesIndexRoute: CampaignIdMatchesIndexRoute,
+  CampaignIdNewsIndexRoute: CampaignIdNewsIndexRoute,
   CampaignIdProgressIndexRoute: CampaignIdProgressIndexRoute,
   CampaignIdTimelineIndexRoute: CampaignIdTimelineIndexRoute,
   CampaignIdWarbandsIndexRoute: CampaignIdWarbandsIndexRoute,

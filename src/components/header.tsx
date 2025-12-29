@@ -139,6 +139,13 @@ export function Header({ campaignId }: HeaderProps) {
 					</NavigationMenuItem>
 					<NavigationMenuItem>
 						<NavigationMenuLink
+							render={<Link to="/$campaignId/news" params={{ campaignId }} />}
+						>
+							News
+						</NavigationMenuLink>
+					</NavigationMenuItem>
+					<NavigationMenuItem>
+						<NavigationMenuLink
 							render={
 								<Link to="/$campaignId/timeline" params={{ campaignId }} />
 							}
